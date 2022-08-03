@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+VERSION=1.4
+
+PREFIX="/usr/local/src/ped-sim-$VERSION"
+
+# Create build directory
+TMPDIR="/tmp"
+pushd "${TMPDIR}"
+
+# ---- Fetch and unpack source code 
+URL="https://github.com/williamslab/ped-sim/archive/refs/tags/v${VERSION}.tar.gz"
+SRC="ped-sim-${VERSION}"
+wget -O- ${URL} | tar -xvzf -
+cd ${SRC}
+
+# ---- Compile 
+# -lgslcblas must be specified
+make -j `nproc` --makefile=Makefile-gsl LIBS="-lz -lgsl -lgslcblas"
+
+
+# ---- move to PREFIX
+mkdir -p ${PREFIX}/bin
+cp fam2def.py ped-sim plot-fam.R ${PREFIX}/bin
+cp -r example interfere README.md ${PREFIX}
+
+cd ${TMPDIR} && rm -rf ${SRC}
+# cd /usr/local/bin && ln -s ../src/ped-sim-${VERSION}/bin/ped-sim

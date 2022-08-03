@@ -1,0 +1,6 @@
+name: ped-sim-1.3
+
+channels:
+  - b3bg
+dependencies:
+  - b3bg::ped-sim=1.3

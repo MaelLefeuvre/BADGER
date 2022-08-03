@@ -1,0 +1,89 @@
+from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
+FTP = FTPRemoteProvider(retry=config['FTP']['retries']) # Anonymous 
+
+
+# ---- Set config variables
+configfile: "./config/config.yml"
+
+g1k_url  = config["1000g"]["url"]
+data_out = config["data"]["output_dir"]
+
+rule download_1000_genomes:
+    """
+    Download 1000genomes phase 3 SNPs
+    http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
+
+    """
+    input:
+        vcf = FTP.remote(f"{g1k_url}"+"/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz")
+    output:
+        vcf = f"{data_out}"+"/g1k-phase3-callset/00-original/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
+    shell:
+        "mv {input.vcf} {output.vcf}"
+
+
+rule filter_1000_genomes:
+    """
+    Filter each 1000g variant callset to merely preserve biallelic SNPs with maf >= 0.05
+    """
+    input:
+        vcf = rules.download_1000_genomes.output.vcf
+    output:
+        vcf = f"{data_out}"+"/g1k-phase3-callset/01-filtered/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+    threads: 16
+    conda: "../envs/bcftools-1.15.yml"
+    shell:
+        "bcftools view -Oz --threads {threads} --min-alleles 2 --max-alleles 2 -v snps --min-af 0.05 {input.vcf} -o {output.vcf}"
+
+
+rule fetch_samples_panel:
+    """
+    Download samples metadata from the 1000g FTP website
+    """
+    input:
+        panel = FTP.remote("ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel")
+    output:
+        panel = f"{data_out}"+"/g1k-phase3-callset/samples-list/integrated_call_samples_v3.20130502.ALL.panel"
+    shell:
+        "mv {input.panel} {output.panel}"
+
+
+rule get_target_pop_samples:
+    """
+    Create a subset list of samples ID for a specific population or superpopulation.
+    """
+    input:
+        panel       = rules.fetch_samples_panel.output.panel
+    output:
+        target_list = f"{data_out}"+"/g1k-phase3-callset/samples-list/integrated_call_samples_v3.20130502.{POP}.panel"
+    shell:
+        "grep {wildcards.POP} {input.panel} | cut -f1 > {output.target_list}"
+
+
+rule subset_1000_genomes:
+    """
+    Subset the 1000g-phase3 dataset, keeping only the specified population.
+    """
+    input:
+        vcf     = rules.filter_1000_genomes.output.vcf,
+	    samples = rules.get_target_pop_samples.output.target_list
+    output:
+        vcf     = f"{data_out}"+"/g1k-phase3-callset/01-filtered/{POP}.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+    threads: 16
+    conda: "../envs/bcftools-1.15.yml"
+    shell:
+        "bcftools view --threads {threads} --samples-file {input.samples} -Oz {input.vcf} -o {output.vcf}"
+
+
+rule concat_1000_genomes:
+    """
+    Concatenate chromosome file into a single, population-specific VCF. 
+    """
+    input:
+        split_vcfs = expand(rules.subset_1000_genomes.output.vcf, chrom=range(1,23), POP="{POP}")
+    output:
+        merged_vcf = f"{data_out}"+"/g1k-phase3-callset/02-merged/{POP}.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+    threads: 16
+    conda: "../envs/bcftools-1.15.yml"
+    shell:
+        "bcftools concat --threads {threads} -Oz -o {output.merged_vcf} {input.split_vcfs}"
