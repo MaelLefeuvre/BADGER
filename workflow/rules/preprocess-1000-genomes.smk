@@ -87,3 +87,13 @@ rule concat_1000_genomes:
     conda: "../envs/bcftools-1.15.yml"
     shell:
         "bcftools concat --threads {threads} -Oz -o {output.merged_vcf} {input.split_vcfs}"
+
+rule tabix_vcf:
+    input:
+        vcf = "{vcf}"
+    output:
+        tbi = "{vcf}.tbi"
+    conda: "../envs/bcftools-1.15.yml"
+    shell: """
+        tabix {input.vcf}
+    """

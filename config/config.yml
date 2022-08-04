@@ -1,26 +1,33 @@
 FTP:
-    retries: 20
+  retries: 20
 data:
-    output_dir:     "data"
+  output_dir:     "data"
 refgen:
-    url:            "ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/{reference}.fa.gz"
+  url:            "ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/{reference}.fa.gz"
 1000g:
-    url:            "ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
+  url:            "ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
 
 ped-sim:
-    input: 
-        interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
-        refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
-    data:
-        codes:          "resources/ped-sim/definition/pedigree_codes.txt" 
-        definition:     "resources/ped-sim/definition/pedigree.def"
-        map:            "data/ped-sim/recombination_maps/refined_mf.simmap"
-        interference:   "data/ped-sim/interference_maps/nu_p_campbell.tsv"
-    output:
-        directory: "results/00-ped-sim"
-    params:
-        error_rate:  0
-        missingness: 0
-        POP: "CEU"
-        
-    
+  input: 
+    interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
+    refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
+  data:
+    codes:          "resources/ped-sim/definition/pedigree_codes.txt" 
+    definition:     "resources/ped-sim/definition/pedigree.def"
+    map:            "data/ped-sim/recombination_maps/refined_mf.simmap"
+    interference:   "data/ped-sim/interference_maps/nu_p_campbell.tsv"
+  output:
+    directory: "results/00-ped-sim"
+  params:
+    error_rate:  0
+    missingness: 0
+    pop: "CEU"
+gargammel:
+  coverage: 1.0
+  comp_endo: 0.5
+  comp_cont: 0.5
+  comp_bact: 0
+  misincorporation: "resources/gargammel/misincorporations/MT23-misincorporation.txt"
+  sizefreq:         "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
+  params:
+    contam-pop: "AFR"

@@ -1,11 +1,34 @@
-import os
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+from itertools import dropwhile
+import os 
+
 HTTP = HTTPRemoteProvider()
 
 # ---- Set config variables
 
 configfile: "./config/config.yml"
 
+# ---- Utility functions
+def get_twins(wildcards):
+    """
+    Runs through the pedigree definition file, finds which individuals are supposed to become twins and outputs their IDs
+    """
+    with open(rules.run_ped_sim.input.definition) as f:
+        # Find how many pedigree replicates are being run
+        gen_no = int(list(dropwhile(lambda x: x.startswith('#'), [line for line in f]))[0].split(' ')[2])
+    with open(config["ped-sim"]["data"]["codes"], "r") as f:
+        # Run through the pedigree_codes and find potential twins relationship
+        lines = f.read().split("\n")
+        twins = None
+        for line in lines[:len(lines) -1]:
+            cells = line.split("\t")
+            twins = cells[1] if cells[1] == cells[2].lower() else None
+    if twins:
+        return expand("ped{gen}_{id}", gen=range(1,gen_no+1), id=twins)
+    else:
+        return ""
+
+# ------------------------------------------------------------------------------------------------------------------- #
 
 rule fetch_sex_specific_gen_map:
     """
@@ -18,9 +41,10 @@ rule fetch_sex_specific_gen_map:
         gen_map = HTTP.remote(config["ped-sim"]["input"]["refined-genetic-map-url"], keep_local=True)
     output:
         map_dir  = directory("data/ped-sim/Refined_genetic_map_b37"),
-        gen_maps = expand("data/ped-sim/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"])
-    shell:
-        "tar --strip-components=1 -xvzf {input.gen_map} -C {output.map_dir} && rm -rf {input.gen_map}"
+        gen_maps = temp(expand("data/ped-sim/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"]))
+    shell: """
+        tar --strip-components=1 -xvzf {input.gen_map} -C {output.map_dir} && rm -rf {input.gen_map}
+    """
 
 
 rule format_sex_specific_gen_map:
@@ -33,15 +57,14 @@ rule format_sex_specific_gen_map:
         sim_map = config["ped-sim"]['data']["map"]
     params:
         map_dir = rules.fetch_sex_specific_gen_map.output.map_dir
-    shell:
-        """
+    shell: """
         printf "#chr\tpos\tmale_cM\tfemale_cM\n" > {output.sim_map};                    \
         for chr in {{1..22}}; do                                                        \
             paste {params.map_dir}/male_chr$chr.txt {params.map_dir}/female_chr$chr.txt \
                 | awk -v OFS="\t" 'NR > 1 && $2 == $6 {{print $1,$2,$4,$8}}'            \
                 | sed 's/^chr//' >> {output.sim_map};                                   \
         done
-        """
+    """
 
 rule fetch_interference_map:
     """
@@ -54,8 +77,9 @@ rule fetch_interference_map:
         intf_map = HTTP.remote(config["ped-sim"]["input"]["interference-map-url"], keep_local=True)
     output:
         intf_map = config['ped-sim']['data']['interference']
-    shell:
-        "mv {input.intf_map} {output.intf_map}"
+    shell: """
+        mv {input.intf_map} {output.intf_map}
+    """
 
 
 rule run_ped_sim:
@@ -68,17 +92,16 @@ rule run_ped_sim:
         map          = config['ped-sim']['data']['map'],
         interference = config['ped-sim']['data']['interference']
     output:
-        fam = config['ped-sim']['output']['directory'] +"/{POP}-pedigrees-everyone.fam",
-        log = config['ped-sim']['output']['directory'] +"/{POP}-pedigrees.log",
-        seg = config['ped-sim']['output']['directory'] +"/{POP}-pedigrees.seg",
-        vcf = config['ped-sim']['output']['directory'] +"/{POP}-pedigrees.vcf.gz",
+        fam = "results/00-pedsim/{POP}-pedigrees-everyone.fam",
+        log = "results/00-pedsim/{POP}-pedigrees.log",
+        seg = "results/00-pedsim/{POP}-pedigrees.seg",
+        vcf = "results/00-pedsim/{POP}-pedigrees.vcf.gz",
     params:
-        output_basename  = config['ped-sim']['output']['directory']+ "/{POP}-pedigrees",
+        output_basename  = "results/00-pedsim/{POP}-pedigrees",
         error_rate       = config['ped-sim']['params']['error_rate'],
         missingness      = config['ped-sim']['params']['missingness']
     conda: "../envs/ped-sim-1.3.yml"
-    shell:
-        """
+    shell: """
         ped-sim -d {input.definition}            \
                 -m {input.map}                   \
                 -i {input.vcf}                   \
@@ -88,27 +111,51 @@ rule run_ped_sim:
                 --keep_phase                     \
                 --miss_rate {params.missingness} \
                 --err_rate {params.error_rate}
-        #sed -i 's/0/NA/g' {output.fam}
-		"""
+    """
 
 rule filter_snps:
+    """
+    Keep only biallelic SNPs from the definition file and convert to BGZIP
+    """
     input:
         rules.run_ped_sim.output.vcf
     output:
-        vcf = config['ped-sim']['output']['directory'] +"/{POP}-pedigrees-M2-m2-snps.vcf.gz"
+        vcf = "results/00-ped-sim/{POP}-pedigrees-M2-m2-snps.vcf.gz"
+    conda: "../envs/bcftools-1.15.yml"
     threads: 16
-    shell:
-        "bcftools view --threads {threads} -M2 -m2 -v snps {input} | bgzip -c > {output} && tabix {output}"
+    shell: """
+        bcftools view --threads {threads} -M2 -m2 -v snps {input} | bgzip -c > {output} && tabix {output}
+    """
 
+rule extract_twins:
+    input:
+        vcf        = rules.filter_snps.output.vcf
+    output:
+        twins_vcf  = "results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-twins.vcf.gz",
+        twin_codes = "results/00-ped-sim/{POP}-twin_codes.txt",
+        merged_vcf = "results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz"
+    params:
+        twins = get_twins
+    conda: "../envs/bcftools-1.15.yml"
+    shell: """
+        echo -e {params.twins} | tr '[:lower:]' '[:upper:]' | sed 's/PED/ped/g' | awk 'BEGIN{{RS=" "}}{{print}}' | head -n -1 > {output.twin_codes}
+        bcftools view -s $(echo {params.twins} | sed 's/ /,/g') {input.vcf} | bcftools reheader -s {output.twin_codes} | bgzip > {output.twins_vcf}
+        tabix {output.twins_vcf}
+        bcftools merge -Oz {input.vcf} {output.twins_vcf} > {output.merged_vcf}
+        tabix {output.merged_vcf}
+    """
 
 
 checkpoint get_samples:
+    """
+    Extract the ped-sim samples identifiers contained within the VCF. These will become our wildcards
+    for the remainder of this simulations pipeline.
+    """
     input:
-        expand(rules.filter_snps.output.vcf, POP=config["ped-sim"]["params"]["POP"])
+        expand(rules.extract_twins.output.merged_vcf, POP=config["ped-sim"]["params"]["pop"])
     output:
         "results/00-ped-sim/sample_names.tsv"
     priority: 50
-    shell: 
-        """
+    shell: """
         zcat {input} | grep '#CHROM' | cut -f 10- > {output}
-        """
+    """

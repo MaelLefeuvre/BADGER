@@ -10,16 +10,13 @@ g1k_url = config["1000g"]["url"]
 
 def my_samples(wildcards):
 	with checkpoints.get_samples.get().output[0].open() as f:
-       #return expand("out/fastqs/rescaled_{sample}.bam", sample=str.split(f.readline().replace('\n',''),'\t'))
-        #return expand("out/fastqs/{sample}.sam",sample=str.split(f.readline().replace('\n',''),'\t'))
 		return expand("results/01-gargammel/fastqs/{sample}_s{for_rev}.fq.gz", for_rev=[1,2], sample=str.split(f.readline().replace('\n',''),'\t'))
-		#return expand("out/fastqs/{sample}_chr{chr}_s{for_rev}.fq.gz",for_rev=[1,2], chr=range(1,23), sample=str.split(f.readline().replace('\n',''),'\t'))
-		#return expand("out/garga/{sample}/endo/{sample}_chr{chr}_haplo{side}.fasta",side=[1,2], chr=range(1,22), sample=str.split(f.readline().replace('\n',''),'\t'))
+
 
 
 
 rule ped_sim:
-    input: expand("results/00-ped-sim/{POP}-pedigrees.vcf.gz", POP=config["ped-sim"]["params"]["POP"])
+    input: expand("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz", POP=config["ped-sim"]["params"]["pop"])
 
 rule gargammel:
     input:
@@ -29,10 +26,3 @@ rule all:
     input:
         rules.ped_sim.input,
         rules.gargammel.input
-        #"data/refgen/Homo_sapiens.GRCh37.dna.primary_assembly.fa.bwt",
-        #expand("data/g1k-phase3-callset/01-filtered/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz",  chrom=range(1,23)),
-        #expand("data/g1k-phase3-callset/01-filtered/CEU.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz", chrom=range(1,23)),
-        #"data/g1k-phase3-callset/02-merged/CEU.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz",
-        #"resources/ped-sim/recombination_maps/refined_mf.simmap",
-        #"results/00-ped-sim/CEU-pedigrees.vcf.gz"
-

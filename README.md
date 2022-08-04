@@ -1,11 +1,43 @@
+# aDNA-kinship-simulations
+
+## Installation
+
+1. Install [Conda](https://docs.conda.io/en/latest/)
+  - Check the documentation of [miniconda3](https://docs.conda.io/en/latest/miniconda.html) and review the detailled [installation instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) beforehand.
+  - On a x86_64 bits Linux architecture:
+    ```Bash
+    user@desktop:~$ MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+    user@desktop:~$ wget $MINICONDA_URL && bash Miniconda3-latest-Linux-x86_64.sh
+    ```
+
+2. [Optional] Install [Mamba](https://github.com/mamba-org/mamba)
+  - This integrates seamlessly with conda, and will greatly speed-up its environment solver.
+  - On a x86_64 bit Linux architecture:
+    ```Bash
+    user@desktop:~$ conda install -n base -c conda-forge mamba
+    ```
+
+3. Install [Snakemake](https://snakemake.github.io/)
+  - Check the [documentation](https://snakemake.readthedocs.io/en/stable/) and review the detailled [installation instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html)
+  - A dedicated environment is available within this repository. On a x86_64 bit Linux architecture:
+    ```Bash
+    (base) user@desktop:~$ mamba env install -f ./workflow/envs/snakemake-7.12.0.yml
+    ```
 ## Execution
-```Bash
-snakemake --cores `nproc` --use-conda --conda-frontend mamba --describe channel_priority
-```
+1. Activate snakemake
+  ```Bash
+  (base) user@desktop:~$ mamba activate snakemake-7.12.0.yml
+  ``` 
+2. Run the pipeline  
+  ```Bash
+  (snakemake-7.12.0) user@desktop:~$ snakemake all --cores `nproc` --use-conda --conda-frontend mamba
+  ```
 
 ## @TODO:
 - `rule bwa_mem` : use `multiext()` for the input.reference
 - `rule get_consensus`: error because the output vcf of `rule run_ped_sim` is not BGZF compressed.
+- `rule extract_twins` is needlessly complicated and generates unnecessary intermediary files.
+- `find_contaminants()`: there's a redundant context manager with a seemingly needless "dummy" file. try to refactor this ? 
 
 ### Dependencies:
 #### Pedigree simulator>=1.4
