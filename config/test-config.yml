@@ -21,9 +21,9 @@ ped-sim:
     missingness: 0
     pop: "CEU"
 gargammel:
-  coverage: 0.05
-  comp_endo: 1.0
-  comp_cont: 0
+  coverage: 1.0
+  comp_endo: 0.5
+  comp_cont: 0.5
   comp_bact: 0
   misincorporation: "resources/gargammel/misincorporations/MT23-misincorporation.txt"
   sizefreq:         "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
@@ -34,7 +34,7 @@ preprocess:
     min-overlap: 1
     min-length: 17
   bwa:
-    aligner: "mem" # 'mem' || 'aln'
+    aligner: "mem"
   filter:
     min-MQ: 30
   dedup:
@@ -42,12 +42,12 @@ preprocess:
 kinship:
   targets: "data/g1k-phase3-callset/02-merged/CEU.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
   READ:
-    window-size: 1000000
+    window-size: 10
   GRUPS:
     pedigree: "workflow/scripts/grups/resources/pedigrees/simple_pedigree.txt"
     pedigree-pop: "EUR"
     contam-pop: "AFR"
     mode: "fst"
-    reps: 1000
+    reps: 10
 
 

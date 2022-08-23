@@ -18,15 +18,15 @@ def get_twins(wildcards):
         gen_no = int(list(dropwhile(lambda x: x.startswith('#'), [line for line in f]))[0].split(' ')[2])
     with open(config["ped-sim"]["data"]["codes"], "r") as f:
         # Run through the pedigree_codes and find potential twins relationship
-        lines = f.read().split("\n")
-        twins = None
-        for line in lines[:len(lines) -1]:
+        lines = [line for line in f.read().split('\n') if line.strip() != ''] 
+        twins = []
+        for line in lines[:len(lines)]:
             cells = line.split("\t")
-            twins = cells[1] if cells[1] == cells[2].lower() else None
+            twins.append(cells[1]) if cells[1] == cells[2].lower() else None
     if twins:
         return expand("ped{gen}_{id}", gen=range(1,gen_no+1), id=twins)
     else:
-        return ""
+        raise RuntimeError(f"Failed to extract any twins within pedigree codes file: '{f.name}'")
 
 # ------------------------------------------------------------------------------------------------------------------- #
 
@@ -92,14 +92,15 @@ rule run_ped_sim:
         map          = config['ped-sim']['data']['map'],
         interference = config['ped-sim']['data']['interference']
     output:
-        fam = "results/00-pedsim/{POP}-pedigrees-everyone.fam",
-        log = "results/00-pedsim/{POP}-pedigrees.log",
-        seg = "results/00-pedsim/{POP}-pedigrees.seg",
-        vcf = "results/00-pedsim/{POP}-pedigrees.vcf.gz",
+        fam = "results/00-ped-sim/{POP}-pedigrees-everyone.fam",
+        log = "results/00-ped-sim/{POP}-pedigrees.log",
+        seg = "results/00-ped-sim/{POP}-pedigrees.seg",
+        vcf = "results/00-ped-sim/{POP}-pedigrees.vcf.gz",
     params:
-        output_basename  = "results/00-pedsim/{POP}-pedigrees",
+        output_basename  = "results/00-ped-sim/{POP}-pedigrees",
         error_rate       = config['ped-sim']['params']['error_rate'],
         missingness      = config['ped-sim']['params']['missingness']
+    log: "logs/00-ped-sim/run_ped_sim/{POP}_ped-sim.log"
     conda: "../envs/ped-sim-1.3.yml"
     shell: """
         ped-sim -d {input.definition}            \
@@ -110,7 +111,7 @@ rule run_ped_sim:
                 --fam                            \
                 --keep_phase                     \
                 --miss_rate {params.missingness} \
-                --err_rate {params.error_rate}
+                --err_rate {params.error_rate} > {log} 2>&1 
     """
 
 rule filter_snps:

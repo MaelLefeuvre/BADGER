@@ -1,5 +1,6 @@
 import random
 import sys
+from os.path import dirname
 configfile: "./config/config.yml"
 
 wildcard_constraints:
@@ -32,7 +33,7 @@ checkpoint get_contamination_table:
     output:
         cont_table = "results/01-gargammel/contaminants/contaminants.tsv"
     params:
-        cont      = get_contaminants
+        cont       = get_contaminants
     priority: 99
     shell: """
         echo {params.cont} | awk 'BEGIN{{RS=\" \"}}{{print \"ped\"NR, $1}}' > {output.cont_table}
@@ -42,19 +43,22 @@ rule create_human_contamination:
     input:
         vcf = expand(rules.concat_1000_genomes.output.merged_vcf, POP=config["gargammel"]["params"]["contam-pop"]),
         tbi = expand(f"{rules.concat_1000_genomes.output.merged_vcf}.tbi", POP=config["gargammel"]["params"]["contam-pop"]),
-        chr_ref = "data/refgen/splitted/{chr}.fasta"
+        chr_ref = lambda wildcards: dirname(config["refgen"]) + "/splitted/{chr}.fasta"
     output:
         hap1 = "results/01-gargammel/contaminants/{sample}/{chr}/{sample}_chr{chr}_haplo1.fasta",
         hap2 = "results/01-gargammel/contaminants/{sample}/{chr}/{sample}_chr{chr}_haplo2.fasta"
+    log: 
+        hap1 = "logs/01-gargammel/create_human_contamination/{sample}_chr{chr}_haplo1.log",
+        hap2 = "logs/01-gargammel/create_human_contamination/{sample}_chr{chr}_haplo2.log"
     group: "contaminate"
     resources: scatter=2
     threads: 2
     priority: 99
     conda: "../envs/bcftools-1.15.yml"
     shell: """
-    bcftools consensus -H 1 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} > {output.hap1} \
+    bcftools consensus -H 1 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} -o {output.hap1} 2> {log.hap1} \
     & \
-    bcftools consensus -H 2 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} > {output.hap2} \
+    bcftools consensus -H 2 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} -o {output.hap2} 2> {log.hap2} \
     """
 
 
@@ -75,25 +79,26 @@ def find_contaminant(wildcards):
             if line.startswith(f"{gen} "):
                 contaminant = line.strip("\n").split(" ")[1]
                 break
-    #return expand("results/01-gargammel/contaminants/{sample}/{chr}", sample=contaminant, chr=chromo)
     return expand("results/01-gargammel/contaminants/{sample}/{{chr}}/{sample}_chr{{chr}}_haplo{haplo}.fasta", sample=contaminant, chr=chromo, haplo=[1,2])
 
 
 rule get_consensus:
     input:
         vcf     = expand(rules.extract_twins.output.merged_vcf, POP=config["ped-sim"]["params"]["pop"]),
-        chr_ref = "data/refgen/splitted/{chr}.fasta"
+        chr_ref = lambda wildcards: dirname(config["refgen"]) + "/splitted/{chr}.fasta"
     output:
         hap1=temp("results/01-gargammel/{sample}/{chr}/endo/{sample}_chr{chr}_haplo1.fasta"),
         hap2=temp("results/01-gargammel/{sample}/{chr}/endo/{sample}_chr{chr}_haplo2.fasta"),
+    log: 
+        hap1 = "logs/01-gargammel/get_consensus/{sample}_chr{chr}_haplo1.log",
+        hap2 = "logs/01-gargammel/get_consensus/{sample}_chr{chr}_haplo2.log"
     group: "scatter"
-    threads: 4
-    shell:
-        """
-        bcftools consensus -H 1 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} > {output.hap1} \
+    threads: 2
+    shell: """
+        bcftools consensus -H 1 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} -o {output.hap1} 2> {log.hap1} \
         & \
-        bcftools consensus -H 2 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} > {output.hap2} \
-        """
+        bcftools consensus -H 2 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} -o {output.hap2} 2> {log.hap2} \
+    """
 
 
 rule fetch_bacterial_contamination:
@@ -107,7 +112,7 @@ rule fetch_bacterial_contamination:
     """
 
 
-rule get_fastq:
+rule run_gargammel:
     input:
         hap1                    = rules.get_consensus.output.hap1,
         hap2                    = rules.get_consensus.output.hap2,
@@ -115,8 +120,8 @@ rule get_fastq:
         human_contamination     = find_contaminant,
         bacterial_contamination = rules.fetch_bacterial_contamination.output,
     output:
-        forw  = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_s1.fq.gz"),
-        rev   = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_s2.fq.gz"),
+        forwd = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_s1.fq.gz"),
+        revrs = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_s2.fq.gz"),
         a     = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_a.fa.gz"),
         b     = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}.b.fa.gz"),
         c     = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}.c.fa.gz"),
@@ -130,10 +135,11 @@ rule get_fastq:
         comp_bact        = config['gargammel']['comp_bact'],
         misincorporation = config['gargammel']['misincorporation'],
         output_base_name = "results/01-gargammel/{sample}/{chr}",
-        input_directory  = directory("results/01-gargammel/{sample}/{chr}")
+        input_directory  = directory("results/01-gargammel/{sample}/{chr}"),
+    log: "logs/01-gargammel/run_gargammel/{sample}_chr{chr}.log"
     group: "scatter"
     conda: "../envs/gargammel-1.1.2.yml"
-    threads: 4
+    threads: 1
     priority: 2
     shell: """
         mkdir -p {params.output_base_name}/cont
@@ -144,21 +150,24 @@ rule get_fastq:
                   -c {params.coverage}                                               \
                   -f {params.size_freq}                                              \
                   -o {params.output_base_name}/{wildcards.sample}_chr{wildcards.chr} \
-                  {params.input_directory}    
+                  {params.input_directory} > {log} 2>&1
     """
 
 
 rule merge_chromosomes:
     input:
-        forw=expand(rules.get_fastq.output.forw, chr=range(1,23), sample="{sample}"),
-        rev =expand(rules.get_fastq.output.rev,  chr=range(1,23), sample="{sample}")
+        forwd = expand(rules.run_gargammel.output.forwd, chr=range(1,23), sample="{sample}"),
+        revrs = expand(rules.run_gargammel.output.revrs, chr=range(1,23), sample="{sample}")
     output:
-        forw="results/01-gargammel/fastqs/{sample}_s1.fq.gz",
-        rev ="results/01-gargammel/fastqs/{sample}_s2.fq.gz"
+        forwd = "results/02-preprocess/00-raw/{sample}_s1.fq.gz",
+        revrs = "results/02-preprocess/00-raw/{sample}_s2.fq.gz"
+    log: 
+        forwd = "logs/01-gargammel/merge_chromosomes/{sample}_s1.log",
+        revrs = "logs/01-gargammel/merge_chromosomes/{sample}_s2.log"
     group: "scatter"
     priority: 3
-    threads: 4
+    threads: 2
     shell: """
-        zcat {input.forw} | gzip > {output.forw}
-        zcat {input.rev} | gzip > {output.rev} 
+        zcat {input.forwd} | gzip > {output.forwd} 2> {log.forwd}
+        zcat {input.revrs} | gzip > {output.revrs} 2> {log.revrs}
     """

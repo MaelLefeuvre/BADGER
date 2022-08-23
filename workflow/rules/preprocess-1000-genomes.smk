@@ -4,9 +4,7 @@ FTP = FTPRemoteProvider(retry=config['FTP']['retries']) # Anonymous
 
 # ---- Set config variables
 configfile: "./config/config.yml"
-
-g1k_url  = config["1000g"]["url"]
-data_out = config["data"]["output_dir"]
+# ------------------------------------------------------------------------------------------------------------------- #
 
 rule download_1000_genomes:
     """
@@ -15,9 +13,14 @@ rule download_1000_genomes:
 
     """
     input:
-        vcf = FTP.remote(f"{g1k_url}"+"/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz")
+        vcf = FTP.remote(expand("{url}/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
+            url=config["FTP"]["1000g"],
+            chrom = "{chrom}"
+        ))
     output:
-        vcf = f"{data_out}"+"/g1k-phase3-callset/00-original/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
+        vcf = "data/g1k-phase3-callset/00-original/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
+    params:
+        url = config["FTP"]["1000g"]
     shell:
         "mv {input.vcf} {output.vcf}"
 
@@ -29,7 +32,7 @@ rule filter_1000_genomes:
     input:
         vcf = rules.download_1000_genomes.output.vcf
     output:
-        vcf = f"{data_out}"+"/g1k-phase3-callset/01-filtered/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+        vcf = "data/g1k-phase3-callset/01-filtered/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
     threads: 16
     conda: "../envs/bcftools-1.15.yml"
     shell:
@@ -43,7 +46,7 @@ rule fetch_samples_panel:
     input:
         panel = FTP.remote("ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel")
     output:
-        panel = f"{data_out}"+"/g1k-phase3-callset/samples-list/integrated_call_samples_v3.20130502.ALL.panel"
+        panel = "data/g1k-phase3-callset/samples-list/integrated_call_samples_v3.20130502.ALL.panel"
     shell:
         "mv {input.panel} {output.panel}"
 
@@ -55,9 +58,10 @@ rule get_target_pop_samples:
     input:
         panel       = rules.fetch_samples_panel.output.panel
     output:
-        target_list = f"{data_out}"+"/g1k-phase3-callset/samples-list/integrated_call_samples_v3.20130502.{POP}.panel"
-    shell:
-        "grep {wildcards.POP} {input.panel} | cut -f1 > {output.target_list}"
+        target_list = "data/g1k-phase3-callset/samples-list/integrated_call_samples_v3.20130502.{POP}.panel"
+    shell: """
+        grep {wildcards.POP} {input.panel} | cut -f1 > {output.target_list}
+    """
 
 
 rule subset_1000_genomes:
@@ -68,11 +72,15 @@ rule subset_1000_genomes:
         vcf     = rules.filter_1000_genomes.output.vcf,
 	    samples = rules.get_target_pop_samples.output.target_list
     output:
-        vcf     = f"{data_out}"+"/g1k-phase3-callset/01-filtered/{POP}.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+        vcf     = "data/g1k-phase3-callset/01-filtered/{POP}.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
     threads: 16
     conda: "../envs/bcftools-1.15.yml"
-    shell:
-        "bcftools view --threads {threads} --samples-file {input.samples} -Oz {input.vcf} -o {output.vcf}"
+    shell: """
+        bcftools view --threads {threads}            \
+                      --samples-file {input.samples} \
+                      -Oz {input.vcf}                \
+                      -o {output.vcf}
+    """
 
 
 rule concat_1000_genomes:
@@ -82,13 +90,18 @@ rule concat_1000_genomes:
     input:
         split_vcfs = expand(rules.subset_1000_genomes.output.vcf, chrom=range(1,23), POP="{POP}")
     output:
-        merged_vcf = f"{data_out}"+"/g1k-phase3-callset/02-merged/{POP}.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+        merged_vcf = "data/g1k-phase3-callset/02-merged/{POP}.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
     threads: 16
     conda: "../envs/bcftools-1.15.yml"
-    shell:
-        "bcftools concat --threads {threads} -Oz -o {output.merged_vcf} {input.split_vcfs}"
+    shell: """
+        bcftools concat --threads {threads} -Oz -o {output.merged_vcf} {input.split_vcfs}
+    """
+
 
 rule tabix_vcf:
+    """
+    Index a generic .vcf[.gz] file.
+    """
     input:
         vcf = "{vcf}"
     output:

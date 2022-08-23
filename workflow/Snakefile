@@ -4,13 +4,14 @@ include: "rules/preprocess-1000-genomes.smk"
 include: "rules/pedigree-sims.smk"
 include: "rules/gargammel.smk"
 include: "rules/preprocess-fastq.smk"
+include: "rules/READ.smk"
+include: "rules/grups-rs.smk"
 
-
-g1k_url = config["1000g"]["url"]
 
 def my_samples(wildcards):
-	with checkpoints.get_samples.get().output[0].open() as f:
-		return expand("results/01-gargammel/fastqs/{sample}_s{for_rev}.fq.gz", for_rev=[1,2], sample=str.split(f.readline().replace('\n',''),'\t'))
+    with checkpoints.get_samples.get().output[0].open() as f:
+        return expand("results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam", sample=str.split(f.readline().replace('\n',''),'\t')) 
+        #return expand("results/01-gargammel/fastqs/{sample}_s{for_rev}.fq.gz", for_rev=[1,2], sample=str.split(f.readline().replace('\n',''),'\t'))
 
 
 
@@ -22,7 +23,17 @@ rule gargammel:
     input:
         my_samples
 
+rule READ:
+    input:
+        READ_output
+
+rule GRUPS:
+    input:
+        GRUPS_output
+
 rule all:
     input:
-        rules.ped_sim.input,
-        rules.gargammel.input
+        #rules.ped_sim.input,
+        #rules.gargammel.input,
+        #rules.READ.input,
+        rules.GRUPS.input

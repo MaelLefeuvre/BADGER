@@ -2,6 +2,11 @@
 
 ## Installation
 
+0. Clone this repository
+  ```Bash
+  user@desktop:~$ git clone --recursive git@github.com:MaelLefeuvre/aDNA-kinship-simulations.git
+  ```
+
 1. Install [Conda](https://docs.conda.io/en/latest/)
   - Check the documentation of [miniconda3](https://docs.conda.io/en/latest/miniconda.html) and review the detailled [installation instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) beforehand.
   - On a x86_64 bits Linux architecture:
@@ -23,6 +28,7 @@
     ```Bash
     (base) user@desktop:~$ mamba env install -f ./workflow/envs/snakemake-7.12.0.yml
     ```
+
 ## Execution
 1. Activate snakemake
   ```Bash
@@ -33,11 +39,29 @@
   (snakemake-7.12.0) user@desktop:~$ snakemake all --cores `nproc` --use-conda --conda-frontend mamba
   ```
 
+# Development
+
+## Testing
+1. Copy the provided dummy dataset into a `data` directory at the root of the project.
+  ```Bash
+  (snakemake-7.12.0) user@desktop:~$ cp -r resources/dummy-data ./data
+  ```
+2. Run the pipeline using the provided `test-config.yml` file
+  ```Bash
+  (snakemake-7.12.0) user@desktop:~$ snakemake all --cores `nproc` --use-conda --conda-frontend mamba --configfile config/test-config.yml
+  ```
+
+
 ## @TODO:
 - `rule bwa_mem` : use `multiext()` for the input.reference
 - `rule get_consensus`: error because the output vcf of `rule run_ped_sim` is not BGZF compressed.
 - `rule extract_twins` is needlessly complicated and generates unnecessary intermediary files.
 - `find_contaminants()`: there's a redundant context manager with a seemingly needless "dummy" file. try to refactor this ? 
+
+## Features
+
+- `bcftools consensus` has trouble handling indels. We need to find a way to add those.
+- Add microbial database to gargammel.
 
 ### Dependencies:
 #### Pedigree simulator>=1.4
