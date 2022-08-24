@@ -1,0 +1,6 @@
+name: admixtools-7.0.2
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::admixtools=7.0.2

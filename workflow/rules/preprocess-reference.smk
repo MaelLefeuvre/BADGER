@@ -1,11 +1,8 @@
-from os.path import basename, dirname 
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
 FTP = FTPRemoteProvider(retry=config['FTP']['retries']) # Anonymous 
 
 # ---- Set config variables
 configfile: "./config/config.yml"
-
-reference = "Homo_sapiens.GRCh37.dna.primary_assembly"
 
 rule download_reference_genome:
     """
@@ -13,16 +10,11 @@ rule download_reference_genome:
     human_g1k_v37 is malformed... see: https://github.com/hammerlab/biokepi/issues/117
     """
     input:
-        remote = FTP.remote(expand("{url}/{reference}.gz", 
-            url       = config["FTP"]["refgen"], 
-            reference = lambda wildcards: basename(config["refgen"])
-        ))
+        refgen = FTP.remote("ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/{reference}.fa.gz")
     output:
-        reference = config["refgen"]
-    params:
-        url      = config["FTP"]["refgen"],
+        refgen = "data/refgen/GRCh37/{reference}.fa.gz"
     shell: """
-        mv {remove} {output.reference}
+        mv {input.refgen} {output.refgen}
     """
 
 
@@ -31,11 +23,12 @@ rule decompress_reference_genome:
     Decrompress a reference file from .fa.gz -> .fa 
     """
     input:
-        reference = rules.download_reference_genome.output.reference
+        refgen = rules.download_reference_genome.output.refgen
     output:
-        reference = config["refgen"]
+        refgen = protected("data/refgen/GRCh37/{reference}.fa")
+    log: "logs/refgen/decompress_reference_genome/{reference}.log"
     shell: """
-        gunzip -v {input.reference}
+        gunzip -v {input.refgen} > {log} 2>&1
     """
 
 rule index_reference_genome:
@@ -43,26 +36,44 @@ rule index_reference_genome:
     Generate the Burrows-Wheeler transform on the reference genome.
     """
     input:
-        reference = rules.decompress_reference_genome.output.reference
+        refgen = config["refgen"]
     output:
-        bwt = multiext(config["refgen"], ".amb", ".ann", ".bwt", ".pac", ".sa")
+        amb = config["refgen"] + ".amb",
+	    ann = config["refgen"] + ".ann",
+	    bwt = config["refgen"] + ".bwt",
+	    pac = config["refgen"] + ".pac",
+	    sa  = config["refgen"] + ".sa",
     conda: "../envs/bwa-0.7.17.yml"
+    log: "logs/refgen/index_reference_genome/index_reference_genome.log"
     shell: """
-	    bwa index {input.reference}
+	    bwa index {input.refgen} >2 {log}
 	"""
 
-rule split_refgen:
+rule samtools_faidx:
+    """
+    Generate a `.fai` fasta index using samtools faidx
+    """
+    input:
+        fasta = "{directory}/{fasta}.fa"
+    output:
+        fai   = "{directory}/{fasta}.fa.fai"
+    conda: "../envs/samtools-1.15.yml"
+    shell: """
+        samtools faidx {input.fasta} --fai-idx {output.fai}
+    """
+
+rule split_reference_genome:
     """
     Split the reference genome according to chromosome.
     """
     input:
-        reference   = rules.decompress_reference_genome.output.reference
+        refgen   = config["refgen"]
     output:
-        splitted = expand(dirname(config["refgen"]) + "/splitted/{chr}.fasta", chr=range(1,23))
+        splitted = expand("data/refgen/GRCh37/splitted/{chr}.fasta", chr=range(1,23))
     shell: """
         curr_wd=`pwd`
         cd $(dirname {output.splitted[0]})
-        csplit -s -z $curr_wd/{input.reference} '/>/' '{{*}}'
+        csplit -s -z $curr_wd/{input.refgen} '/>/' '{{*}}'
         for i in xx* ; do                                  \
             n=$(sed 's/>// ; s/ .*// ; 1q' "$i") ;         \
             mv "$i" "$n.fasta" ;                           \

@@ -12,7 +12,18 @@ def get_contaminants(wildcards):
     Returns a list of random ID(s) from a list of potential individuals to use as contamination.
     This will give out a single contaminating individual for each replicate, or generation.
     """
-    # Open the pedigree generation file and 1000g panel definition file.
+
+    # Prevent unneccessary rule re-run trigger events: If the contamination table already exists,
+    # simply print out its contents and leave...
+    if Path(rules.get_contamination_table.output.cont_table).exists():
+        with open(rules.get_contamination_table.output.cont_table, "r") as contamination_table:
+            print("Contamination table already created...")
+            lines = [line.strip("\n") for line in contamination_table.readlines()]
+            print(lines)
+            return lines
+
+    # else, open the pedigree generation file and 1000g panel definition file and return a list
+    # of random samples.
     with open(rules.run_ped_sim.input.definition) as f, open(rules.fetch_samples_panel.output.panel) as samples:
         # get the number of replicates / generations.
         gen_no = int(list(dropwhile(lambda x: x.startswith('#'), [line for line in f]))[0].split(' ')[2])
@@ -30,8 +41,10 @@ checkpoint get_contamination_table:
     """
     Call `get_contaminants` and output its result into a tsv file.
     """
+    input:
+        samples_panel = rules.fetch_samples_panel.output.panel
     output:
-        cont_table = "results/01-gargammel/contaminants/contaminants.tsv"
+        cont_table    = "results/01-gargammel/contaminants/contaminants.tsv",
     params:
         cont       = get_contaminants
     priority: 99
@@ -71,10 +84,14 @@ def find_contaminant(wildcards):
     sample = wildcards.sample
     chromo = wildcards.chr
     gen    = sample.split("_")[0] 
-    # @TODO: what is up with these dummy files ??! I don't think we need a second context manager for that.
-    # Run the checkpoint, read the contamination table and return the sampleID corresponding to the generation number.
-    # return the path leading to the appropriate fasta files..
-    with checkpoints.get_contamination_table.get().output.cont_table.open() as dummy, open(rules.get_contamination_table.output.cont_table) as f:
+    
+    # ---- Do not trigger the checkpoint if the corresponding file already exists...
+    if Path(rules.get_contamination_table.output.cont_table).exists():
+        contamination_table = rules.get_contamination_table.output.cont_table
+    else:
+        contamination_table = checkpoints.get_contamination_table.get().output.cont_table
+
+    with open(contamination_table) as f:
         for line in f.readlines():
             if line.startswith(f"{gen} "):
                 contaminant = line.strip("\n").split(" ")[1]

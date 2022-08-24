@@ -2,6 +2,7 @@ FTP:
   retries: 20
   refgen: "ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/"
   1000g : "ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
+  1240K : "https://reichdata.hms.harvard.edu/pub/datasets/amh_repo/curated_releases/V52/V52.2/SHARE/public.dir/v52.2_1240K_public.tar"
 
 refgen: "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary_assembly.fa"
 
@@ -20,6 +21,7 @@ ped-sim:
     error_rate:  0
     missingness: 0
     pop: "CEU"
+
 gargammel:
   coverage: 0.05
   comp_endo: 1.0
@@ -29,6 +31,7 @@ gargammel:
   sizefreq:         "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
   params:
     contam-pop: "AFR"
+
 preprocess:
   trimming:
     min-overlap: 1
@@ -39,8 +42,10 @@ preprocess:
     min-MQ: 30
   dedup:
     max-length: 200
+
 kinship:
-  targets: "data/g1k-phase3-callset/02-merged/CEU.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+  #targets: "data/g1k-phase3-callset/02-merged/CEU.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+  targets: "data/Reich-dataset/1240K/v52.2_1240K_public.ucscbed"
   READ:
     window-size: 1000000
   GRUPS:
@@ -49,5 +54,3 @@ kinship:
     contam-pop: "AFR"
     mode: "fst"
     reps: 1000
-
-

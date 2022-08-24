@@ -28,6 +28,7 @@ rule GRUPS_fetch_recombination_map:
         output_dir = lambda wildcards, output: dirname(output.map[0])
     shell: """
         tar -xvzf {input.tarball} -C {params.output_dir}
+        rm {input.tarball}
     """
 
 rule GRUPS_generate_fst_set:
@@ -35,16 +36,17 @@ rule GRUPS_generate_fst_set:
         data    = expand("data/g1k-phase3-callset/00-original/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz", chrom=range(1,23)),
         panel   = rules.fetch_samples_panel.output.panel
     output:
-        fst     = expand(
+        fst     = protected(expand(
             "data/grups/fst/g1k-phase3-v5/{ped_pop}-{cont_pop}/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes-{ped_pop}-{cont_pop}.{ext}",
             ped_pop  = config["kinship"]["GRUPS"]["pedigree-pop"],
             cont_pop = config["kinship"]["GRUPS"]["contam-pop"],
             chrom    = range(1,23),
             ext      = ["fst", "fst.frq"]
-        )
+        ))
     params:
         pedigree_pop = config["kinship"]["GRUPS"]["pedigree-pop"],
         contam_pop   = config["kinship"]["GRUPS"]["contam-pop"]
+    log: "logs/03-kinship/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.log"
     conda: "../envs/grups-rs.yml"
     threads: 22
     shell: """
@@ -53,7 +55,7 @@ rule GRUPS_generate_fst_set:
                   --pop-subset {params.pedigree_pop} {params.contam_pop} \
                   --panel {input.panel}                                  \
                   --threads {threads}                                    \
-                  --verbose
+                  --verbose > {log} 2>&1
     """
 
 rule run_GRUPS:
@@ -75,6 +77,7 @@ rule run_GRUPS:
         contam_pop   = config["kinship"]["GRUPS"]["contam-pop"],
         reps         = config["kinship"]["GRUPS"]["reps"],
         mode         = config["kinship"]["GRUPS"]["mode"],
+    log: "logs/03-kinship/run_GRUPS/{generation}-run_GRUPS.log"
     conda: "../envs/grups-rs.yml"
     shell: """
         grups pedigree-sims --pileup {input.pileup}                                           \
@@ -89,5 +92,5 @@ rule run_GRUPS:
                             --mode {params.mode}                                              \
                             --output-dir {output.output_dir}                                  \
                             --print-blocks                                                    \
-                            --verbose -v
+                            --verbose -v > {log} 2>&1
     """

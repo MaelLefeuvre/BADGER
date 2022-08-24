@@ -1,5 +1,83 @@
 configfile: "./config/config.yml"
 
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+HTTP = HTTPRemoteProvider()
+
+rule download_reich_1240K:
+    input:
+        tarball = HTTP.remote(config["FTP"]["1240K"])
+    output:
+        eigenstrat = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".snp", ".ind", ".geno")
+    params:
+        output_dir = lambda wildcards, output: dirname(output.eigenstrat[0])
+    shell:"""
+        tar -xvf {input.tarball} -C {params.output_dir}
+    """
+
+rule eigenstrat_to_UCSC_BED:
+    input:
+        snp = "{directory}/{eigenstrat}.snp"
+    output:
+        bed = "{directory}/{eigenstrat}.ucscbed"
+    shell: """
+        awk '{{print $2, $4-1, $4}}' {input.snp} > {output.bed}
+    """
+
+rule generate_convertf_file:
+    input:
+        eigenstrat = multiext("{directory}/{eigenstrat}", ".snp", ".geno", ".ind")
+    output:
+        parfile    = "{directory}/par.EIGENSTRAT.PED"
+    params:
+        basename   = lambda wildcards: "{wildcards.directory}/{wildcards.eigenstrat}"
+    shell: """
+        echo "" > {output.parfile}
+        echo "genotypename:           ${params.basename}.geno"   >> {output.parfile}
+        echo "snpname:                ${params.basename}.snp"    >> {output.parfile}
+        echo "indivname:              ${params.basename}.ind"    >> {output.parfile}
+        echo "outputformat:           PACKEDPED"                 >> {output.parfile}
+        echo "genotypeoutname:        ${params.basename}.bed"    >> {output.parfile}
+        echo "snpoutname:             ${params.basename}.bim"    >> {output.parfile}
+        echo "indivoutname:           ${params.basename}.fam"    >> {output.parfile}
+    """
+
+rule eigenstrat_to_plink:
+    input:
+        eigenstrat = multiext("{directory}/{eigenstrat}", ".snp", ".geno", ".ind"),
+        parfile    = rules.generate_convertf_file.output.parfile
+    output:
+        plink = multiext("{directory}/{eigenstrat}", ".bed", ".bim", ".fam")
+    conda: "../envs/admixtools-7.0.2.yml"
+    shell: """
+        convertf -p {input.parfile}
+    """
+
+rule vcf_to_plink:
+    input:
+        vcf = "{directory}/{filestem}.vcf.gz",
+        tbi = "{directory}/{filestem}.vcf.gz.tbi"
+    output:
+        plink = multiext("{directory}/{filestem}", ".bed", ".bim", ".fam")
+    params:
+        basename = lambda wildcards: "{directory}/{filestem}"
+    conda: "../envs/plink-1.9.yml"
+    shell: """
+        plink --vcf {input.vcf} --make-bed --out {params.basename} --allow-no-sex --keep-allele-order
+    """
+
+
+rule plink_to_frequency:
+    input:
+        plink       = multiext("{directory}/{eigenstrat}", ".ped", ".map", ".fam")
+    output:
+        frequencies = "{directory}/{eigenstrat}.frq"
+    params:
+        basename    = lambda wildcards: "{directory}/{eigenstrat}"
+    conda: "../envs/plink-1.9.yml"
+    shell: """
+        plink --bfile {params.basename} --freq --out {params.basename} --allow-no-sex --keep-allele-order
+    """
+
 rule adapter_removal_pe:
     input:
         forwd = "{preprocess_dir}/00-raw/{sample}_s1.fq.gz",

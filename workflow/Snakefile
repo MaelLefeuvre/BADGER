@@ -20,20 +20,16 @@ rule ped_sim:
     input: expand("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz", POP=config["ped-sim"]["params"]["pop"])
 
 rule gargammel:
-    input:
-        my_samples
+    input: my_samples
 
 rule READ:
-    input:
-        READ_output
+    input: READ_output
 
 rule GRUPS:
-    input:
-        GRUPS_output
+    input: GRUPS_output
 
 rule all:
     input:
-        #rules.ped_sim.input,
-        #rules.gargammel.input,
-        #rules.READ.input,
+        rules.READ.input,
         rules.GRUPS.input
+    default_target: True
