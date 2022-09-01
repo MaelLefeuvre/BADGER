@@ -7,12 +7,14 @@ FTP:
 refgen: "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary_assembly.fa"
 
 ped-sim:
+  filter-indels: True
+  filter-maf: True
   input: 
     interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
     refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
   data:
-    codes:          "resources/ped-sim/definition/test-pedigree_codes.txt" 
-    definition:     "resources/ped-sim/definition/test-pedigree.def"
+    codes:          "resources/ped-sim/definition/pedigree_codes.txt" 
+    definition:     "resources/ped-sim/definition/pedigree.def"
     map:            "data/ped-sim/recombination_maps/refined_mf.simmap"
     interference:   "data/ped-sim/interference_maps/nu_p_campbell.tsv"
   output:
@@ -24,9 +26,9 @@ ped-sim:
 
 gargammel:
   coverage: 0.05
-  comp_endo: 1.0
-  comp_cont: 0
-  comp_bact: 0
+  comp_endo: 0.90
+  comp_cont: 0.05
+  comp_bact: 0.05
   misincorporation: "resources/gargammel/misincorporations/MT23-misincorporation.txt"
   sizefreq:         "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
   params:

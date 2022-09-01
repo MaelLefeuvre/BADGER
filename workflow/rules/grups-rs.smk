@@ -1,4 +1,4 @@
-from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider() # Anonymous 
 # https://ftp.ncbi.nlm.nih.gov/hapmap/recombination/2011-01_phaseII_B37/genetic_map_HapMapII_GRCh37.tar.gz
 
@@ -69,7 +69,7 @@ rule run_GRUPS:
         output_dir   = directory("results/03-kinship/GRUPS/{generation}/")
     params:
         sample_names = lambda wildcards: expand(READ_bam_samples_id(wildcards), generation = wildcards.generation),
-        samples      = lambda wildcards: 3,
+        samples      = lambda wildcards: len(READ_bam_samples_id(wildcards)) - 1,
         data_dir     = lambda wildcards, input: dirname(input.data[0]),
         recomb_dir   = lambda wildcards, input: dirname(input.recomb_map[0]),
         pedigree     = config["kinship"]["GRUPS"]["pedigree"],
@@ -92,5 +92,6 @@ rule run_GRUPS:
                             --mode {params.mode}                                              \
                             --output-dir {output.output_dir}                                  \
                             --print-blocks                                                    \
+                            --maf 0.05                                                        \
                             --verbose -v > {log} 2>&1
     """

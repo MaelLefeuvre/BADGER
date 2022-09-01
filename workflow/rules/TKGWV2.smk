@@ -25,19 +25,21 @@ rule TKGWV2_bam2plink:
         bed_targets   = lambda wildcards: splitext(config["kinship"]["targets"])[0] + ".ucscbed"
         plink_targets = lambda wildcards: splitext(config["kinship"]["targets"])[0]
         frequencies   = lambda wildcards: splitext(config["kinship"]["targets"])[0] + ".frq"
-        
     output:
+        results       = lambda wildcards, input: dirname(input.bams[0]) + "/TKGWV2_Results.txt"
     conda: "../envs/TKGWV2.yml"
     params:
         min_MQ    = config["kinship"]["TKGWV2"]["min-MQ"],
         min_BQ    = config["kinship"]["TKGWV2"]["min-BQ"],
         min_depth = config["kinship"]["TKGWV2"]["min-depth"]
+        bam_ext   = ".srt.rmdup.rescaled_subsampled.bam"
     shell: """
         TKGWV2.py bam2plink --referenceGenome {input.reference}    \
                             --gwvList {input.targets}              \
                             --gwvPlink {input.plink_targets}       \
                             --minMQ {params.min_MQ}                \
                             --minBQ {params.min_BQ}                \
+                            --bamExtension {params.bam_ext}        \
                   plink2tkrelated --freqFile {input.frequencies}   \
                                   --ignoreTresh {params.min_depth} \
                                   --verbose

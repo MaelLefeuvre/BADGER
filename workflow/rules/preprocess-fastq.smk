@@ -126,6 +126,42 @@ rule bwa_mem:
         bwa mem -t {threads} -R \'{params.RG}\' -p {input.reference} {input.trimmed} > {output.sam} 2> {log}
     """
 
+rule bwa_mem_se:
+    input:
+        trimmed = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.{extension}.gz",
+        reference = config["refgen"],
+        bwt       = rules.index_reference_genome.output.bwt
+    output:
+        sam = "{preprocess_dir}/02-align/{sample}.{extension}.sam"
+    params:
+        RG = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina'
+    log: "logs/{preprocess_dir}/bwa_mem_se/{sample}.bwamem.{extension}.log"
+    conda: "../envs/bwa-0.7.17.yml"
+    priority: 5
+    threads: 4
+    shell: """
+        bwa mem -t {threads} -R \'{params.RG}\' -p {input.reference} {input.trimmed} > {output.sam} 2> {log}
+    """
+
+rule bwa_mem_pe:
+    input:
+        pair1     = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair1.truncated.gz",
+        pair2     = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair2.truncated.gz",
+        reference = config["refgen"],
+        bwt       = rules.index_reference_genome.output.bwt
+
+    output:
+        sam       = "{preprocess_dir}/02-align/{sample}/{sample}.bwamem.{extension}.sam"
+    params:
+        RG = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina'
+    log: "logs/{preprocess_dir}/bwa_mem_pe/{sample}.bwamem.{extension}.log"
+    conda: "../envs/bwa-0.7.17.yml"
+    priority: 5
+    threads: 4
+    shell: """
+        bwa mem -t {threads} -R \'{params.RG}\' {input.reference} {input.pair1} {input.pair2} > {output.sam} 2> {log}
+    """
+
 rule bwa_aln:
     """
     Use bwa aln to perform alignment. Gives off very robust results, at the cost of an impoverished runtime performance
@@ -190,6 +226,18 @@ rule bwa_sampe:
     threads: 1
     shell: """
         bwa sampe {input.reference} {input.sai1} {input.sai2} {input.pair1} {input.pair2} > {output.sam} 2> {log}
+    """
+
+rule samtools_merge_mem:
+    input:
+        paired_end = "{preprocess_dir}/02-align/{sample}/{sample}.paired.sam",
+        single_end = expand("{{preprocess_dir}}/02-align/{{sample}}/{{sample}}.bwamem.{extension}.sam", extension=["collapsed", "collapsed.truncated", "singleton.truncated"],)
+    output:
+        merged = "{preprocess_dir}/02-align/{sample}/{sample}.merged.sam"
+    log: "logs/{preprocess_dir}/samtools_merge/{sample}.log"
+    threads: 1
+    shell: """
+        samtools merge -@ {threads} {output.merged} {input.paired_end} {input.single_end} 2> {log}
     """
 
 rule samtools_merge:

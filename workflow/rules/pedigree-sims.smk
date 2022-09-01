@@ -38,7 +38,7 @@ rule fetch_sex_specific_gen_map:
      - https://github.com/cbherer/Bherer_etal_SexualDimorphismRecombination
     """
     input:
-        gen_map = HTTP.remote(config["ped-sim"]["input"]["refined-genetic-map-url"], keep_local=True)
+        gen_map = HTTP.remote(config["ped-sim"]["input"]["refined-genetic-map-url"])
     output:
         map_dir  = directory("data/ped-sim/Refined_genetic_map_b37"),
         gen_maps = temp(expand("data/ped-sim/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"]))
@@ -74,12 +74,19 @@ rule fetch_interference_map:
      - https://github.com/williamslab/ped-sim/blob/master/interfere/nu_p_campbell.tsv
     """
     input:
-        intf_map = HTTP.remote(config["ped-sim"]["input"]["interference-map-url"], keep_local=True)
+        intf_map = HTTP.remote(config["ped-sim"]["input"]["interference-map-url"])
     output:
         intf_map = config['ped-sim']['data']['interference']
     shell: """
         mv {input.intf_map} {output.intf_map}
     """
+
+def check_ped_sim_input_vcf(wildcards):
+    filter_indels = config["ped-sim"]["filter-indels"]
+    if filter_indels:
+        return "genotypes.snps" 
+    else:
+        return "genotypes"
 
 
 rule run_ped_sim:
@@ -87,7 +94,7 @@ rule run_ped_sim:
     Run pedigree-simulator, using individuals from a specified population of the 1000g project as founder individuals.
     """
     input:
-        vcf          = rules.concat_1000_genomes.output.merged_vcf,
+        vcf          = lambda wildcards: expand(rules.concat_1000_genomes.output.merged_vcf, steps=check_ped_sim_input_vcf(wildcards), POP="{POP}") ,
         definition   = config['ped-sim']['data']['definition'],
         map          = config['ped-sim']['data']['map'],
         interference = config['ped-sim']['data']['interference']
@@ -129,10 +136,15 @@ rule filter_snps:
     """
 
 rule extract_twins:
+    """
+    Pick a selected individual within ped-sim's vcf output (we run through our pedigree_codes file using get_twins()
+    and search for any self-comparison).
+    Copy the genotype information as a separate sample and create a merged vcf.
+    """
     input:
         vcf        = rules.filter_snps.output.vcf
     output:
-        twins_vcf  = "results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-twins.vcf.gz",
+        twins_vcf  = temp("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-twins.vcf.gz"),
         twin_codes = "results/00-ped-sim/{POP}-twin_codes.txt",
         merged_vcf = "results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz"
     params:
