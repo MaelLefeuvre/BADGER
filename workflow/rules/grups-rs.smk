@@ -67,6 +67,7 @@ rule run_GRUPS:
         targets      = config["kinship"]["targets"],
     output:
         output_dir   = directory("results/03-kinship/GRUPS/{generation}/")
+        results      = multiext("results/03-kinship/GRUPS/{generation}/{generation}", ".pwd", ".results")
     params:
         sample_names = lambda wildcards: expand(READ_bam_samples_id(wildcards), generation = wildcards.generation),
         samples      = lambda wildcards: len(READ_bam_samples_id(wildcards)) - 1,

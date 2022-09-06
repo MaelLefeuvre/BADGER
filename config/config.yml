@@ -6,6 +6,8 @@ FTP:
 
 refgen: "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary_assembly.fa"
 
+tempdir: "/tmp/mlefeuvre"
+
 ped-sim:
   filter-indels: True
   filter-maf: True
@@ -22,13 +24,13 @@ ped-sim:
   params:
     error_rate:  0
     missingness: 0
-    pop: "CEU"
+    pop: "FIN"
 
 gargammel:
-  coverage: 0.05
-  comp_endo: 0.90
-  comp_cont: 0.05
-  comp_bact: 0.05
+  coverage: 0.1
+  comp_endo: 1.00
+  comp_cont: 0.00
+  comp_bact: 0.00
   misincorporation: "resources/gargammel/misincorporations/MT23-misincorporation.txt"
   sizefreq:         "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
   params:
@@ -42,8 +44,7 @@ preprocess:
     aligner: "mem" # 'mem' || 'aln'
   filter:
     min-MQ: 30
-  dedup:
-    max-length: 200
+    min-length: 30
 
 kinship:
   #targets: "data/g1k-phase3-callset/02-merged/CEU.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
@@ -56,3 +57,7 @@ kinship:
     contam-pop: "AFR"
     mode: "fst"
     reps: 1000
+  TKGWV2:
+    min-BQ: 30
+    min-MQ: 30
+    min-depth: 1

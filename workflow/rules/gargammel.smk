@@ -3,9 +3,6 @@ import sys
 from os.path import dirname
 configfile: "./config/config.yml"
 
-wildcard_constraints:
-    chr="\d+"
-
 # ---- Utility functions
 def get_contaminants(wildcards):
     """
@@ -61,20 +58,18 @@ rule create_human_contamination:
         ),
         chr_ref = lambda wildcards: dirname(config["refgen"]) + "/splitted/{chr}.fasta"
     output:
-        hap1 = "results/01-gargammel/contaminants/{sample}/{chr}/{sample}_chr{chr}_haplo1.fasta",
-        hap2 = "results/01-gargammel/contaminants/{sample}/{chr}/{sample}_chr{chr}_haplo2.fasta"
+        hap1 = "results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo1.fasta",
+        hap2 = "results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo2.fasta"
     log: 
-        hap1 = "logs/01-gargammel/create_human_contamination/{sample}_chr{chr}_haplo1.log",
-        hap2 = "logs/01-gargammel/create_human_contamination/{sample}_chr{chr}_haplo2.log"
-    group: "contaminate"
-    resources: scatter=2
+        hap1 = "logs/01-gargammel/create_human_contamination/{cont}_chr{chr}_haplo1.log",
+        hap2 = "logs/01-gargammel/create_human_contamination/{cont}_chr{chr}_haplo2.log"
     threads: 2
     priority: 99
     conda: "../envs/bcftools-1.15.yml"
     shell: """
-    bcftools consensus -e 'ALT~"<.*>"' -H 1 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} -o {output.hap1} 2> {log.hap1} \
+    bcftools consensus -e 'ALT~"<.*>"' -H 1 -f {input.chr_ref} --sample {wildcards.cont} {input.vcf} -o {output.hap1} 2> {log.hap1} \
     & \
-    bcftools consensus -e 'ALT~"<.*>"' -H 2 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} -o {output.hap2} 2> {log.hap2} \
+    bcftools consensus -e 'ALT~"<.*>"' -H 2 -f {input.chr_ref} --sample {wildcards.cont} {input.vcf} -o {output.hap2} 2> {log.hap2} \
     """
 
 
@@ -82,7 +77,6 @@ def find_contaminant(wildcards):
     """
     Assign the correct contaminating individual to a given pedigree sample, according to its generation #.
     """
-
     # Get the current pedigree sampleID, chromosome and generation.
     sample = wildcards.sample
     chromo = wildcards.chr
@@ -99,7 +93,9 @@ def find_contaminant(wildcards):
             if line.startswith(f"{gen} "):
                 contaminant = line.strip("\n").split(" ")[1]
                 break
-    return expand("results/01-gargammel/contaminants/{sample}/{{chr}}/{sample}_chr{{chr}}_haplo{haplo}.fasta", sample=contaminant, chr=chromo, haplo=[1,2])
+    
+    out = "results/01-gargammel/contaminants/{cont}/{{chr}}/{cont}_chr{{chr}}_haplo{haplo}.fasta"
+    return expand(out, cont=contaminant, chr=chromo, haplo=[1,2])
 
 
 rule get_consensus:

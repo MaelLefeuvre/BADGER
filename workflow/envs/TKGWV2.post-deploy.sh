@@ -12,6 +12,7 @@ chmod +x tkgwv2-master/scripts/*
 chmod +x tkgwv2-master/helpers/*.R
 
 ln -s tkgwv2-master/helpers/* .
+ln -s tkgwv2-master/TKGWV2.py
 
 # Permanently add to path
 #conda develop `pwd`/tkgwv2-master/scripts

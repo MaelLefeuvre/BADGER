@@ -6,7 +6,11 @@ include: "rules/gargammel.smk"
 include: "rules/preprocess-fastq.smk"
 include: "rules/READ.smk"
 include: "rules/grups-rs.smk"
+include: "rules/TKGWV2.smk"
 
+wildcard_constraints:
+    chr    = "\d+",
+    sample = "ped[0-9]{1,2}_[-gGbBiIsS0-9]+"
 
 def my_samples(wildcards):
     with checkpoints.get_samples.get().output[0].open() as f:
@@ -28,8 +32,12 @@ rule READ:
 rule GRUPS:
     input: GRUPS_output
 
+rule TKGWV2:
+    input: TKGWV2_output
+
 rule all:
     input:
         rules.READ.input,
-        rules.GRUPS.input
+        rules.GRUPS.input,
+        rules.TKGWV2.input
     default_target: True

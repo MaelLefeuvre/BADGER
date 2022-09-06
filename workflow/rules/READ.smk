@@ -24,11 +24,11 @@ def READ_bam_samples_id(wildcards):
     with checkpoints.get_samples.get().output[0].open() as f:
         samples = str.split(f.readline().replace('\n', ''), '\t')
         ids     = set([sample.split('_')[1] for sample in samples])
-        return expand(
+        return sorted(expand(
             "{generation}_{ids}",
             ids=ids,
             generation="{generation}",
-        )
+        ))
 
 rule READ_bam_list:
     """
