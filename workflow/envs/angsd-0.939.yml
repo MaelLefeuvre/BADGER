@@ -1,4 +1,4 @@
-name: angsd-0.939.yml
+name: angsd-0.939
 channels:
   - bioconda
   - conda-forge

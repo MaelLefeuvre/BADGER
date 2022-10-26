@@ -4,6 +4,7 @@ include: "rules/preprocess-1000-genomes.smk"
 include: "rules/pedigree-sims.smk"
 include: "rules/gargammel.smk"
 include: "rules/preprocess-fastq.smk"
+include: "rules/variant-calling.smk"
 include: "rules/READ.smk"
 include: "rules/grups-rs.smk"
 include: "rules/TKGWV2.smk"
@@ -21,7 +22,7 @@ def my_samples(wildcards):
 
 
 rule ped_sim:
-    input: expand("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz", POP=config["ped-sim"]["params"]["pop"])
+    input: expand("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz", POP=config['ped-sim']['params']['pop'])
 
 rule gargammel:
     input: my_samples

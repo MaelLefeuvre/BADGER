@@ -114,26 +114,39 @@ rule run_ped_sim:
                 -m {input.map}                   \
                 -i {input.vcf}                   \
                 -o {params.output_basename}      \
-                --intf {input.interference}      \
+                --pois                           \
                 --fam                            \
                 --keep_phase                     \
                 --miss_rate {params.missingness} \
                 --err_rate {params.error_rate} > {log} 2>&1 
     """
 
-rule filter_snps:
-    """
-    Keep only biallelic SNPs from the definition file and convert to BGZIP
-    """
+rule convert_to_bcf:
     input:
-        rules.run_ped_sim.output.vcf
+        vcf = rules.run_ped_sim.output.vcf
     output:
-        vcf = "results/00-ped-sim/{POP}-pedigrees-M2-m2-snps.vcf.gz"
+        bcf = "results/00-ped-sim/{POP}-pedigrees.bcf",
+        tbi = "results/00-ped-sim/{POP}-pedigrees.bcf.csi"
     conda: "../envs/bcftools-1.15.yml"
-    threads: 16
     shell: """
-        bcftools view --threads {threads} -M2 -m2 -v snps {input} | bgzip -c > {output} && tabix {output}
+        zcat {input.vcf} | bcftools view -Ob -o {output.bcf}
+        tabix {output.bcf}
     """
+
+#rule filter_snps:
+#    """
+#    Keep only biallelic SNPs from the definition file and convert to BGZIP
+#    """
+#    input:
+#        rules.convert_to_bcf.output.bcf
+#    output:
+#        bcf = "results/00-ped-sim/{POP}-pedigrees-M2-m2-snps.bcf"
+#    conda: "../envs/bcftools-1.15.yml"
+#    threads: 16
+#    shell: """
+#        bcftools view --threads {threads} -Ob -M2 -m2 -v snps {input.bcf} > {output.bcf}
+#        tabix {output.bcf}
+#    """
 
 rule extract_twins:
     """
@@ -142,19 +155,25 @@ rule extract_twins:
     Copy the genotype information as a separate sample and create a merged vcf.
     """
     input:
-        vcf        = rules.filter_snps.output.vcf
+        #bcf        = rules.filter_snps.output.bcf
+        bcf        = rules.convert_to_bcf.output.bcf
     output:
-        twins_vcf  = temp("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-twins.vcf.gz"),
+        twins_vcf  = temp("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-twins.bcf"),
         twin_codes = "results/00-ped-sim/{POP}-twin_codes.txt",
         merged_vcf = "results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz"
     params:
         twins = get_twins
     conda: "../envs/bcftools-1.15.yml"
     shell: """
+        # Twins of a given sample are identified by UPPERCASE letters. The identifier stays the same. 
         echo -e {params.twins} | tr '[:lower:]' '[:upper:]' | sed 's/PED/ped/g' | awk 'BEGIN{{RS=" "}}{{print}}' | head -n -1 > {output.twin_codes}
-        bcftools view -s $(echo {params.twins} | sed 's/ /,/g') {input.vcf} | bcftools reheader -s {output.twin_codes} | bgzip > {output.twins_vcf}
+
+        # Extract the twin(s) from the original vcf and modify the output's header.
+        bcftools view -Oz -s $(echo {params.twins} | sed 's/ /,/g') {input.bcf} | bcftools reheader -s {output.twin_codes} > {output.twins_vcf}
         tabix {output.twins_vcf}
-        bcftools merge -Oz {input.vcf} {output.twins_vcf} > {output.merged_vcf}
+
+        # Merge the two vcfs.
+        bcftools merge -Oz {input.bcf} {output.twins_vcf} > {output.merged_vcf}
         tabix {output.merged_vcf}
     """
 

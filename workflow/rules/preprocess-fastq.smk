@@ -3,6 +3,7 @@ configfile: "./config/config.yml"
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
+
 rule download_reich_1240K:
     input:
         tarball    = HTTP.remote(config["FTP"]["1240K"])
@@ -14,6 +15,7 @@ rule download_reich_1240K:
         tar -xvf {input.tarball} -C {params.output_dir}
     """
 
+
 rule eigenstrat_to_UCSC_BED:
     input:
         snp = "{directory}/{eigenstrat}.snp"
@@ -23,91 +25,18 @@ rule eigenstrat_to_UCSC_BED:
         awk '{{print $2, $4-1, $4}}' {input.snp} > {output.bed}
     """
 
-rule generate_convertf_file:
-    input:
-        eigenstrat = multiext("{directory}/v52.2_1240K_public", ".snp", ".ind", ".geno")
-    output:
-        parfile    = "{directory}/par.EIGENSTRAT.PED"
-    params:
-        basename   = "{directory}/v52.2_1240K_public"
-    shell: """
-        echo "" > {output.parfile}
-        echo "genotypename:           {params.basename}.geno"   >> {output.parfile}
-        echo "snpname:                {params.basename}.snp"    >> {output.parfile}
-        echo "indivname:              {params.basename}.ind"    >> {output.parfile}
-        echo "outputformat:           PACKEDPED"                >> {output.parfile}
-        echo "genotypeoutname:        {params.basename}.bed"    >> {output.parfile}
-        echo "snpoutname:             {params.basename}.bim"    >> {output.parfile}
-        echo "indivoutname:           {params.basename}.fam"    >> {output.parfile}
-    """
-
-rule eigenstrat_to_plink:
-    input:
-        eigenstrat = multiext("{directory}/{eigenstrat}", ".snp", ".geno", ".ind"),
-        parfile    = rules.generate_convertf_file.output.parfile
-    output:
-        plink      = multiext("{directory}/{eigenstrat}", ".bed", ".bim", ".fam")
-    conda: "../envs/admixtools-7.0.2.yml"
-    shell: """
-        convertf -p {input.parfile}
-    """
-
-def extract_eigenstrat_first_sample(wildcards):
-    # Open .fam file
-    with open(splitext(rules.download_reich_1240K.output.eigenstrat[0])[0] + ".ind") as f:
-        first_sample = f.readline().strip("\n").split(" ")[0]
-        return first_sample
-
-rule subset_plink_one_sample:
-    input:
-        plink          = rules.eigenstrat_to_plink.output.plink
-    output:
-        plink          = multiext("{directory}/{eigenstrat}_onesample", ".bed", ".bim", ".fam")
-    params:
-        first_sample   = extract_eigenstrat_first_sample,
-        plink_basename = "{directory}/{eigenstrat}"
-    conda: "../envs/plink-1.9.yml"
-    shell: """
-        plink --bfile {params.plink_basename} --keep <(echo "1 {params.first_sample}") --chr 1-22 --make-bed --out {params.plink_basename}_onesample --allow-no-sex --keep-allele-order
-    """
-
-#rule vcf_to_plink:
-#    input:
-#        vcf = "{directory}/{filestem}.vcf.gz",
-#        tbi = "{directory}/{filestem}.vcf.gz.tbi"
-#    output:
-#        plink = multiext("{directory}/{filestem}", ".bed", ".bim", ".fam")
-#    params:
-#        basename = lambda wildcards: "{directory}/{filestem}"
-#    conda: "../envs/plink-1.9.yml"
-#    shell: """
-#        plink --vcf {input.vcf} --make-bed --out {params.basename} --allow-no-sex --keep-allele-order
-#    """
-
-
-rule plink_to_frequency:
-    input:
-        plink       = multiext("{directory}/{eigenstrat}", ".bed", ".bim", ".fam")
-    output:
-        frequencies = "{directory}/{eigenstrat}.frq"
-    params:
-        basename    = "{directory}/{eigenstrat}"
-    conda: "../envs/plink-1.9.yml"
-    shell: """
-        plink --bfile {params.basename} --chr 1-22 --freq --out {params.basename} --allow-no-sex --keep-allele-order
-    """
 
 rule adapter_removal_pe:
     input:
         forwd       = "{preprocess_dir}/00-raw/{sample}_s1.fq.gz",
         revrs       = "{preprocess_dir}/00-raw/{sample}_s2.fq.gz"
     output:
-        trimmed     = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.collapsed.gz",
-        truncated   = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.collapsed.truncated.gz",
-        discarded   = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.discarded.gz",
-        pair1       = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair1.truncated.gz",
-        pair2       = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair2.truncated.gz",
-        singleton   = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.singleton.truncated.gz"
+        trimmed     = temp("{preprocess_dir}/01-adapter_removal/{sample}/{sample}.collapsed.gz"),
+        truncated   = temp("{preprocess_dir}/01-adapter_removal/{sample}/{sample}.collapsed.truncated.gz"),
+        discarded   = temp("{preprocess_dir}/01-adapter_removal/{sample}/{sample}.discarded.gz"),
+        pair1       = temp("{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair1.truncated.gz"),
+        pair2       = temp("{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair2.truncated.gz"),
+        singleton   = temp("{preprocess_dir}/01-adapter_removal/{sample}/{sample}.singleton.truncated.gz")
     params:
         base_name   = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}",
         min_overlap = config["preprocess"]["trimming"]["min-overlap"],
@@ -131,10 +60,10 @@ rule adapter_removal_pe:
 rule bwa_mem_se:
     input:
         trimmed   = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.{extension}.gz",
-        reference = config["refgen"],
+        reference = config["reference"],
         bwt       = rules.index_reference_genome.output.bwt
     output:
-        sam       = "{preprocess_dir}/02-align/{sample}/{sample}.bwamem.{extension}.sam"
+        sam       = temp("{preprocess_dir}/02-align/{sample}/{sample}.bwamem.{extension}.sam")
     params:
         RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina'
     log: "logs/{preprocess_dir}/bwa_mem_se/{sample}.bwamem.{extension}.log"
@@ -142,18 +71,18 @@ rule bwa_mem_se:
     priority: 5
     threads: 4
     shell: """
-        bwa mem -t {threads} -R \'{params.RG}\' -p {input.reference} {input.trimmed} > {output.sam} 2> {log}
+        bwa mem -M -t {threads} -R \'{params.RG}\' -p {input.reference} {input.trimmed} > {output.sam} 2> {log}
     """
 
 rule bwa_mem_pe:
     input:
         pair1     = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair1.truncated.gz",
         pair2     = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair2.truncated.gz",
-        reference = config["refgen"],
+        reference = config["reference"],
         bwt       = rules.index_reference_genome.output.bwt
 
     output:
-        sam       = "{preprocess_dir}/02-align/{sample}/{sample}.bwamem.paired.sam"
+        sam       = temp("{preprocess_dir}/02-align/{sample}/{sample}.bwamem.paired.sam")
     params:
         RG = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina'
     log: "logs/{preprocess_dir}/bwa_mem_pe/{sample}.bwamem.paired.log"
@@ -161,7 +90,7 @@ rule bwa_mem_pe:
     priority: 5
     threads: 4
     shell: """
-        bwa mem -t {threads} -R \'{params.RG}\' {input.reference} {input.pair1} {input.pair2} > {output.sam} 2> {log}
+        bwa mem -M -t {threads} -R \'{params.RG}\' {input.reference} {input.pair1} {input.pair2} > {output.sam} 2> {log}
     """
 
 rule bwa_aln:
@@ -172,14 +101,14 @@ rule bwa_aln:
             BWA-aln settings still outperform BWA-mem for ancient DNA data alignment. Ecol Evol, 11: 18743-18748. 
             https://doi.org/10.1002/ece3.8297
 
-    extension: '.collapsed' || '.collapsed.truncated' || '.pair1.truncated' || '.pair1.truncated' || '.singleton.truncated'
+    extension: '.collapsed' || '.collapsed.truncated' || '.pair1.truncated' || '.pair2.truncated' || '.singleton.truncated'
     """
     input:
         trimmed      = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.{extension}.gz",
-        reference    = config["refgen"],
+        reference    = config["reference"],
         bwt          = rules.index_reference_genome.output.bwt
     output:
-        sai          = "{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.{extension}.sai"
+        sai          = temp("{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.{extension}.sai")
     params:
         seed_length  = 1024,
         missing_prob = 0.01,
@@ -200,9 +129,9 @@ rule bwa_samse:
     input:
         trimmed   = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.{extension}.gz",
         sai       = rules.bwa_aln.output.sai,
-        reference = config["refgen"]
+        reference = config["reference"]
     output:
-        sam       = "{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.{extension}.sam"
+        sam       = temp("{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.{extension}.sam")
     #params:
     #    RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina' ## ADD IT LATER (-r argument)
     log: "logs/{preprocess_dir}/bwa_samse/{sample}.{extension}.log"
@@ -218,7 +147,7 @@ rule bwa_sampe:
         pair2     = "{preprocess_dir}/01-adapter_removal/{sample}/{sample}.pair2.truncated.gz",
         sai1      = "{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.pair1.truncated.sai",
         sai2      = "{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.pair2.truncated.sai",
-        reference = config["refgen"]
+        reference = config["reference"]
     output:
         sam       = temp("{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.paired.sam")
     #params:
@@ -235,11 +164,11 @@ rule samtools_merge_mem:
         paired_end = "{preprocess_dir}/02-align/{sample}/{sample}.bwamem.paired.sam",
         single_end = expand("{{preprocess_dir}}/02-align/{{sample}}/{{sample}}.bwamem.{extension}.sam", extension=["collapsed", "collapsed.truncated", "singleton.truncated"],)
     output:
-        merged     = "{preprocess_dir}/02-align/{sample}/{sample}.bwamem.merged.sam"
+        merged     = "{preprocess_dir}/02-align/{sample}/{sample}.bwamem.merged.bam"
     log: "logs/{preprocess_dir}/samtools_merge/{sample}.log"
-    threads: 1
+    threads: 4
     shell: """
-        samtools merge -@ {threads} {output.merged} {input.paired_end} {input.single_end} 2> {log}
+        samtools merge -@ {threads} -OBAM -o {output.merged} {input.paired_end} {input.single_end} 2> {log}
     """
 
 rule samtools_merge_aln:
@@ -247,11 +176,11 @@ rule samtools_merge_aln:
         paired_end = "{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.paired.sam",
         single_end = expand("{{preprocess_dir}}/02-align/{{sample}}/{{sample}}.bwaaln.{extension}.sam", extension=["collapsed", "collapsed.truncated", "singleton.truncated"],)
     output:
-        merged     = "{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.merged.sam"
+        merged     = "{preprocess_dir}/02-align/{sample}/{sample}.bwaaln.merged.bam"
     log:     "logs/{preprocess_dir}/samtools_merge/{sample}.log"
     threads: 1
     shell: """
-        samtools merge -@ {threads} {output.merged} {input.paired_end} {input.single_end} 2> {log}
+        samtools merge -@ {threads} -OBAM -o {output.merged} {input.paired_end} {input.single_end} 2> {log}
     """
 
 def assign_aligner_algorithm(wildcards):
@@ -263,10 +192,10 @@ def assign_aligner_algorithm(wildcards):
 rule samtools_filter_unmapped:
     input:
         sam        = assign_aligner_algorithm,
-        reference  = config["refgen"],
+        reference  = config["reference"],
         bwt        = rules.index_reference_genome.output.bwt
     output:
-        bam        = "{preprocess_dir}/03-filter/{sample}.bam"
+        bam        = temp("{preprocess_dir}/03-filter/{sample}/{sample}.bam")
     params:
         min_MQ     = config["preprocess"]["filter"]["min-MQ"],
         min_length = config["preprocess"]["filter"]["min-length"],
@@ -286,9 +215,9 @@ rule samtools_filter_unmapped:
 rule samtools_sort:
     input:
         bam       = rules.samtools_filter_unmapped.output.bam,
-        reference = config["refgen"]
+        reference = config["reference"]
     output:
-        bam       = "{preprocess_dir}/04-sort/{sample}.srt.bam"
+        bam       = temp("{preprocess_dir}/04-sort/{sample}/{sample}.srt.bam")
     log:      "logs/{preprocess_dir}/samtools_sort/{sample}.log"
     conda:    "../envs/samtools-1.15.yml"
     priority: 7
@@ -301,8 +230,8 @@ rule picard_rmdup:
     input:
         bam     = rules.samtools_sort.output.bam,
     output:
-        bam     = "{preprocess_dir}/05-dedup/{sample}.srt.rmdup.bam",
-        metrics = "{preprocess_dir}/05-dedup/{sample}.rmdup.metrics.txt"
+        bam     = temp("{preprocess_dir}/05-dedup/{sample}/{sample}.srt.rmdup.bam"),
+        metrics = "{preprocess_dir}/05-dedup/{sample}/{sample}.rmdup.metrics.txt"
     params:
         tmpdir  = config["tempdir"]
     log:     "logs/{preprocess_dir}/picard_rmdup/{sample}.log"
@@ -310,6 +239,28 @@ rule picard_rmdup:
     threads: 1
     shell: """
         picard MarkDuplicates -I {input.bam} -O {output.bam} -M {output.metrics} --REMOVE_DUPLICATES true --VALIDATION_STRINGENCY LENIENT --TMP_DIR {params.tmpdir} 2> {log}
+    """
+
+rule apeltzer_dedup:
+    input:
+        bam = rules.samtools_sort.output.bam
+    output:
+        bam = temp("{preprocess_dir}/05-DeDup/{sample}/{sample}.srt.rmdup.bam")
+    conda: "../envs/dedup-0.12.8.yml"
+    shell: """
+        AdapterRemovalFixPrefix {input.bam} | dedup --output {output.bam}
+    """
+
+rule samtools_rmdup:
+    input:
+        bam = rules.samtools_sort.output.bam
+    output:
+        bam = temp("{preprocess_dir}/05-dedup/{sample}/{sample}.srt.samtoolsrmdup.bam")
+    conda: "../envs/samtools-1.15.yml"
+    threads: 4
+    shell: """
+    samtools index -@ {threads} {input.bam}
+    samtools collate -O {input.bam} | samtools fixmate - - | samtools sort - | samtools markdup -r -s - {output.bam}
     """
 
 
@@ -328,7 +279,7 @@ rule map_damage:
     input:
         bam       = rules.picard_rmdup.output.bam,
         bai       = expand(rules.samtools_index.output.bai, bam=rules.picard_rmdup.output.bam),
-        reference = config["refgen"]
+        reference = config["reference"]
     output:
         bam = "{preprocess_dir}/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam"
     log: "logs/{preprocess_dir}/samtools_mapdamage/{sample}.log"

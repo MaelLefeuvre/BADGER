@@ -5,12 +5,12 @@ HTTP = HTTPRemoteProvider() # Anonymous
 # ---- Utility functions
 def GRUPS_output(wildcards):
     """
-    Returns the list of required generation_wise comparisons from READ
+    Returns the list of required generation_wise comparisons for GRUPS-rs
     """
     with checkpoints.get_samples.get().output[0].open() as f:
         samples = str.split(f.readline().replace('\n', ''), '\t')
         generations = set([sample.split('_')[0] for sample in samples])
-        return directory(expand("results/03-kinship/GRUPS/{generation}", generation=generations))
+        return directory(expand("results/04-kinship/GRUPS/{generation}", generation=generations))
 
 # ------------------------------------------------------------------------------------------------------------------- #
 
@@ -33,7 +33,7 @@ rule GRUPS_fetch_recombination_map:
 
 rule GRUPS_generate_fst_set:
     input:
-        data    = expand("data/g1k-phase3-callset/00-original/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz", chrom=range(1,23)),
+        data    = expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
         panel   = rules.fetch_samples_panel.output.panel
     output:
         fst     = protected(expand(
@@ -46,7 +46,7 @@ rule GRUPS_generate_fst_set:
     params:
         pedigree_pop = config["kinship"]["GRUPS"]["pedigree-pop"],
         contam_pop   = config["kinship"]["GRUPS"]["contam-pop"]
-    log: "logs/03-kinship/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.log"
+    log: "logs/04-kinship/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.log"
     conda: "../envs/grups-rs.yml"
     threads: 22
     shell: """
@@ -60,17 +60,17 @@ rule GRUPS_generate_fst_set:
 
 rule run_GRUPS:
     input:
-        pileup       = rules.pileup_READ.output.pileup,
+        pileup       = rules.samtools_pileup.output.pileup,
         data         = rules.GRUPS_generate_fst_set.output.fst,
-        panel        = rules.fetch_samples_panel.output.panel,
+        #panel        = rules.fetch_samples_panel.output.panel,
         recomb_map   = rules.GRUPS_fetch_recombination_map.output.map,
         targets      = config["kinship"]["targets"],
     output:
-        output_dir   = directory("results/03-kinship/GRUPS/{generation}/")
-        results      = multiext("results/03-kinship/GRUPS/{generation}/{generation}", ".pwd", ".results")
+        output_dir   = directory("results/04-kinship/GRUPS/{generation}/"),
+        results      = multiext("results/04-kinship/GRUPS/{generation}/{generation}", ".pwd", ".result")
     params:
-        sample_names = lambda wildcards: expand(READ_bam_samples_id(wildcards), generation = wildcards.generation),
-        samples      = lambda wildcards: len(READ_bam_samples_id(wildcards)) - 1,
+        sample_names = lambda wildcards: expand(get_samples_ids(wildcards), generation = wildcards.generation),
+        samples      = lambda wildcards: len(get_samples_ids(wildcards)) - 1,
         data_dir     = lambda wildcards, input: dirname(input.data[0]),
         recomb_dir   = lambda wildcards, input: dirname(input.recomb_map[0]),
         pedigree     = config["kinship"]["GRUPS"]["pedigree"],
@@ -78,7 +78,10 @@ rule run_GRUPS:
         contam_pop   = config["kinship"]["GRUPS"]["contam-pop"],
         reps         = config["kinship"]["GRUPS"]["reps"],
         mode         = config["kinship"]["GRUPS"]["mode"],
-    log: "logs/03-kinship/run_GRUPS/{generation}-run_GRUPS.log"
+        min_depth    = config["kinship"]["GRUPS"]["min-depth"],
+        min_quality  = config["kinship"]["GRUPS"]["min-qual"],     
+        maf          = config["kinship"]["GRUPS"]["maf"]
+    log: "logs/04-kinship/run_GRUPS/{generation}-run_GRUPS.log"
     conda: "../envs/grups-rs.yml"
     shell: """
         grups pedigree-sims --pileup {input.pileup}                                           \
@@ -87,12 +90,14 @@ rule run_GRUPS:
                             --pedigree {params.pedigree}                                      \
                             --pedigree-pop {params.pedigree_pop}                              \
                             --contam-pop {params.contam_pop}                                  \
+                            --min-depth {params.min_depth}                                    \
                             --samples 0-{params.samples}                                      \
                             --sample-names {params.sample_names}                              \
                             --reps {params.reps}                                              \
                             --mode {params.mode}                                              \
                             --output-dir {output.output_dir}                                  \
+                            --maf {params.maf}                                                \
+                            --min-qual {params.min_quality}                                   \
                             --print-blocks                                                    \
-                            --maf 0.05                                                        \
-                            --verbose -v > {log} 2>&1
+                            --verbose > {log} 2>&1
     """

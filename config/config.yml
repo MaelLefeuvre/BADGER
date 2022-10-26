@@ -1,63 +1,85 @@
 FTP:
-  retries: 20
-  refgen: "ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/"
-  1000g : "ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
-  1240K : "https://reichdata.hms.harvard.edu/pub/datasets/amh_repo/curated_releases/V52/V52.2/SHARE/public.dir/v52.2_1240K_public.tar"
+  retries:                   20
+  refgen:                    "ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/"
+  1000g :                    "ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
+  1240K :                    "https://reichdata.hms.harvard.edu/pub/datasets/amh_repo/curated_releases/V52/V52.2/SHARE/public.dir/v52.2_1240K_public.tar"
 
-refgen: "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary_assembly.fa"
+reference:                   "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary_assembly.fa"
 
-tempdir: "/tmp/mlefeuvre"
+tempdir:                     "/tmp/mlefeuvre"
 
 ped-sim:
-  filter-indels: True
-  filter-maf: True
+  filter-indels:             False
+  filter-maf:                False
   input: 
     interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
     refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
   data:
-    codes:          "resources/ped-sim/definition/pedigree_codes.txt" 
-    definition:     "resources/ped-sim/definition/pedigree.def"
-    map:            "data/ped-sim/recombination_maps/refined_mf.simmap"
-    interference:   "data/ped-sim/interference_maps/nu_p_campbell.tsv"
+    codes:                   "resources/ped-sim/definition/pedigree_codes.txt" 
+    definition:              "resources/ped-sim/definition/pedigree.def"
+    map:                     "data/ped-sim/recombination_maps/refined_mf.simmap"
+    interference:            "data/ped-sim/interference_maps/nu_p_campbell.tsv"
   output:
-    directory: "results/00-ped-sim"
+    directory:               "results/00-ped-sim"
   params:
-    error_rate:  0
-    missingness: 0
-    pop: "FIN"
+    error_rate:              0
+    missingness:             0
+    pop:                     "CEU"
 
 gargammel:
-  coverage: 0.1
-  comp_endo: 1.00
-  comp_cont: 0.00
-  comp_bact: 0.00
-  misincorporation: "resources/gargammel/misincorporations/MT23-misincorporation.txt"
-  sizefreq:         "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
+  coverage:                  1
+  comp_endo:                 1.00
+  comp_cont:                 0.00
+  comp_bact:                 0.00
+  misincorporation:          "resources/gargammel/misincorporations/MT23-misincorporation.txt"
+  sizefreq:                  "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
   params:
-    contam-pop: "AFR"
+    contam-pop:              "AFR"
 
 preprocess:
   trimming:
-    min-overlap: 1
-    min-length: 17
+    min-overlap:             1
+    min-length:              17
   bwa:
-    aligner: "mem" # 'mem' || 'aln'
+    aligner:                 "mem" # 'mem' || 'aln'
   filter:
-    min-MQ: 30
-    min-length: 30
+    min-MQ:                  20
+    min-length:              30
+
+variant-calling:
+  caller:                    "pileupCaller"    # ANGSD || pileupCaller
+  pileup:
+    disable-BAQ:             True              # True || False
+    min-BQ:                  30
+    min-MQ:                  30
+  pileupCaller:
+    skip-transitions:        False             # True || False
+    mode:                    "randomHaploid"   # "randomHaploid" || "majorityCall"
+    min-depth:               1
+    seed: ~
+  
 
 kinship:
-  #targets: "data/g1k-phase3-callset/02-merged/CEU.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
-  targets: "data/Reich-dataset/1240K/v52.2_1240K_public.ucscbed"
+  targets:                   "data/Reich-dataset/1240K/v52.2_1240K_public.snp"
   READ:
-    window-size: 1000000
+    window-size:             1000000
+    norm-method:             "median"          # median || mean || max || value
+    norm-value:              ~                 # (Float). Ignored if norm-method != "value"
   GRUPS:
-    pedigree: "workflow/scripts/grups/resources/pedigrees/simple_pedigree.txt"
-    pedigree-pop: "EUR"
-    contam-pop: "AFR"
-    mode: "fst"
-    reps: 1000
+    pedigree:                "workflow/scripts/grups/resources/pedigrees/simple_pedigree.txt"
+    pedigree-pop:            "EUR"
+    contam-pop:              "AFR"
+    min-depth:               1
+    mode:                    "fst"
+    reps:                    500
+    maf:                     0.05
+    min-qual:                30
   TKGWV2:
-    min-BQ: 30
-    min-MQ: 30
-    min-depth: 1
+    support-files-url:       "https://drive.google.com/drive/folders/1Aw-0v_7CUorHJOLpCJ0QVCwEdH43HlO4"
+    support-files-dir:       "data/TKGWV2"
+    downsample:              True                # True || False
+    downsample-N:            57600000
+    target-frequencies:      "data/TKGWV2/1000GP3_EUR_1240K.frq"
+    min-BQ:                  30
+    min-MQ:                  30
+    min-depth:               1

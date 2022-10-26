@@ -1,0 +1,202 @@
+# ["#a0d6ae", "#deb1e0", "#cad9a1","#aabbea","#e3c297","#71cdeb","#ecaaae", "#8adbd3"]
+
+# ["#a0d6ae", "#deb1e0", "#cad9a1","#aabbea","#e3c297","#71cdeb","#ecaaae", "#8adbd3"]
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0];
+    node[shape=box, style=rounded, fontname=sans, fontsize=10, penwidth=2, margin=0.2];
+    edge[penwidth=2, color=grey];
+      concentrate=true;
+      
+
+
+    subgraph preprocess_1000g {
+        node[color="#a0d6ae"]
+        
+	    A0a[label = "Download 1000g phase3",               group="a"];
+	    A1a[label = "Filter indels",                       group="a", style="dashed, rounded",];
+	    
+        {rank="same"; A2a; A2b}
+	    A2a[label = "Normalize vcf",                       group="a"];
+	    A2b[label = "Download samples panel",              group="b"];
+	    
+	    {rank="same"; A3a; A3b}
+	    A3a[label = "Filter biallelic SNPs",               group="a", style="dashed, rounded"];
+	    A3b[label = "Extract target population IDs",       group="b"];
+
+	    A4a[label = "Subset VCF",                          group="a"];
+	    A5a[label = "Update allele frequencies",           group="a", style="dashed, rounded"];
+	    A6a[label = "Filter MAF", style="dashed, rounded", group="a", style="dashed, rounded"];
+	    A7a[label = "Concatenate VCFs",                    group="a"];
+
+        A0a -> A1a
+        A1a -> A2a
+        A2a -> A3a
+        A3a -> A4a
+    
+        A2b -> A3b -> A4a 
+    
+        A4a -> A5a
+        A5a -> A6a
+        A6a -> A7a
+    }
+    
+    subgraph run_pedigree_sims {
+        node[color="#deb1e0"]
+        B0a[label = "Download sex-specific genetic map",  group="b"];
+        B1a[label = "Format genetic map",                 group="b"];
+        B2a[label = "Run ped-sim",                        group="b"];
+        B3a[label = "Convert to BCF",                     group="b"]
+        B4a[label = "generate twins",                     group="b"];
+        B5a[label = "[checkpoint] Get samples IDs",       group="b"];
+        
+        B0b[label = "Download interference map",          group="c"];
+        
+        B0a -> B1a
+        B1a -> B2a
+        
+        A7a -> B2a
+        B0b -> B2a 
+        B2a -> B3a
+        B3a -> B4a
+        B4a -> B5a
+    }
+    
+    subgraph simulate_aDNA {
+        node[color="#cad9a1"];
+        {rank="same"; B4a; C0b}
+        {rank="same"; B5a; C1b}
+        
+        C0b[label="Create contamination table",           group="c"];
+        C1b[label="Generate human contamination",         group="c"];
+        
+        C0c[label="Download reference genome",            group="d"];
+        C1c[label="Index reference genome",               group="d"];
+        
+        C1d[label="Download bacterial database",          group="e"];
+        
+        C2a[label="Generate haplotypes",                  group="c"];
+        C3a[label="Run Gargammel",                        group="c"];
+        C4a[label="Merge chromosomes",                    group="c"];
+        
+
+        C0b -> C1b
+        C1b -> C2a
+        B5a -> C2a
+        C1d -> C2a
+        C2a -> C3a
+        C3a -> C4a
+        
+        C0c -> C1c
+        C1c -> C2a
+        
+    }
+
+    subgraph Preprocessing {
+        node[color="#aabbea"];
+        D0a[label="Adapter Removal", group="c"];
+        
+        subgraph cluster_mem {
+            graph[style="dashed, rounded", margin=5];
+
+            {rank="same"; D1a; D1b}
+            D1a[label="BWA mem se"]
+            D1b[label="BWA mem pe"]
+        }
+        
+        subgraph cluster_aln {
+            graph[style="dashed, rounded", margin=5];
+            D1c[label="BWA aln"];
+            
+            {rank="same"; D2b; D2c}
+            D2b[label="BWA samse"];
+            D2c[label="BWA sampe"];
+            
+        }
+        
+        D3a[label="samtools merge", group="c"]
+        D4a[label="samtools filter", group="c"]
+        D5a[label="samtools sort", group="c"]
+        D6a[label="picard rmdup", group="c"]
+        D7a[label="mapDamage", group="c"]
+        D8a[label="samtools mpileup", group="c"]
+
+        {rank="same"; D6a; D6b}
+        {rank="same"; D7a; D7b}
+        
+        D6b[label="Download 1240K"]
+        D7b[label="Convert to UCSC BED"]
+
+        C4a -> D0a
+        
+        # Attach bwa aln
+        D0a -> D1a[style="dashed"]
+        D0a -> D1b[style="dashed"]
+        D1a -> D3a[style="dashed"]
+        D1b -> D3a[style="dashed"]
+        
+        # Attach bwa mem
+        D0a -> D1c[style="dashed"]
+        D1c -> D2b
+        D1c -> D2c
+        D2b -> D3a[style="dashed"]
+        D2c -> D3a[style="dashed"]
+        
+        D3a -> D4a
+        D4a -> D5a
+        D5a -> D6a
+        D6a -> D7a
+        D7a -> D8a
+        
+        D6b -> D7b
+        D7b -> D8a 
+        
+    }
+    
+    
+    subgraph GRUPS {
+        node[color="#e3c297"]
+        {rank="same"; E0a; E0b}
+        E0a[label="Download HapMapII"];
+        E0b[label="Generate Fst set"];
+        E1a[label="run GRUPS"]
+        
+        E0a -> E1a
+        E0b -> E1a
+        D8a -> E1a
+    }
+    
+    subgraph READ {
+        node[color="#71cdeb"]
+        
+        subgraph cluster_haploidcaller {
+          graph[style="dashed, rounded", margin=5];
+          F0a[label="ANGSD haploid calling"];
+          F0b[label="pileupCaller", group="c"];
+        }  
+        
+        F1a[label="Convert to tped/tfam", group="c"];
+        F2a[label="run READ", group="c"];
+        
+        D8a -> F0a[style="dashed"]
+        D8a -> F0b[style="dashed"]
+        F0a -> F1a[style="dashed"]
+        F0b -> F1a[style="dashed"]
+        F1a -> F2a
+    }
+    
+    subgraph TKGWV2 {
+        node[color="#ecaaae"]
+
+        {rank="same"; G0a; G0b}
+        G0a[label="Downsample Bam"];
+        G0b[label="Download_support_files"];
+        G1a[label="run TKGWV2"];
+    
+        D7a -> G0a
+        G0a -> G1a
+        G0b -> G1a
+    }
+    {rank="same"; E0a; E0b; D8a; G0b; G0a}
+    {rank="same"; E1a; F2a; G1a}
+
+}    

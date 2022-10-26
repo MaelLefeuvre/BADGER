@@ -56,10 +56,10 @@ rule create_human_contamination:
             steps=check_ped_sim_input_vcf(wildcards),
             POP=config["gargammel"]["params"]["contam-pop"]
         ),
-        chr_ref = lambda wildcards: dirname(config["refgen"]) + "/splitted/{chr}.fasta"
+        chr_ref = lambda wildcards: dirname(config["reference"]) + "/splitted/{chr}.fasta"
     output:
-        hap1 = "results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo1.fasta",
-        hap2 = "results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo2.fasta"
+        hap1 = temp("results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo1.fasta"),
+        hap2 = temp("results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo2.fasta")
     log: 
         hap1 = "logs/01-gargammel/create_human_contamination/{cont}_chr{chr}_haplo1.log",
         hap2 = "logs/01-gargammel/create_human_contamination/{cont}_chr{chr}_haplo2.log"
@@ -105,7 +105,7 @@ rule get_consensus:
     """
     input:
         vcf     = expand(rules.extract_twins.output.merged_vcf, POP=config["ped-sim"]["params"]["pop"]),
-        chr_ref = lambda wildcards: dirname(config["refgen"]) + "/splitted/{chr}.fasta"
+        chr_ref = lambda wildcards: dirname(config["reference"]) + "/splitted/{chr}.fasta"
     output:
         hap1=temp("results/01-gargammel/{sample}/{chr}/endo/{sample}_chr{chr}_haplo1.fasta"),
         hap2=temp("results/01-gargammel/{sample}/{chr}/endo/{sample}_chr{chr}_haplo2.fasta"),
@@ -192,8 +192,8 @@ rule merge_chromosomes:
         forwd = expand(rules.run_gargammel.output.forwd, chr=range(1,23), sample="{sample}"),
         revrs = expand(rules.run_gargammel.output.revrs, chr=range(1,23), sample="{sample}")
     output:
-        forwd = "results/02-preprocess/00-raw/{sample}_s1.fq.gz",
-        revrs = "results/02-preprocess/00-raw/{sample}_s2.fq.gz"
+        forwd = temp("results/02-preprocess/00-raw/{sample}_s1.fq.gz"),
+        revrs = temp("results/02-preprocess/00-raw/{sample}_s2.fq.gz")
     log: 
         forwd = "logs/01-gargammel/merge_chromosomes/{sample}_s1.log",
         revrs = "logs/01-gargammel/merge_chromosomes/{sample}_s2.log"

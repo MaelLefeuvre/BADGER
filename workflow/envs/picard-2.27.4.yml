@@ -1,4 +1,4 @@
-name: picard-2.27.4.yml
+name: picard-2.27.4
 channel:
   - conda-forge
   - bioconda

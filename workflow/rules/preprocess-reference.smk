@@ -36,13 +36,13 @@ rule index_reference_genome:
     Generate the Burrows-Wheeler transform on the reference genome.
     """
     input:
-        refgen = config["refgen"]
+        refgen = config["reference"]
     output:
-        amb = config["refgen"] + ".amb",
-	    ann = config["refgen"] + ".ann",
-	    bwt = config["refgen"] + ".bwt",
-	    pac = config["refgen"] + ".pac",
-	    sa  = config["refgen"] + ".sa",
+        amb = config["reference"] + ".amb",
+	    ann = config["reference"] + ".ann",
+	    bwt = config["reference"] + ".bwt",
+	    pac = config["reference"] + ".pac",
+	    sa  = config["reference"] + ".sa",
     conda: "../envs/bwa-0.7.17.yml"
     log: "logs/refgen/index_reference_genome/index_reference_genome.log"
     shell: """
@@ -67,7 +67,7 @@ rule split_reference_genome:
     Split the reference genome according to chromosome.
     """
     input:
-        refgen   = config["refgen"]
+        refgen   = config["reference"]
     output:
         splitted = expand("data/refgen/GRCh37/splitted/{chr}.fasta", chr=range(1,23))
     shell: """
