@@ -2,3 +2,6 @@
 data
 results
 logs
+benchmarks
+archive
+workflow/scripts/dopplegang-samples/target

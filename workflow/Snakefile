@@ -1,13 +1,18 @@
 configfile: "./config/config.yml"
-include: "rules/preprocess-reference.smk"
-include: "rules/preprocess-1000-genomes.smk"
-include: "rules/pedigree-sims.smk"
-include: "rules/gargammel.smk"
-include: "rules/preprocess-fastq.smk"
-include: "rules/variant-calling.smk"
-include: "rules/READ.smk"
-include: "rules/grups-rs.smk"
-include: "rules/TKGWV2.smk"
+include: "rules/00-netrules.smk"
+include: "rules/00-preprocess-reference.smk"
+include: "rules/00-preprocess-1000g-phase3.smk"
+include: "rules/01-pedigree-sims.smk"
+include: "rules/02-adna-simulations.smk"
+include: "rules/03-align-fastqs.smk"
+include: "rules/04-preprocess-bams.smk"
+include: "rules/05-variant-calling.smk"
+include: "rules/06-READ.smk"
+include: "rules/06-grups-rs.smk"
+include: "rules/06-TKGWV2.smk"
+include: "rules/07-archive.smk"
+
+localrules: meta, READ, GRUPS, TKGWV2, gargammel, ped_sim, all
 
 wildcard_constraints:
     chr    = "\d+",
@@ -16,29 +21,51 @@ wildcard_constraints:
 def my_samples(wildcards):
     with checkpoints.get_samples.get().output[0].open() as f:
         return expand("results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam", sample=str.split(f.readline().replace('\n',''),'\t')) 
-        #return expand("results/01-gargammel/fastqs/{sample}_s{for_rev}.fq.gz", for_rev=[1,2], sample=str.split(f.readline().replace('\n',''),'\t'))
+
+#configfile: "./config/config.yml"
+
+rule meta:
+    output:
+        metadata = "results/meta/pipeline-metadata.yml"
+    script: "scripts/print-meta.py"
 
 
+rule READ:
+    input: 
+        rules.meta.output,
+        READ_output
+
+rule GRUPS:
+    input:
+        rules.meta.output,
+        GRUPS_output
+
+
+rule TKGWV2:
+    input:
+        rules.meta.output,
+        TKGWV2_output
+
+
+rule gargammel:
+    input: 
+        rules.meta.output,
+        my_samples
 
 
 rule ped_sim:
-    input: expand("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz", POP=config['ped-sim']['params']['pop'])
+    input: 
+        rules.meta.output,
+        expand("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz", POP=config['ped-sim']['params']['pop'])
 
-rule gargammel:
-    input: my_samples
-
-rule READ:
-    input: READ_output
-
-rule GRUPS:
-    input: GRUPS_output
-
-rule TKGWV2:
-    input: TKGWV2_output
 
 rule all:
+    default_target: True
     input:
+        rules.meta.output,
         rules.READ.input,
         rules.GRUPS.input,
         rules.TKGWV2.input
-    default_target: True
+
+
+

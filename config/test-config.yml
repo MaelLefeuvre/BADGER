@@ -10,8 +10,8 @@ ped-sim:
     interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
     refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
   data:
-    codes:          "resources/ped-sim/definition/test-pedigree_codes.txt" 
-    definition:     "resources/ped-sim/definition/test-pedigree.def"
+    codes:          "resources/ped-sim/ped-definition/test-pedigree_codes.txt" 
+    definition:     "resources/ped-sim/ped-definition/test-pedigree.def"
     map:            "data/ped-sim/recombination_maps/refined_mf.simmap"
     interference:   "data/ped-sim/interference_maps/nu_p_campbell.tsv"
   output:
@@ -21,9 +21,9 @@ ped-sim:
     missingness: 0
     pop: "CEU"
 gargammel:
-  coverage: 1.0
-  comp_endo: 0.5
-  comp_cont: 0.5
+  coverage: 0.05
+  comp_endo: 1.0
+  comp_cont: 0
   comp_bact: 0
   misincorporation: "resources/gargammel/misincorporations/MT23-misincorporation.txt"
   sizefreq:         "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
@@ -40,7 +40,7 @@ preprocess:
   dedup:
     max-length: 200
 kinship:
-  targets: "data/g1k-phase3-callset/02-merged/CEU.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
+  targets: "data/vcf/1000g-phase3/02-merged/CEU.merged.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.m2.M2.maf05.vcf.gz"
   READ:
     window-size: 10
   GRUPS:

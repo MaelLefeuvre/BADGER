@@ -1,0 +1,7 @@
+2022-12-20 18:26:56,621	INFO	main: Started with the command: /home/mlefeuvre/miniconda3/envs/mapdamage-2.2.1/bin/mapDamage --input nochr-Chan_hg19_merged_duprem30_realigned.bam --reference CRS-hg19.fa --verbose
+2022-12-20 21:35:22,763	DEBUG	main: BAM read in 11307.783630 seconds
+2022-12-20 21:35:42,959	INFO	mapdamage.rscript: Performing Bayesian estimates
+2022-12-20 21:35:42,959	DEBUG	mapdamage.rscript: Call: Rscript /home/mlefeuvre/miniconda3/envs/mapdamage-2.2.1/lib/python3.10/site-packages/mapdamage/Rscripts/stats/runGeneral.R --args 30 10000 10 50000 0 0 1 1 0 0 1 12 results_nochr-Chan_hg19_merged_duprem30_realigned/ /home/mlefeuvre/miniconda3/envs/mapdamage-2.2.1/lib/python3.10/site-packages/mapdamage/Rscripts/stats/ results_nochr-Chan_hg19_merged_duprem30_realigned/Stats_out 1 0 0 results_nochr-Chan_hg19_merged_duprem30_realigned/acgt_ratio.csv 0 0
+2022-12-20 21:39:46,677	DEBUG	mapdamage.rscript: Bayesian estimates completed in 243.717748 seconds
+2022-12-20 21:39:46,677	INFO	main: Successful run
+2022-12-20 21:39:46,677	DEBUG	main: Run completed in 11571.698542 seconds

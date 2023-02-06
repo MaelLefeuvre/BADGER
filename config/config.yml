@@ -8,56 +8,94 @@ reference:                   "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary
 
 tempdir:                     "/tmp/mlefeuvre"
 
+archive:
+  archive-dir:               "/data/mlefeuvre/Projects/20230206-aDNA-kinship-simulations/archive"
+  compress-level: 9
+
 ped-sim:
+  replicates:                10
   filter-indels:             False
   filter-maf:                False
+  filter-maf-threshold:      0.05
   input: 
     interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
     refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
   data:
-    codes:                   "resources/ped-sim/definition/pedigree_codes.txt" 
-    definition:              "resources/ped-sim/definition/pedigree.def"
+    codes:                   "resources/ped-sim/ped-definition/pedigree_codes.txt"
+    definition:              "resources/ped-sim/ped-definition/pedigree.def"
     map:                     "data/ped-sim/recombination_maps/refined_mf.simmap"
     interference:            "data/ped-sim/interference_maps/nu_p_campbell.tsv"
-  output:
-    directory:               "results/00-ped-sim"
   params:
     error_rate:              0
     missingness:             0
+    retain-extra:            0 
     pop:                     "CEU"
+    seed:                    ~        # Random if empty '~'
 
+simulator: "gargammel"                # "gargammel" | "dwgsim"
 gargammel:
-  coverage:                  1
+  coverage:                  0.01
   comp_endo:                 1.00
   comp_cont:                 0.00
   comp_bact:                 0.00
-  misincorporation:          "resources/gargammel/misincorporations/MT23-misincorporation.txt"
-  sizefreq:                  "resources/gargammel/sizefreqs/Ust_Ishim_sizefreq.size.gz"
+  pmd-model:                 "misincorporation"  # "misincorporation" | "briggs"
+  misincorporation:
+    file:                    "resources/gargammel/misincorporations/Chan_meso/misincorporation.txt"
+    #file:                  "resources/gargammel/misincorporations/NO-PMD-misincorporation.txt"
+    protocol:               "double"
+  briggs:
+    nick-frequency:          0.03  # 0.03
+    overhang-length:         0.4   # 0.4
+    ds-deaminations:         0.01  # 0.01
+    ss-deaminations:         0.3   # 0.3
+  sizefreq:                  "resources/gargammel/sizefreqs/Chan_Meso-sizefreq.txt"
+  qshift:                    0                 # 0. MAX:93 (Note: higher values DECREASES the error rate)
   params:
     contam-pop:              "AFR"
+dwgsim:
+  seed:                      ~                 # Random seed if empty
 
 preprocess:
   trimming:
-    min-overlap:             1
-    min-length:              17
+    min-overlap:             1                 # 1   Minimum allowed read-mate overlap.
+    min-length:              17                # 30  Minimum allowed read length
+    min-quality:             20                # 20  Minimum allowed base quality
+    qualitymax:              41                # 41  set to 93 if you intend to increase gargammel -qs | -qs2 parameters
+    seed:                    ~                 # Random seed if empty (~)
   bwa:
-    aligner:                 "mem" # 'mem' || 'aln'
+    aligner:                 "aln"             # 'mem' || 'aln'
+    collapsed-only:          False
+    bwa-aln:
+      seed-length:           1024              # 1024 (Oliva et al. 2021)
+      max-open-gap:          2                 # 2    (Oliva et al. 2021)
+      max-seed-diff:         2                 # 2
+      max-miss-prob:         0.01              # 0.01 (Oliva et al. 2021)  
   filter:
     min-MQ:                  20
     min-length:              30
+  dedup:
+    method: picard                             # "samtools" | "picard" | "dedup"
+  pmd-rescaling:
+    rescaler: mapdamage                        # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
+    map-damage:
+      rescale:               True
+      downsample:            ~                 # No downsampling if empty (0 < downsample < 1)
+      downsample-seed:       ~                 # Random seed if empty (~)
+    pmdtools:
+      threshold:             -19999            # in LOD. Recommended: 3 | set to -19999 to disable
+      mask-terminal-deams:   0                 # in bases. Default 0 
 
 variant-calling:
   caller:                    "pileupCaller"    # ANGSD || pileupCaller
   pileup:
     disable-BAQ:             True              # True || False
-    min-BQ:                  30
-    min-MQ:                  30
+    min-BQ:                  20
+    min-MQ:                  20
   pileupCaller:
     skip-transitions:        False             # True || False
     mode:                    "randomHaploid"   # "randomHaploid" || "majorityCall"
     min-depth:               1
-    seed: ~
-  
+    seed:                    ~                 # Random seed if empty
 
 kinship:
   targets:                   "data/Reich-dataset/1240K/v52.2_1240K_public.snp"
@@ -66,20 +104,23 @@ kinship:
     norm-method:             "median"          # median || mean || max || value
     norm-value:              ~                 # (Float). Ignored if norm-method != "value"
   GRUPS:
-    pedigree:                "workflow/scripts/grups/resources/pedigrees/simple_pedigree.txt"
+    pedigree:                "workflow/scripts/grups/resources/pedigrees/siblings-pedigree.txt"
     pedigree-pop:            "EUR"
     contam-pop:              "AFR"
     min-depth:               1
     mode:                    "fst"
-    reps:                    500
-    maf:                     0.05
+    reps:                    1000
+    maf:                     0.0
     min-qual:                30
+    seq-error-rate:          0.0               # Uses pileup quality scores if empty (~)
+    seed:                    ~                 # Random seed if empty (~)
   TKGWV2:
     support-files-url:       "https://drive.google.com/drive/folders/1Aw-0v_7CUorHJOLpCJ0QVCwEdH43HlO4"
     support-files-dir:       "data/TKGWV2"
-    downsample:              True                # True || False
+    downsample:              False              # True || False
     downsample-N:            57600000
-    target-frequencies:      "data/TKGWV2/1000GP3_EUR_1240K.frq"
+    downsample-seed:         ~                 # Random seed if empty (~)
+    target-frequencies:      "data/TKGWV2/1240K/1000GP3_EUR_1240K.frq"
     min-BQ:                  30
     min-MQ:                  30
     min-depth:               1

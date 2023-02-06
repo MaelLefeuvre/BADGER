@@ -51,13 +51,16 @@
   (snakemake-7.12.0) user@desktop:~$ snakemake all --cores `nproc` --use-conda --conda-frontend mamba --configfile config/test-config.yml
   ```
 
+## CHANGELOG:
+ - 2022-12-09: Added support for samtools markdup
+ - 2022-10-05: Added ***Limited*** Support for dedup 
 
 ## @TODO:
 - `rule bwa_mem` : use `multiext()` for the input.reference
 - `rule get_consensus`: error because the output vcf of `rule run_ped_sim` is not BGZF compressed.
 - `rule extract_twins` is needlessly complicated and generates unnecessary intermediary files.
 - `find_contaminants()`: there's a redundant context manager with a seemingly needless "dummy" file. try to refactor this ? 
-
+ 
 ## Features
 
 - `bcftools consensus` has trouble handling indels. We need to find a way to add those.

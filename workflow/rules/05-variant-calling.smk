@@ -1,0 +1,294 @@
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+
+HTTP = HTTPRemoteProvider()
+
+
+localrules: generate_bam_list
+
+# ------------------------------------------------------------------------------------------------------------------- #
+# ---- Generic / Utility rules and functions.
+
+def get_samples_ids(wildcards):
+    """
+    Get each pedigree sample's id based on each unique pedigree sample id + the
+    number of pedigree replicates. This list is sorted to match UNIX's 
+    """
+    # Run through the initial samples files and extract pedigree ids 
+    with checkpoints.get_samples.get().output[0].open() as f:
+        samples = str.split(f.readline().replace('\n', ''), '\t')
+        ids     = set([sample.split('_')[1] for sample in samples])
+        return sorted(expand("{generation}_{ids}", ids=ids, generation="{generation}"), key=str.casefold)
+
+
+rule eigenstrat_to_UCSC_BED:
+    """
+    Convert an eigensoft's .snp file to a generic bed file 
+    (termed 'ucscbed', to avoid collisions with plink's file format).
+    """
+    input:
+        snp = "{directory}/{eigenstrat}.snp"
+    output:
+        bed = "{directory}/{eigenstrat}.ucscbed"
+    shell: """
+        awk '{{print $2, $4-1, $4}}' {input.snp} > {output.bed}
+    """
+
+
+rule plink_bfile_to_tped:
+    """
+    Convert a binarized PLINK fileset into a human readable transposed set.
+    """
+    input:
+        bfile  = multiext("{directory}/{file}", ".bed", ".bim", ".fam"),
+    output:
+        tplink = multiext("{directory}/{file}", ".tped", ".tfam") 
+    params:
+        basename = "{directory}/{file}"
+    log:   "logs/03-variant-calling/plink_bfile_to_tped/{directory}/{file}.log"
+    conda: "../envs/plink-1.9.yml"
+    shell: """
+        plink \
+        --bfile {params.basename} \
+        --out {params.basename} \
+        --recode transpose tab \
+        --allow-no-sex \
+        --keep-allele-order > {log} 2>&1
+    """
+
+# ------------------------------------------------------------------------------------------------------------------- #
+# ---- 00. Download out variant callset.
+
+module netrules:
+    snakefile: "00-netrules.smk"
+    config: config
+
+use rule download_reich_1240K from netrules
+
+# ------------------------------------------------------------------------------------------------------------------- #
+# ---- 01. Generate a list of input BAM list for cohort variant calling (one list per pedigree).
+
+def get_pileup_input_bams(wildcards):
+    """
+    Define the appropriate input bam for the variant caller, based on which 
+    PMD-rescaling method was requested by the user.
+    """
+    # Run through the initial samples files and extract pedigree ids 
+    samples_ids = get_samples_ids(wildcards)
+
+    # Return a list of input bam files for pileup
+    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
+    match rescaler:
+        case "mapdamage":
+            print("NOTE: Using MapDamage rescaled bams for variant calling.", file=sys.stderr)
+            return expand(
+                "results/02-preprocess/06-mapdamage/{sample_id}/{sample_id}.srt.rmdup.rescaled.bam",
+                sample_id = samples_ids,
+            )
+        case "pmdtools":
+            print("NOTE: Using PMDTools rescaled bams for variant calling.", file=sys.stderr)
+            return expand(
+                "results/02-preprocess/06-pmdtools/{sample}/{sample}.srt.rmdup.filtercontam.bam",
+                sample = samples_ids,
+
+            )
+        case None:
+            print("WARNING: Skipping PMD Rescaling for variant calling!", file=sys.stderr)
+            return expand(
+                define_dedup_input_bam(wildcards),
+                sample_id= samples_ids
+            )
+    raise RuntimeError(f'Invalid rescaler value "{rescaler}')
+
+
+rule generate_bam_list:
+    """
+    Create an ordered list of bam files using the original samples file
+    """
+    input:
+        bamlist = get_pileup_input_bams
+    output:
+        bamlist = "results/03-variant-calling/01-pileup/{generation}/{generation}.bam.list"
+    log:   "logs/03-variant-calling/generate_bam_list/{generation}.log"
+    priority: 15
+    shell: """
+        ls {input.bamlist} > {output.bamlist} 2> {log}
+    """
+
+
+# ------------------------------------------------------------------------------------------------------------------- #
+# ---- 02. Generate pileup files using samtools. One pileup per pedigree.
+
+def get_samtools_optargs(wildcards):
+    """
+    Inject the appropriate flag to disable samtools' Base alignment quality,
+    if the user requested it.
+    """
+    optargs = ""
+    if config['variant-calling']['pileup']['disable-BAQ']:
+        optargs += "-B "
+    return optargs
+
+
+rule get_target_panel_intersect:
+    """
+    Get the intersect between our pedigree simulations variant set (A) and our target variant set (B)
+    - This is required to prevent bias arising from targeting SNPs that were not simulated. In other terms,
+      targeting the B set when n(A∩B) < n(B) would cause a drastic decrease in observed average heterozygocity.
+
+    - This rule is made to ensure n(B) == n(A∩B), at the cost of loosing target coverage.
+    """
+    input:
+        ped_vcf = multiext(rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
+        targets = os.path.splitext(config["kinship"]["targets"])[0] + ".ucscbed",
+    output:
+        targets = "results/03-variant-calling/00-panel/variants-intersect.ucscbed"
+    log:   "logs/03-variant-calling/get_target_panel_intersect.log"
+    conda: "../envs/bcftools-1.15.yml"
+    shell: """
+        bcftools view -H -R <(awk 'BEGIN{{OFS="\t"}}{{print $1, $3}}' {input.targets}) {input.ped_vcf} \
+        | awk 'BEGIN{{OFS=" "}}{{print $1, $2-1, $2}}' \
+        > {output.targets} 2> {log}
+    """
+
+rule samtools_pileup:
+    """
+    Generate a legacy pileup file using samtools mpileup.
+    """
+    input:
+        bamlist   = rules.generate_bam_list.output.bamlist,
+        targets   = rules.get_target_panel_intersect.output.targets,
+        reference = config["reference"],
+        fai       = config["reference"] + ".fai",
+    output:
+        pileup    = "results/03-variant-calling/01-pileup/{generation}/{generation}.pileup"
+    params:
+        min_MQ    = config['variant-calling']['pileup']['min-MQ'],
+        min_BQ    = config['variant-calling']['pileup']['min-BQ'],
+        optargs   = get_samtools_optargs
+    log:   "logs/03-variant-calling/samtools_pileup/{generation}.log"
+    conda: "../envs/samtools-1.15.yml"
+    shell: """
+        samtools mpileup \
+        -R {params.optargs} \
+        -q {params.min_MQ} \
+        -Q {params.min_BQ} \
+        -l {input.targets} \
+        -f {input.reference} \
+        -b {input.bamlist} | LC_ALL=C sort -k1,1n -k2,2n > {output.pileup} 2> {log}
+        """
+
+
+# ------------------------------------------------------------------------------------------------------------------- #
+# ---- 03-A. Perform pseudo-haploid random variant calling with SequenceTools' PileupCaller
+
+def parse_pileup_caller_flags(wildcards):
+    args=""
+    if config['variant-calling']['pileupCaller']["skip-transitions"]:
+        args+="--skipTransitions "
+
+    seed = config['variant-calling']['pileupCaller']['seed']
+    if seed is None:
+        with open(rules.meta.output.metadata) as f:
+            metadata = yaml.load(f, Loader=yaml.loader.SafeLoader)
+            seed     = metadata['seed']
+
+    args += f"--seed {seed} "
+
+    match config['variant-calling']['pileupCaller']["mode"]:
+        case "randomHaploid":
+            args += "--randomHaploid "
+        case "majorityCall":
+            args += "--majorityCall "
+        case _:
+            raise RuntimeError("Incorrect pileupCaller mode selected.")
+    return args
+
+
+rule pileup_caller:
+    """
+    Perform random sampling variant calling uing SequenceTools' pileupCaller
+    """
+    input:
+        pileup            = rules.samtools_pileup.output.pileup,
+        bamlist           = rules.generate_bam_list.output.bamlist,
+        targets           = os.path.splitext(config["kinship"]["targets"])[0] + ".snp",
+        metadata          = "results/meta/pipeline-metadata.yml"
+    output:
+        plink             = multiext("results/03-variant-calling/02-pileupCaller/{generation}/{generation}", ".bed", ".bim", ".fam"),
+        sample_names_file = "results/03-variant-calling/02-pileupCaller/{generation}/{generation}-names.txt"
+    params:
+        basename          = "results/03-variant-calling/02-pileupCaller/{generation}/{generation}",
+        optargs           = parse_pileup_caller_flags,
+        min_depth         = config['variant-calling']["pileupCaller"]["min-depth"],
+        seed              = config['variant-calling']['pileupCaller']["seed"],
+        sample_names      = lambda wildcards: expand(get_samples_ids(wildcards), generation = wildcards.generation)
+    log:   "logs/03-variant-calling/pileup_caller/{generation}.log"
+    conda: "../envs/sequencetools-1.5.2.yml"
+    shell: """
+        echo {params.sample_names} | tr ' ' '\n' > {output.sample_names_file}
+
+        pileupCaller \
+        {params.optargs} \
+        --snpFile <( awk '($2<=22)' {input.targets}) \
+        --sampleNameFile {output.sample_names_file} \
+        --plinkOut {params.basename} \
+        --minDepth {params.min_depth} \
+        --samplePopName {wildcards.generation} < {input.pileup} > {log} 2>&1 
+    """
+
+# ------------------------------------------------------------------------------------------------------------------- #
+# ---- 03-B. Perform pseudo-haploid random variant calling with ANGSD
+
+rule ANGSD_random_haploid:
+    """
+    Perform random pseudo-haploid variant calling using ANGSD
+    """
+    input:
+        pileup    = rules.samtools_pileup.output.pileup,
+        bamlist   = rules.generate_bam_list.output.bamlist,
+        reference = config['reference'],
+        fai       = config["reference"] + ".fai",
+    output:
+        haplos    = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.haplo.gz"
+    params:
+        out       = "results/03-variant-calling/02-ANGSD/{generation}/{generation}"
+    log:   "logs/03-variant-calling/ANGSD_random_haploid/{generation}.log"
+    threads: 4
+    priority: 15
+    conda: "../envs/angsd-0.939.yml"
+    shell: """
+        angsd -pileup {input.pileup} \
+        -fai {input.fai} \
+        -nInd $(cat {input.bamlist} | wc -l) \
+        -rf <(seq 1 22) \
+        -dohaplocall 1 \
+        -doCounts 1 \
+        -nthreads {threads} \
+        -out {params.out} 2> {log}
+    """
+
+
+rule ANGSD_haplo_to_plink:
+    """
+    Convert a .haplo.gz ANGSD file to a set of PLINK .tped / .tfam files 
+    """
+    input:
+        haplos  = rules.ANGSD_random_haploid.output.haplos,
+        bamlist = rules.generate_bam_list.output.bamlist 
+    output:
+        tped = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.tped",
+        tfam = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.tfam",
+    params:
+        outputname = "results/03-variant-calling/02-ANGSD/{generation}/{generation}"
+    log:   "logs/03-variant-calling/ANGSD_haplo_to_plink/{generation}.log"
+    conda: "../envs/angsd-0.939.yml"
+    priority: 15
+    shell: """
+        haploToPlink {input.haplos} {params.outputname} 2>  {log}
+        sed -i 's/N/0/g' {output.tped}                  2>> {log}
+        cat {input.bamlist} \
+        | xargs basename -a \
+        | grep -oP '^[^.]+(?=(\.[^.]+)*(\.bam$))' \
+        | awk 'BEGIN{{OFS="\t"}}{{print "{wildcards.generation}", $1, 0, 0, 0, 0}}' \
+        > {output.tfam} 2>> {log}
+    """

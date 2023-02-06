@@ -1,0 +1,7 @@
+name: dopplegang-samples
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::rust=1.63
+  - bioconda::htslib=1.15

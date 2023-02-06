@@ -1,0 +1,197 @@
+from os.path import splitext, basename
+from functools import partial
+localrules: merge_TKGWV2_results
+
+module netrules:
+    snakefile: "00-netrules.smk"
+    config: config
+
+use rule download_TKGWV2_support_files from netrules
+
+
+def TKGWV2_output(wildcards):
+    """
+    Returns the list of required generation_wise comparisons from READ
+    """
+    # Get the number of expected generations.
+    gen_no = config['ped-sim']['replicates']
+    return expand("results/04-kinship/TKGWV2/ped{gen}/ped{gen}-TKGWV2_Results.txt", gen=gen_no)
+
+
+def get_TKGWV2_input_bams(wildcards):
+    """
+    Define the appropriate input bam files for TKGWV2, based on which PMD
+    rescaler was requested by the user
+    """
+    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
+    match rescaler:
+        case "mapdamage":
+            print("NOTE: Using MapDamage rescaled bams for TKGWV2", file=sys.stderr)
+            root = "results/02-preprocess/06-mapdamage/ped{gen}_{pairs}/ped{gen}_{pairs}.srt.rmdup.rescaled.{ext}"
+        case "pmdtools":
+            print("NOTE: Using PMDTools rescaled bams for TKGWV2", file=sys.stderr)
+            root = "results/02-preprocess/06-pmdtools/ped{gen}_{pairs}/ped{gen}_{pairs}.srt.rmdup.filtercontam.{ext}"
+        case None:
+            print("WARNING: Skipping PMD rescaling for TKGWV2!", file=sys.stderr)
+            root = expand(define_dedup_input_bam(wildcards), sample = "{gen}_{pairs}")
+        case other:
+            raise RuntimeError(f'Invalid rescaler value "{rescaler}')
+
+    return expand(root,
+        gen   = "{gen}",
+        pairs = ["{pairA}", "{pairB}"],
+        ext   = ["bam", "bam.bai"] 
+    )
+
+
+def TKGWV2_downsample_seed(wildcards):
+    seed = config['kinship']['TKGWV2']['downsample-seed']
+    if seed is None:
+        with open(rules.meta.output.metadata) as f:
+            metadata = yaml.load(f, Loader=yaml.loader.SafeLoader)
+            seed     = metadata['seed']
+    return seed
+
+rule TKGWV2_downsample_bam:
+    """
+    Downsample the .bam file if there are more than 1_500_000 reads.
+     - As is, this helper script is applied to all files ending with the ".bam" suffix within the working directory.
+     - output files are identified with the "_subsampled.bam" suffix.
+    """
+    input:
+        pairs =  get_TKGWV2_input_bams,
+        metadata = "results/meta/pipeline-metadata.yml"
+    output:
+        pairA = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.srt.rmdup.rescaled_subsampled.bam",
+        pairB = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.srt.rmdup.rescaled_subsampled.bam"
+    params:
+        workdir     = lambda wildcards, output: dirname(output.pairA),
+        downsampleN = config['kinship']['TKGWV2']['downsample-N'],
+        seed        = TKGWV2_downsample_seed,
+    log: "logs/04-kinship/TKGWV2/TKGWV2_downsample_bam/ped{gen}/{pairA}_{pairB}.log"
+    conda: "../envs/TKGWV2.yml"
+    shell: """
+        root_dir=`pwd`                                                   # Keep current dir in memory.
+        ln -sfrt {params.workdir} {input.pairs} >  $root_dir/{log}       # temporary symlink
+        cd {params.workdir}                     >> $root_dir/{log}       # go to output workdir
+        TK-helpers.py downsampleBam \
+        --downsampleN {params.downsampleN} \
+        --downsampleSeed {params.seed}          >> $root_dir/{log} 2>&1  # run TK-helpers
+        find . -maxdepth 1 -type l -delete      >> $root_dir/{log}       # delete symlinks.
+    """
+
+
+def define_TKGWV2_input(wildcards):
+    """
+    Define the input for TKGWV2: either a downsampled bam file if the user
+    requested it, or skip downsampling entirely.
+    """
+    if config['kinship']['TKGWV2']['downsample']:
+        return rules.TKGWV2_downsample_bam.output
+    else:
+        return get_TKGWV2_input_bams(wildcards)
+
+
+rule run_TKGWV2:
+    """
+    Run TKGWV2 on a single pair of individuals.
+    @ TODO: Keep track of the 'frq' and 'tped' output files (TKGWV2 reorders pairA and pairB in lexical order.......)
+    """
+    input:
+        bams          = define_TKGWV2_input,
+        reference     = config["reference"],
+        bed_targets   = "data/TKGWV2/genomeWideVariants_hg19/1000GP3_22M_noFixed_noChr.bed",
+        plink_targets = multiext("data/TKGWV2/genomeWideVariants_hg19/DummyDataset_EUR_22M_noFixed", ".bed", ".bim", ".fam"),
+        frequencies   = config['kinship']['TKGWV2']['target-frequencies']
+    output:
+        results = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/TKGWV2_Results.txt",
+        #frq     = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/commped{gen}_{A}____ped{gen}_{B}.frq",
+        #tped    = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}____ped{gen}_{pairB}.tped",
+        peds    = [
+            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.ped",
+            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.ped"
+        ],
+        maps    = [
+            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.map",
+            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.map"
+        ],
+        pileups = [
+            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.pileupsamtools.gwv.txt",
+            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.pileupsamtools.gwv.txt"
+        ],
+    conda: "../envs/TKGWV2.yml"
+    params:
+        plink_basename = lambda wildcards, input: splitext(input.plink_targets[0])[0],
+        min_MQ     = config["kinship"]["TKGWV2"]["min-MQ"],
+        min_BQ     = config["kinship"]["TKGWV2"]["min-BQ"],
+        min_depth  = config["kinship"]["TKGWV2"]["min-depth"],
+        bam_ext    = lambda wildcards, input: basename(input.bams[0]).split(".",1)[1]
+    log: "logs/04-kinship/TKGWV2/run_TKGWV2/ped{gen}/{pairA}_{pairB}.log"
+    shell: """
+        base_dir=`pwd`                                     # Keep a record of the base directory
+        cd $(dirname {output.results}) 2> $base_dir/{log}  # Go into the results directory
+
+        # If the file is not present (i.e. no downsample has been made, create symlink.)
+        for bam in {input.bams}; do
+            [[ -f $(basename $bam) ]] || ln -sr $base_dir/$bam
+        done 2>> $base_dir/{log}
+
+        # Run TKGWV2
+        TKGWV2.py bam2plink \
+        --referenceGenome $base_dir/{input.reference} \
+        --gwvList $base_dir/{input.bed_targets} \
+        --gwvPlink $base_dir/{params.plink_basename} \
+        --minMQ {params.min_MQ} \
+        --minBQ {params.min_BQ} \
+        --bamExtension .{params.bam_ext} \
+        plink2tkrelated \
+        --freqFile $base_dir/{input.frequencies} \
+        --ignoreThresh {params.min_depth} \
+        --verbose >> $base_dir/{log} 2>&1
+    """
+
+
+
+def define_TKGWV2_requested_dyads(wildcards):
+    """
+    Returns the list of requested pairwise comjparisons for TKGWV2,
+    using the pedigree codes file. This will merge the results of each
+    considered dyad into a single results file. one per generated pedigree.
+    """
+
+    # Open the pedigree codes definition file, and extract the relevant pedigree comparisons.
+    with open(config["ped-sim"]["data"]["codes"]) as f:
+        ind1, ind2 = zip(
+            *[tuple(str.split(comparison.replace('\n', ''), '\t')[1:3]) for comparison in list(f.readlines())]
+        )
+
+        # Guard gen wildcard. We must do this in advance, or zipped expand will bug_out.
+        out = expand(rules.run_TKGWV2.output.results,
+            pairA="{pairA}",
+            pairB="{pairB}",
+            gen="{{gen}}"
+        )
+        relevant_comparisons = expand(
+            out,
+            zip,
+            pairA=ind1,
+            pairB=ind2
+        )
+        return relevant_comparisons
+
+
+
+rule merge_TKGWV2_results:
+    """
+    Merge the pair-specific results of run_TKGWV2 into a single results file.
+    (while removing header duplicates.)
+    """
+    input:
+        results = define_TKGWV2_requested_dyads
+    output:
+        result = "results/04-kinship/TKGWV2/ped{gen}/ped{gen}-TKGWV2_Results.txt"
+    log: "logs/04-kinship/TKGWV2/merge_TKGWV2_results/ped{gen}.log"
+    shell: """
+        awk 'FNR>1 || NR==1' {input.results} > {output.result} 2> {log}
+    """
+
