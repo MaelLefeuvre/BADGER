@@ -24,12 +24,12 @@ rule tabix_vcf:
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 00. Download the original dataset.
 
-module netrules:
-    snakefile: "00-netrules.smk"
-    config: config
-
-use rule download_1000_genomes from netrules
-use rule fetch_samples_panel from netrules
+#module netrules:
+#    snakefile: "00-netrules.smk"
+#    config: config
+#
+#use rule download_1000_genomes from netrules
+#use rule fetch_samples_panel from netrules
 
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 00. B symlink out of the original data dir if required.
@@ -40,7 +40,8 @@ rule symlink_original_data:
     no requested filtering steps.
     """
     input:
-        vcf = rules.download_1000_genomes.output.vcf
+        #vcf = rules.download_1000_genomes.output.vcf
+        vcf = "data/vcf/1000g-phase3/00-original/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
     output:
         link = temp("data/vcf/1000g-phase3/01-filter/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz")
     threads: 1
@@ -121,7 +122,8 @@ rule get_target_pop_samples:
     Create a subset list of samples ID for a specific population or superpopulation.
     """
     input:
-        panel       = rules.fetch_samples_panel.output.panel
+        # panel       = rules.fetch_samples_panel.output.panel
+        panel = "data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.ALL.panel"
     output:
         target_list = "data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.{POP}.panel"
     log: "logs/00-preprocess-1000g/get_target_pop_samples/get_target_pop_samples-{POP}.log"

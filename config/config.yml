@@ -34,7 +34,7 @@ ped-sim:
 
 simulator: "gargammel"                # "gargammel" | "dwgsim"
 gargammel:
-  coverage:                  0.01
+  coverage:                  0.05
   comp_endo:                 1.00
   comp_cont:                 0.00
   comp_bact:                 0.00
@@ -122,5 +122,5 @@ kinship:
     downsample-seed:         ~                 # Random seed if empty (~)
     target-frequencies:      "data/TKGWV2/1240K/1000GP3_EUR_1240K.frq"
     min-BQ:                  30
-    min-MQ:                  30
+    min-MQ:                  20
     min-depth:               1

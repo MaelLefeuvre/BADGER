@@ -21,11 +21,11 @@ rule samtools_faidx:
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 00. Download reference genome from Ensembl
 
-module netrules:
-    snakefile: "00-netrules.smk"
-    config: config
-
-use rule download_reference_genome from netrules
+#module netrules:
+#    snakefile: "00-netrules.smk"
+#    config: config
+#
+#use rule download_reference_genome from netrules
 
 
 # ------------------------------------------------------------------------------------------------------------------- #
@@ -37,7 +37,8 @@ rule decompress_reference_genome:
     Decrompress a reference file from .fa.gz -> .fa 
     """
     input:
-        refgen = rules.download_reference_genome.output.refgen
+        # refgen = rules.download_reference_genome.output.refgen
+        refgen = "data/refgen/GRCh37/{reference}.fa.gz"
     output:
         refgen = protected("data/refgen/GRCh37/{reference}.fa")
     log: "logs/00-preprocess-reference/decompress_reference_genome/{reference}.log"

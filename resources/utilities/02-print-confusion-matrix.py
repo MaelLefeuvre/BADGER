@@ -6,11 +6,12 @@ import numpy as np
 import pandas as pd
 def grups_to_degree(pred):
     translator = {
-            "Cousins"  : "Third",
-            "GPGC"     : "Second",
-            "Siblings" : "First",
-            "Self"     : "Self",
-            "Unrelated": "Unrelated"
+            "Cousins"      : "Third",
+            "GPGC"         : "Second",
+            "Half-siblings": "Second",
+            "Siblings"     : "First",
+            "Self"         : "Self",
+            "Unrelated"    : "Unrelated"
     }
     return translator[pred]
 

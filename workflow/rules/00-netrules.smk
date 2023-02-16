@@ -109,8 +109,8 @@ rule fetch_sex_specific_recombination_map:
     input:
         gen_map = HTTP.remote(config["ped-sim"]["input"]["refined-genetic-map-url"])
     output:
-        map_dir  = directory("data/ped-sim/Refined_genetic_map_b37"),
-        gen_maps = temp(expand("data/ped-sim/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"]))
+        map_dir  = directory("data/recombination-maps/Refined_genetic_map_b37"),
+        gen_maps = expand("data/recombination-maps/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"])
     log: "logs/00-FTP/fetch_sex_specific_gen_map.log"
     shell: """
         tar --strip-components=1 -xvzf {input.gen_map} -C {output.map_dir} 2> {log} && rm -rf {input.gen_map} >> {log} 2>&1

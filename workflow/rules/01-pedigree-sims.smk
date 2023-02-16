@@ -2,12 +2,12 @@ from itertools import dropwhile
 import os 
 
 
-module netrules:
-    snakefile: "00-netrules.smk"
-    config: config
-
-use rule fetch_sex_specific_recombination_map from netrules
-use rule fetch_interference_map from netrules
+#module netrules:
+#    snakefile: "00-netrules.smk"
+#    config: config
+#
+#use rule fetch_sex_specific_recombination_map from netrules
+#use rule fetch_interference_map from netrules
 
 # ---- Set config variables
 configfile: "./config/config.yml"
@@ -44,11 +44,13 @@ rule format_sex_specific_gen_map:
     Concatenate a set of sex-specific chromosome genetic map into a single file.
     """
     input:
-        gen_map = rules.fetch_sex_specific_recombination_map.output.gen_maps
+        #gen_map = rules.fetch_sex_specific_recombination_map.output.gen_maps
+        gen_map = expand("data/recombination-maps/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"])
     output:
         sim_map = config["ped-sim"]['data']["map"]
     params:
-        map_dir = rules.fetch_sex_specific_recombination_map.output.map_dir
+        #map_dir = rules.fetch_sex_specific_recombination_map.output.map_dir
+        map_dir = directory("data/recombination-maps/Refined_genetic_map_b37"),
     log:   "logs/00-ped-sim/format_sex_specific_gen_map.log"
     shell: """
         printf "#chr\tpos\tmale_cM\tfemale_cM\n" > {output.sim_map}; \

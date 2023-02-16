@@ -187,17 +187,23 @@ def make_snakemake_happy_with_READ_checkpoint(wildcards):
 rule archive_READ_results:
     input:
         results = make_snakemake_happy_with_READ_checkpoint,
+        #results  = [
+        #    "results/04-kinship/READ/{generation}/READ_results",
+        #    "results/04-kinship/READ/{generation}/meansP0_AncientDNA_normalized",
+        #    "results/04-kinship/READ/{generation}/READ_output_ordered",
+        #    "results/04-kinship/READ/{generation}/READ_results_plot.pdf"
+        #],
     output:
         archive = protected("{archive_dir}/run-{{run}}/{READ_dir}.tar.xz".format(
             archive_dir = config['archive']['archive-dir'],
-            READ_dir = os.path.dirname(rules.run_READ.output[0])
+            READ_dir = "results/04-kinship/READ/{generation}"
         )),
         checksum = protected("{archive_dir}/run-{{run}}/{READ_dir}.md5sums".format(
             archive_dir = config['archive']['archive-dir'],
-            READ_dir = os.path.dirname(rules.run_READ.output[0])
+            READ_dir = "results/04-kinship/READ/{generation}"
         ))
     params:
-        target_directory = os.path.dirname(rules.run_READ.output[0]),
+        target_directory = "results/04-kinship/READ/{generation}",
         compress_level=config['archive']['compress-level']
     log: "logs/07-archive/run{run}/{generation}/archive_READ_results.log"
     threads: 4
@@ -216,17 +222,18 @@ def make_snakemake_happy_with_GRUPS_checkpoint(wildcards):
 rule archive_GRUPS_results:
     input:
         results_dir = make_snakemake_happy_with_GRUPS_checkpoint
+        #results_dir = "results/04-kinship/GRUPS/{generation}/{generation}.results",
     output:
         archive = protected("{archive_dir}/run-{{run}}/{GRUPS_dir}.tar.xz".format(
             archive_dir = config['archive']['archive-dir'],
-            GRUPS_dir = rules.run_GRUPS.output.output_dir
+            GRUPS_dir = "results/04-kinship/GRUPS/{generation}"
         )),
         checksum = protected("{archive_dir}/run-{{run}}/{GRUPS_dir}.md5sums".format(
             archive_dir = config['archive']['archive-dir'],
-            GRUPS_dir = rules.run_GRUPS.output.output_dir
+            GRUPS_dir = "results/04-kinship/GRUPS/{generation}"
         ))
     params:
-        target_directory = rules.run_GRUPS.output.output_dir,
+        target_directory = "results/04-kinship/GRUPS/{generation}",
         compress_level   = config['archive']['compress-level']
     log: "logs/07-archive/run{run}/{generation}/archive_GRUPS_results.log"
     threads: 4

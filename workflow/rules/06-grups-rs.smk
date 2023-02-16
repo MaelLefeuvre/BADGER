@@ -1,11 +1,11 @@
 import yaml
 
-module netrules:
-    snakefile: "00-netrules.smk"
-    config: config
-
-use rule download_HapMapII_recombination_map from netrules
-use rule download_1000_genomes from netrules
+#module netrules:
+#    snakefile: "00-netrules.smk"
+#    config: config
+#
+#use rule download_HapMapII_recombination_map from netrules
+#use rule download_1000_genomes from netrules
 
 
 
@@ -28,10 +28,17 @@ rule GRUPS_generate_fst_set:
     """
     Generate a .fst and .fst.frq dataset from a set of VCF files. Allows for
     generally faster IO processing when performing multiple runs.
+    @ TODO: The download directive might be the reason why we have an FTP OS error
     """
     input:
-        data    = expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
-        panel   = rules.fetch_samples_panel.output.panel
+        #data    = expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
+        #panel   = rules.fetch_samples_panel.output.panel
+        data     = expand(
+            "data/vcf/1000g-phase3/00-original/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
+            chr=range(1,23)
+        ),
+        
+        panel = "data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.ALL.panel",
     output:
         fst     = protected(expand(
             "data/grups/fst/g1k-phase3-v5/{ped_pop}-{cont_pop}/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes-{ped_pop}-{cont_pop}.{ext}",
@@ -75,12 +82,14 @@ rule run_GRUPS:
     Run grups on an entire pedigree generation.
     @ TODO: VCF mode is not yet implemented within the pipeline.
             A simple function should do the trick.
+    @ TODO: Fetch sample panel might be the cause of our download error.
     """
     input:
         pileup       = rules.samtools_pileup.output.pileup,
         data         = rules.GRUPS_generate_fst_set.output.fst,
-        panel        = rules.fetch_samples_panel.output.panel,
-        recomb_map   = rules.download_HapMapII_recombination_map.output.map,
+        #panel        = rules.fetch_samples_panel.output.panel,
+        #recomb_map   = rules.download_HapMapII_recombination_map.output.map,
+        recomb_map   = expand("data/recombination-maps/HapMapII_GRCh37/genetic_map_GRCh37_chr{chr}.txt", chr=range(1, 23)),
         targets      = config["kinship"]["targets"],
         metadata     = "results/meta/pipeline-metadata.yml"
     output:

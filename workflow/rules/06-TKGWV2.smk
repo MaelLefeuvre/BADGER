@@ -2,11 +2,11 @@ from os.path import splitext, basename
 from functools import partial
 localrules: merge_TKGWV2_results
 
-module netrules:
-    snakefile: "00-netrules.smk"
-    config: config
-
-use rule download_TKGWV2_support_files from netrules
+#module netrules:
+#    snakefile: "00-netrules.smk"
+#    config: config
+#
+#use rule download_TKGWV2_support_files from netrules
 
 
 def TKGWV2_output(wildcards):
@@ -15,7 +15,7 @@ def TKGWV2_output(wildcards):
     """
     # Get the number of expected generations.
     gen_no = config['ped-sim']['replicates']
-    return expand("results/04-kinship/TKGWV2/ped{gen}/ped{gen}-TKGWV2_Results.txt", gen=gen_no)
+    return expand("results/04-kinship/TKGWV2/ped{gen}/ped{gen}-TKGWV2_Results.txt", gen=range(1,gen_no+1))
 
 
 def get_TKGWV2_input_bams(wildcards):

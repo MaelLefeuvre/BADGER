@@ -1,8 +1,3 @@
-from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
-
-HTTP = HTTPRemoteProvider()
-
-
 localrules: generate_bam_list
 
 # ------------------------------------------------------------------------------------------------------------------- #
@@ -58,11 +53,11 @@ rule plink_bfile_to_tped:
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 00. Download out variant callset.
 
-module netrules:
-    snakefile: "00-netrules.smk"
-    config: config
-
-use rule download_reich_1240K from netrules
+#module netrules:
+#    snakefile: "00-netrules.smk"
+#    config: config
+#
+#use rule download_reich_1240K from netrules
 
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 01. Generate a list of input BAM list for cohort variant calling (one list per pedigree).
