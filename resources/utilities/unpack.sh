@@ -114,7 +114,7 @@ function main() {
 	    unpack_pedigree "${OUT_DIR}"
 	    ;;
 	"variants")
-	    unpack_xz_file "${OUT_DIR}" "variants-intersect.ucscbed.xz"
+	    unpack_xz_file "${OUT_DIR}" "variants-intersect-[A-Z]{3}-maf[.0-9]+.ucscbed.xz"
     esac
 }
 

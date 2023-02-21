@@ -7,6 +7,7 @@ include: "rules/02-adna-simulations.smk"
 include: "rules/03-align-fastqs.smk"
 include: "rules/04-preprocess-bams.smk"
 include: "rules/05-variant-calling.smk"
+include: "rules/06-KIN.smk"
 include: "rules/06-READ.smk"
 include: "rules/06-grups-rs.smk"
 include: "rules/06-TKGWV2.smk"
@@ -19,21 +20,21 @@ wildcard_constraints:
     sample = "ped[0-9]{1,2}_[-gGbBiIsS0-9]+"
 
 # ---- Download dataset 
-module netrules:
-    snakefile: "rules/00-netrules.smk"
-    config: config
-use rule * from netrules
+#module netrules:
+#    snakefile: "rules/00-netrules.smk"
+#    config: config
+#use rule * from netrules
 
-rule fetch_data:
-    input:
-        expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
-        rules.fetch_samples_panel.output.panel,
-        rules.download_reference_genome.output.refgen.format(reference="Homo_sapiens.GRCh37.dna.primary_assembly"),
-        rules.download_HapMapII_recombination_map.output.map,
-        rules.fetch_sex_specific_recombination_map.output.gen_maps,
-        rules.fetch_interference_map.output.intf_map,
-        rules.download_reich_1240K.output.eigenstrat,
-        rules.download_TKGWV2_support_files.output.support_files,
+#rule fetch_data:
+#    input:
+#        expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
+#        rules.fetch_samples_panel.output.panel,
+#        rules.download_reference_genome.output.refgen.format(reference="Homo_sapiens.GRCh37.dna.primary_assembly"),
+#        rules.download_HapMapII_recombination_map.output.map,
+#        rules.fetch_sex_specific_recombination_map.output.gen_maps,
+#        rules.fetch_interference_map.output.intf_map,
+#        rules.download_reich_1240K.output.eigenstrat,
+#        rules.download_TKGWV2_support_files.output.support_files,
 
 # ---- Archive and compress results into a separate directory (see config.yml)
 #module archive_run:
@@ -48,6 +49,11 @@ rule meta:
     script: "scripts/print-meta.py"
 
 # ---- Kinship estimation tools
+rule KIN:
+    input:
+        rules.meta.output,
+        KIN_output
+
 rule READ:
     input: 
         rules.meta.output,
@@ -74,6 +80,7 @@ rule all:
     default_target: True
     input:
         rules.meta.output,
+        rules.KIN.input,
         rules.READ.input,
         rules.GRUPS.input,
         rules.TKGWV2.input

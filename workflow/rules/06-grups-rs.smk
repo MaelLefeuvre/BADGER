@@ -50,9 +50,10 @@ rule GRUPS_generate_fst_set:
     params:
         pedigree_pop = config["kinship"]["GRUPS"]["pedigree-pop"],
         contam_pop   = config["kinship"]["GRUPS"]["contam-pop"]
-    log: "logs/04-kinship/GRUPS/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.log"
-    conda: "../envs/grups-rs.yml"
-    threads: 22
+    log:       "logs/04-kinship/GRUPS/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.log"
+    benchmark: "benchmarks/04-kinship/GRUPS/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.tsv"
+    conda:     "../envs/grups-rs.yml"
+    threads:   22
     shell: """
         grups fst \
         --vcf-dir $(dirname {input.data} | uniq) \
@@ -110,8 +111,10 @@ rule run_GRUPS:
         maf          = config["kinship"]["GRUPS"]["maf"],
         q_error_rate = config["kinship"]["GRUPS"]["seq-error-rate"],
         seed         = format_seed
-    log: "logs/04-kinship/GRUPS/run_GRUPS/{generation}-run_GRUPS.log"
-    conda: "../envs/grups-rs.yml"
+    log:       "logs/04-kinship/GRUPS/run_GRUPS/{generation}-run_GRUPS.log"
+    benchmark: "benchmarks/04-kinship/GRUPS/run_GRUPS/{generation}-run_GRUPS.tsv"
+    conda:     "../envs/grups-rs.yml"
+    threads:   1
     shell: """
         grups pedigree-sims \
         --pileup {input.pileup} \

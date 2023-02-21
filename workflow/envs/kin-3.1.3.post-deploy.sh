@@ -11,4 +11,4 @@ pip3 install pypackage/kingaroo &&
 pip3 install pypackage/kin
 
 cd $CWD 
-rm ${TMP_SOURCE}
+rm -r ${TMP_SOURCE}

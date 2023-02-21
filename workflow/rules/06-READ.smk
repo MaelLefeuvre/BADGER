@@ -62,8 +62,10 @@ rule run_READ:
         norm_method = config["kinship"]["READ"]["norm-method"],
         norm_value  = get_READ_norm_value,
         basename    = lambda wildcards, input: splitext(input.tplink[0])[0],
-    conda: "../envs/READ.yml"
-    log: "logs/04-kinship/READ/run_READ/{generation}.log"
+    conda:     "../envs/READ.yml"
+    log:       "logs/04-kinship/READ/run_READ/{generation}.log"
+    benchmark: "benchmarks/04-kinship/READ/run_READ/{generation}.tsv"
+    threads:   1
     shell: """
         cwd=$(pwd)
         cd $(dirname {output.results})               2>  $cwd/{log}

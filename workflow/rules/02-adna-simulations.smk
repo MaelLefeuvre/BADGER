@@ -243,8 +243,8 @@ rule run_gargammel:
         human_contamination     = find_contaminant,
         bacterial_contamination = rules.fetch_bacterial_contamination.output.fasta_dir,
     output:
-        forwd = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_s1.fq.gz"),
-        revrs = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_s2.fq.gz"),
+        forwd = "results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_s1.fq.gz",
+        revrs = "results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_s2.fq.gz",
         a     = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_a.fa.gz"),
         b     = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}.b.fa.gz"),
         c     = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}.c.fa.gz"),

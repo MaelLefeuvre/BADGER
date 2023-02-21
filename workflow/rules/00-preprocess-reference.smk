@@ -12,6 +12,7 @@ rule samtools_faidx:
         fasta = "{directory}/{fasta}.fa"
     output:
         fai   = "{directory}/{fasta}.fa.fai"
+    log:   "logs/generics/{directory}/samtools_faidx-{fasta}.log"
     conda: "../envs/samtools-1.15.yml"
     shell: """
         samtools faidx {input.fasta} --fai-idx {output.fai}

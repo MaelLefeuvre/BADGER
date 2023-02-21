@@ -13,7 +13,7 @@ archive:
   compress-level: 9
 
 ped-sim:
-  replicates:                10
+  replicates:                1
   filter-indels:             False
   filter-maf:                False
   filter-maf-threshold:      0.05
@@ -87,6 +87,8 @@ preprocess:
 
 variant-calling:
   caller:                    "pileupCaller"    # ANGSD || pileupCaller
+  maf:                       0.00
+  maf-superpop:              "EUR"             # AFR | AMR | EAS | EUR | SAS
   pileup:
     disable-BAQ:             True              # True || False
     min-BQ:                  20
@@ -124,3 +126,9 @@ kinship:
     min-BQ:                  30
     min-MQ:                  20
     min-depth:               1
+  KIN:
+    interval:                10000000
+    p0-threshold:            10
+    roh-threshold:           ~                # (ignored if None)
+    diversity-parameter:     ~                # (ignored if None)
+    noisy-windows:           ~                # (ignored if None)

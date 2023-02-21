@@ -12,9 +12,10 @@ rule tabix_vcf:
     Index a generic .vcf[.gz] file.
     """
     input:
-        vcf = "{vcf}"
+        vcf = "{directory}/{vcf}"
     output:
-        tbi = "{vcf}.tbi"
+        tbi = "{directory}/{vcf}.tbi"
+    log:   "logs/generics/{directory}/tabix_vcf-{vcf}.log"
     conda: "../envs/bcftools-1.15.yml"
     shell: """
         tabix {input.vcf}

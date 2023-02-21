@@ -24,8 +24,9 @@ rule eigenstrat_to_UCSC_BED:
         snp = "{directory}/{eigenstrat}.snp"
     output:
         bed = "{directory}/{eigenstrat}.ucscbed"
+    log:   "logs/generics/{directory}/eigenstrat_to_UCSC_BED-{eigenstrat}.log"
     shell: """
-        awk '{{print $2, $4-1, $4}}' {input.snp} > {output.bed}
+        awk 'BEGIN{{OFS="\t"}}{{print $2, $4-1, $4, $5, $6}}' {input.snp} > {output.bed}
     """
 
 
@@ -39,7 +40,7 @@ rule plink_bfile_to_tped:
         tplink = multiext("{directory}/{file}", ".tped", ".tfam") 
     params:
         basename = "{directory}/{file}"
-    log:   "logs/03-variant-calling/plink_bfile_to_tped/{directory}/{file}.log"
+    log:   "logs/generics/{directory}/plink_bfile_to_tped-{file}.log"
     conda: "../envs/plink-1.9.yml"
     shell: """
         plink \
@@ -76,8 +77,8 @@ def get_pileup_input_bams(wildcards):
         case "mapdamage":
             print("NOTE: Using MapDamage rescaled bams for variant calling.", file=sys.stderr)
             return expand(
-                "results/02-preprocess/06-mapdamage/{sample_id}/{sample_id}.srt.rmdup.rescaled.bam",
-                sample_id = samples_ids,
+                "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
+                sample = samples_ids,
             )
         case "pmdtools":
             print("NOTE: Using PMDTools rescaled bams for variant calling.", file=sys.stderr)
@@ -90,7 +91,7 @@ def get_pileup_input_bams(wildcards):
             print("WARNING: Skipping PMD Rescaling for variant calling!", file=sys.stderr)
             return expand(
                 define_dedup_input_bam(wildcards),
-                sample_id= samples_ids
+                sample = samples_ids
             )
     raise RuntimeError(f'Invalid rescaler value "{rescaler}')
 
@@ -131,17 +132,26 @@ rule get_target_panel_intersect:
       targeting the B set when n(A∩B) < n(B) would cause a drastic decrease in observed average heterozygocity.
 
     - This rule is made to ensure n(B) == n(A∩B), at the cost of loosing target coverage.
+
+    MAF support: wildcards 'maf' and 'superpop' respectively represent the requested minor allele frequency and
+    the **super**-population on which this frequency is computed.
+    - Uses the 1000g {POP}_AF annotations, which are kept in ped-sim's output vcf.
+    - Mainly intended for lcMLkin (?).
     """
     input:
         ped_vcf = multiext(rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
         targets = os.path.splitext(config["kinship"]["targets"])[0] + ".ucscbed",
     output:
-        targets = "results/03-variant-calling/00-panel/variants-intersect.ucscbed"
-    log:   "logs/03-variant-calling/get_target_panel_intersect.log"
-    conda: "../envs/bcftools-1.15.yml"
+        targets = "results/03-variant-calling/00-panel/variants-intersect-{superpop}_maf{maf}.ucscbed"
+    params:
+        exclude = lambda w: f"{w.superpop}_AF<{w.maf} || {w.superpop}_AF>{1-float(w.maf)}"
+    log:       "logs/03-variant-calling/00-panel/get_target_panel_intersect-{superpop}-maf{maf}.log"
+    benchmark: "benchmarks/03-variant-calling/00-panel/get_target_panel_intersect-{superpop}-maf{maf}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    threads:   4
     shell: """
-        bcftools view -H -R <(awk 'BEGIN{{OFS="\t"}}{{print $1, $3}}' {input.targets}) {input.ped_vcf} \
-        | awk 'BEGIN{{OFS=" "}}{{print $1, $2-1, $2}}' \
+        bcftools view --threads {threads} -H -v snps -R {input.targets} -e '{params.exclude}' {input.ped_vcf} \
+        | awk 'BEGIN{{OFS="\t"}}{{print $1, $2-1, $2, $4, $5}}' \
         > {output.targets} 2> {log}
     """
 
@@ -151,7 +161,10 @@ rule samtools_pileup:
     """
     input:
         bamlist   = rules.generate_bam_list.output.bamlist,
-        targets   = rules.get_target_panel_intersect.output.targets,
+        targets   = expand(rules.get_target_panel_intersect.output.targets, 
+            maf      = config['variant-calling']['maf'],
+            superpop = config['variant-calling']['maf-superpop'],
+        ),
         reference = config["reference"],
         fai       = config["reference"] + ".fai",
     output:
@@ -160,16 +173,19 @@ rule samtools_pileup:
         min_MQ    = config['variant-calling']['pileup']['min-MQ'],
         min_BQ    = config['variant-calling']['pileup']['min-BQ'],
         optargs   = get_samtools_optargs
-    log:   "logs/03-variant-calling/samtools_pileup/{generation}.log"
-    conda: "../envs/samtools-1.15.yml"
+    log:       "logs/03-variant-calling/samtools_pileup/{generation}.log"
+    benchmark: "benchmarks/03-variant-calling/samtools_pileup/{generation}.tsv"
+    conda:     "../envs/samtools-1.15.yml"
     shell: """
-        samtools mpileup \
+        (samtools mpileup \
         -R {params.optargs} \
         -q {params.min_MQ} \
         -Q {params.min_BQ} \
         -l {input.targets} \
         -f {input.reference} \
-        -b {input.bamlist} | LC_ALL=C sort -k1,1n -k2,2n > {output.pileup} 2> {log}
+        -b {input.bamlist} \
+        | LC_ALL=C sort -k1,1n -k2,2n \
+        )> {output.pileup} 2> {log}
         """
 
 
@@ -212,13 +228,14 @@ rule pileup_caller:
         plink             = multiext("results/03-variant-calling/02-pileupCaller/{generation}/{generation}", ".bed", ".bim", ".fam"),
         sample_names_file = "results/03-variant-calling/02-pileupCaller/{generation}/{generation}-names.txt"
     params:
-        basename          = "results/03-variant-calling/02-pileupCaller/{generation}/{generation}",
+        basename          = lambda wildcards, output: os.path.splitext(output.plink[0])[0],
         optargs           = parse_pileup_caller_flags,
         min_depth         = config['variant-calling']["pileupCaller"]["min-depth"],
         seed              = config['variant-calling']['pileupCaller']["seed"],
         sample_names      = lambda wildcards: expand(get_samples_ids(wildcards), generation = wildcards.generation)
-    log:   "logs/03-variant-calling/pileup_caller/{generation}.log"
-    conda: "../envs/sequencetools-1.5.2.yml"
+    log:       "logs/03-variant-calling/pileup_caller/{generation}.log"
+    benchmark: "benchmarks/03-variant-calling/pileup_caller/{generation}.tsv"
+    conda:     "../envs/sequencetools-1.5.2.yml"
     shell: """
         echo {params.sample_names} | tr ' ' '\n' > {output.sample_names_file}
 
@@ -246,10 +263,11 @@ rule ANGSD_random_haploid:
     output:
         haplos    = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.haplo.gz"
     params:
-        out       = "results/03-variant-calling/02-ANGSD/{generation}/{generation}"
-    log:   "logs/03-variant-calling/ANGSD_random_haploid/{generation}.log"
-    threads: 4
-    priority: 15
+        out       = lambda wildcards, output: os.path.splitext(output.haplos)[0]
+    log:       "logs/03-variant-calling/ANGSD_random_haploid/{generation}.log"
+    benchmark: "benchmarks/03-variant-calling/ANGSD_random_haploid/{generation}.tsv"
+    threads:   4
+    priority:  15
     conda: "../envs/angsd-0.939.yml"
     shell: """
         angsd -pileup {input.pileup} \
@@ -271,16 +289,17 @@ rule ANGSD_haplo_to_plink:
         haplos  = rules.ANGSD_random_haploid.output.haplos,
         bamlist = rules.generate_bam_list.output.bamlist 
     output:
-        tped = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.tped",
-        tfam = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.tfam",
+        tped    = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.tped",
+        tfam    = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.tfam",
     params:
-        outputname = "results/03-variant-calling/02-ANGSD/{generation}/{generation}"
-    log:   "logs/03-variant-calling/ANGSD_haplo_to_plink/{generation}.log"
-    conda: "../envs/angsd-0.939.yml"
-    priority: 15
+        out     = lambda wildcards, output: os.path.splitext(output.tped)[0]
+    log:       "logs/03-variant-calling/ANGSD_haplo_to_plink/{generation}.log"
+    benchmark: "benchmarks/03-variant-calling/ANGSD_haplo_to_plink/{generation}.tsv"
+    conda:     "../envs/angsd-0.939.yml"
+    priority:  15
     shell: """
-        haploToPlink {input.haplos} {params.outputname} 2>  {log}
-        sed -i 's/N/0/g' {output.tped}                  2>> {log}
+        haploToPlink {input.haplos} {params.out} 2>  {log}
+        sed -i 's/N/0/g' {output.tped}           2>> {log}
         cat {input.bamlist} \
         | xargs basename -a \
         | grep -oP '^[^.]+(?=(\.[^.]+)*(\.bam$))' \

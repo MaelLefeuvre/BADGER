@@ -86,8 +86,9 @@ rule sam_to_tmp_bam:
         sam = "{directory}/{file}.sam"
     output:
         bam = temp("{directory}/{file}.tmp-bam")
-    threads: 1
+    log:     "logs/generics/{directory}/sam_to_tmp_bam-{file}.log"
     conda:   "../envs/samtools-1.15.yml"
+    threads: 1
     shell: """
         samtools view -@ {threads} -OBAM {input.sam} > {output.bam}
     """

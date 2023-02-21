@@ -68,8 +68,10 @@ rule TKGWV2_downsample_bam:
         workdir     = lambda wildcards, output: dirname(output.pairA),
         downsampleN = config['kinship']['TKGWV2']['downsample-N'],
         seed        = TKGWV2_downsample_seed,
-    log: "logs/04-kinship/TKGWV2/TKGWV2_downsample_bam/ped{gen}/{pairA}_{pairB}.log"
-    conda: "../envs/TKGWV2.yml"
+    log:       "logs/04-kinship/TKGWV2/TKGWV2_downsample_bam/ped{gen}/{pairA}_{pairB}.log"
+    benchmark: "benchmarks/04-kinship/TKGWV2/TKGWV2_downsample_bam/ped{gen}/{pairA}_{pairB}.tsv"
+    conda:     "../envs/TKGWV2.yml"
+    threads:   1
     shell: """
         root_dir=`pwd`                                                   # Keep current dir in memory.
         ln -sfrt {params.workdir} {input.pairs} >  $root_dir/{log}       # temporary symlink
@@ -119,14 +121,16 @@ rule run_TKGWV2:
             "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.pileupsamtools.gwv.txt",
             "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.pileupsamtools.gwv.txt"
         ],
-    conda: "../envs/TKGWV2.yml"
     params:
         plink_basename = lambda wildcards, input: splitext(input.plink_targets[0])[0],
         min_MQ     = config["kinship"]["TKGWV2"]["min-MQ"],
         min_BQ     = config["kinship"]["TKGWV2"]["min-BQ"],
         min_depth  = config["kinship"]["TKGWV2"]["min-depth"],
         bam_ext    = lambda wildcards, input: basename(input.bams[0]).split(".",1)[1]
-    log: "logs/04-kinship/TKGWV2/run_TKGWV2/ped{gen}/{pairA}_{pairB}.log"
+    log:       "logs/04-kinship/TKGWV2/run_TKGWV2/ped{gen}/{pairA}_{pairB}.log"
+    benchmark: "benchmarks/04-kinship/TKGWV2/run_TKGWV2/ped{gen}/{pairA}_{pairB}.tsv"
+    conda: "../envs/TKGWV2.yml"
+    threads:   1
     shell: """
         base_dir=`pwd`                                     # Keep a record of the base directory
         cd $(dirname {output.results}) 2> $base_dir/{log}  # Go into the results directory

@@ -42,7 +42,8 @@ rule archive_config_file:
             archive_dir = config['archive']['archive-dir'],
             file       = "config/config.yml"
         )),
-    log: "logs/07-archive/run{run}/archive_pipeline_metadata.log"
+    log:       "logs/07-archive/run{run}/archive_pipeline_metadata.log"
+    threads:   1
     shell: """
         cp {input.config_file} {output.archive} > {log} 2>&1
 
@@ -52,6 +53,9 @@ rule archive_config_file:
 
 
 rule archive_pipeline_metadata:
+    """
+    Archive the global pipeline metadata file (containing backup seeds + commit hashes.)
+    """
     input:
         metadata = "results/meta/pipeline-metadata.yml"
     output:
@@ -63,7 +67,9 @@ rule archive_pipeline_metadata:
             archive_dir = config['archive']['archive-dir'],
             file       = "results/meta/pipeline-metadata.yml"
         )),
-    log: "logs/07-archive/run{run}/archive_pipeline_metadata.log"
+    log:       "logs/07-archive/run{run}/archive_pipeline_metadata.log"
+    benchmark: "benchmarks/07-archive/run{run}/archive_pipeline_metadata.tsv"
+    threads:   1
     shell: """
         cp {input.metadata} {output.archive} > {log} 2>&1
 
@@ -72,6 +78,9 @@ rule archive_pipeline_metadata:
     """
 
 rule archive_ped_sim_vcf:
+    """
+    Archive ped-sim's pedigree simulations vcf for the entire run. Compressed in lzma1
+    """
     input:
         merged_vcf = rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop'])
     output:
@@ -86,8 +95,9 @@ rule archive_ped_sim_vcf:
     params:
         target_directory = os.path.dirname(rules.dopplegang_twins.output.merged_vcf),
         compress_level=config['archive']['compress-level']
-    log: "logs/07-archive/run{run}/archive_ped_sim_vcf.log"
-    threads: 16
+    log:       "logs/07-archive/run{run}/archive_ped_sim_vcf.log"
+    benchmark: "benchmarks/07-archive/run{run}/archive_ped_sim_vcf.tsv"
+    threads:   16
     shell: """
         XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {params.target_directory} > {log} 2>&1 
 
@@ -118,9 +128,10 @@ rule archive_pedigree_bams:
         opts = "seqs_per_slice=100000,level={level},use_lzma,use_fqz,use_arith".format(
             level=config['archive']['compress-level']
         )
-    log: "logs/07-archive/run{run}/ped{gen}/archive_pedigree_bams.log"
-    conda: "../envs/samtools-1.15.yml"
-    threads: 16
+    log:       "logs/07-archive/run{run}/ped{gen}/archive_pedigree_bams.log"
+    benchmark: "benchmarks/07-archive/run{run}/ped{gen}/archive_pedigree_bams.tsv"
+    conda:     "../envs/samtools-1.15.yml"
+    threads:   16
     shell: """
         THREADS=`echo {threads}/2 | bc`
         samtools merge -@ ${{THREADS}} -o - {input.bams} | samtools view -@ ${{THREADS}} -OCRAM -T {input.reference} --output-fmt-option {params.opts} > {output.cram} 2> {log}
@@ -131,22 +142,26 @@ rule archive_pedigree_bams:
 
 
 rule archive_variant_callset:
+    """
+    Archive this run's interset panel.
+    """
     input:
-        panel = rules.get_target_panel_intersect.output.targets
+        panel = rules.samtools_pileup.input.targets
 
     output:
         archive = protected("{archive_dir}/run-{{run}}/{panel}.xz".format(
             archive_dir = config['archive']['archive-dir'],
-            panel       = rules.get_target_panel_intersect.output.targets
+            panel       = rules.samtools_pileup.input.targets
         )),
         checksum = protected("{archive_dir}/run-{{run}}/{panel}.md5sum".format(
             archive_dir = config['archive']['archive-dir'],
-            panel       = rules.get_target_panel_intersect.output.targets
+            panel       = rules.samtools_pileup.input.targets
         )),
     params:
         compress_level=config['archive']['compress-level']
-    log: "logs/07-archive/run{run}/archive_variant_callset.log"
-    threads: 4
+    log:       "logs/07-archive/run{run}/archive_variant_callset.log"
+    benchmark: "benchmarks/07-archive/run{run}/archive_variant_callset.tsv"
+    threads:   4
     shell: """
         xz -zc -{params.compress_level} -e -T {threads} {input.panel} > {output.archive} 2> {log} 2>&1 
 
@@ -155,6 +170,9 @@ rule archive_variant_callset:
     """
 
 rule archive_contaminants:
+    """
+    Archive this run's contamination table (assigning 1000g sample-ids for each pedigree.)
+    """
     input:
         contaminants = rules.get_contamination_table.output.cont_table
     output:
@@ -166,7 +184,8 @@ rule archive_contaminants:
             archive_dir = config['archive']['archive-dir'],
             file       = rules.get_contamination_table.output.cont_table
         )),
-    log: "logs/07-archive/run{run}/archive_contaminants.log"
+    log:       "logs/07-archive/run{run}/archive_contaminants.log"
+    threads:   1
     shell: """
         cp {input.contaminants} {output.archive} > {log} 2>&1
 
@@ -185,6 +204,9 @@ def make_snakemake_happy_with_READ_checkpoint(wildcards):
         ]
 
 rule archive_READ_results:
+    """
+    Create a generation-wise archive of READ's result. Results are compressed in lzma format.
+    """
     input:
         results = make_snakemake_happy_with_READ_checkpoint,
         #results  = [
@@ -205,8 +227,9 @@ rule archive_READ_results:
     params:
         target_directory = "results/04-kinship/READ/{generation}",
         compress_level=config['archive']['compress-level']
-    log: "logs/07-archive/run{run}/{generation}/archive_READ_results.log"
-    threads: 4
+    log:       "logs/07-archive/run{run}/{generation}/archive_READ_results.log"
+    benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_READ_results.tsv"
+    threads:   4
     shell: """
         XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {params.target_directory} > {log} 2>&1 
 
@@ -220,6 +243,9 @@ def make_snakemake_happy_with_GRUPS_checkpoint(wildcards):
         return rules.run_GRUPS.output.output_dir
 
 rule archive_GRUPS_results:
+    """
+    Create a generation-wise archive of GRUPS-rs' result. Results are compressed in lzma format.
+    """
     input:
         results_dir = make_snakemake_happy_with_GRUPS_checkpoint
         #results_dir = "results/04-kinship/GRUPS/{generation}/{generation}.results",
@@ -235,34 +261,67 @@ rule archive_GRUPS_results:
     params:
         target_directory = "results/04-kinship/GRUPS/{generation}",
         compress_level   = config['archive']['compress-level']
-    log: "logs/07-archive/run{run}/{generation}/archive_GRUPS_results.log"
-    threads: 4
+    log:       "logs/07-archive/run{run}/{generation}/archive_GRUPS_results.log"
+    benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_GRUPS_results.tsv"
+    threads:   4
     shell: """
         XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {params.target_directory} > {log} 2>&1 
 
-        # store checksums in metadata file yaml-like format.
-        find {params.target_directory} -type f -exec md5sum {{}} \; > {output.checksum} 2>> {log}
+        # Store checksums in metadata file yaml-like format. Skip hidden files
+        find {params.target_directory} -type f -not -path '*/.*' -exec md5sum {{}} \; > {output.checksum} 2>> {log}
     """
 
 
 rule archive_TKGWV2_results:
+    """
+    Create a generation-wise archive of TKGWV2' merged result.
+    """
     input:
         results = rules.merge_TKGWV2_results.output.result
     output:
         archive = protected("{archive_dir}/run-{{run}}/{file}".format(
             archive_dir = config['archive']['archive-dir'],
-            file       = rules.merge_TKGWV2_results.output.result
+            file        = rules.merge_TKGWV2_results.output.result
         )),
         checksum = protected("{archive_dir}/run-{{run}}/{file}.md5sum".format(
             archive_dir = config['archive']['archive-dir'],
-            file       = rules.merge_TKGWV2_results.output.result
+            file        = rules.merge_TKGWV2_results.output.result
         )),
-    log: "logs/07-archive/run{run}/ped{gen}/archive_TKGWV2_results.log"
+    log:     "logs/07-archive/run{run}/ped{gen}/archive_TKGWV2_results.log"
+    threads: 1
     shell: """
         cp {input.results} {output.archive} > {log} 2>&1
 
         # store checksums in metadata file yaml-like format.
         md5sum {input.results} > {output.checksum} 2>> {log}
+    """
+
+rule archive_KIN_results:
+    """
+    Create a generation-wise archive of KIN's result. Results are compressed in lzma format.
+    Note that MD5 checksums are only computed for files located 1-level deep in the results directory.
+    """
+    input:
+        results = rules.run_KIN.output.kin_results
+    output:
+        archive = protected("{archive_dir}/run-{{run}}/{KIN_dir}.tar.xz".format(
+            archive_dir = config['archive']['archive-dir'],
+            KIN_dir     = rules.run_KIN.output.kin_results
+        )),
+        checksum = protected("{archive_dir}/run-{{run}}/{KIN_dir}.md5sums".format(
+            archive_dir = config['archive']['archive-dir'],
+            KIN_dir     = rules.run_KIN.output.kin_results
+        ))
+    params:
+        compress_level  = config['archive']['compress-level']
+    log:       "logs/07-archive/run{run}/{generation}/archive_KIN_results.log"
+    benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_KIN_results.tsv"
+    threads:   4
+    shell: """
+        XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {input.results} > {log} 2>&1 
+
+        # Store checksums in metadata file yaml-like format. Skip hidden files & subdirectories (so many files...)
+        find {input.results} -type f -not -path '*/.*' -maxdepth 1 -exec md5sum {{}} \; > {output.checksum} 2>> {log}
     """
 
 rule check_duplicate_archives:
@@ -295,6 +354,12 @@ rule check_duplicate_archives:
         # ---- Variant calling callset.
         callset_checksum = rules.archive_variant_callset.output.checksum,
 
+        # ---- KIN results callset.
+        KIN_checksums = expand(rules.archive_KIN_results.output.checksum,
+            generation    = ["ped" + str(rep) for rep in range(1, config['ped-sim']['replicates'] + 1)],
+            run = "{run}"
+        ),
+
         # ---- READ results callset.
         READ_checksums = expand(rules.archive_READ_results.output.checksum,
             generation    = ["ped" + str(rep) for rep in range(1, config['ped-sim']['replicates'] + 1)],
@@ -314,6 +379,8 @@ rule check_duplicate_archives:
         ),
     output:
         metadata = temp(touch(f"{config['archive']['archive-dir']}/run-{{run}}-check_duplicate_archives.done"))
+    log:     "logs/07-archive/run{run}/check_duplicate_archives.log"
+    threads: 1 
     run:
         import sys
         import yaml
@@ -346,6 +413,7 @@ rule check_duplicate_archives:
                 "ped-sim"         : dict(),
                 "variant-callset" : dict(),
                 "contaminants"    : dict(),
+                "KIN"             : dict(),
                 "READ"            : dict(),
                 "GRUPS"           : dict(),
                 "TKGWV2"          : dict(),
@@ -376,12 +444,16 @@ rule check_duplicate_archives:
         # Extend our global checksum file w/ the variant callset of this run.
         extend_checksums(global_checksums, input.callset_checksum, run_key, "variant-callset")
 
+        # Extend our global checksum file w/ each pedigree's KIN result.
+        for checksum in input.KIN_checksums:
+            extend_checksums(global_checksums, checksum, run_key, "KIN")
+
         # Extend our global checksum file w/ each pedigree's READ result.
         for checksum in input.READ_checksums:
             extend_checksums(global_checksums, checksum, run_key, "READ")
 
         # Extend our global checksum file w/ each pedigree's GRUPS result.
-        for checksum in input.READ_checksums:
+        for checksum in input.GRUPS_checksums:
             extend_checksums(global_checksums, checksum, run_key, "GRUPS")
 
         # Extend our global checksum file w/ each pedigree's GRUPS result.
