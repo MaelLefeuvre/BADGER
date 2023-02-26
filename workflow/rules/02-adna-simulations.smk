@@ -58,8 +58,12 @@ checkpoint get_contamination_table:
         cont_table    = "results/01-gargammel/contaminants/contaminants.tsv",
     params:
         cont          = get_contaminants
-    log: "logs/01-gargammel/get_contamination_table.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:      "logs/01-gargammel/get_contamination_table.log"
+    conda:    "../envs/coreutils-9.1.yml"
     priority: 99
+    threads:  1 
     shell: """
         echo {params.cont} | awk 'BEGIN{{RS=\" \"}}{{print \"ped\"NR, $1}}' > {output.cont_table}
     """
@@ -87,12 +91,17 @@ rule create_human_contamination:
         hap2 = temp("results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo2.fasta")
     params:
         exclude = 'ALT~"<CN[0-9].*>"||ALT~"<INS:.*>" || ALT~"<INV>"'
+    resources:
+        runtime = 10,
+        mem_mb  = 128,
+        cores   = lambda w, threads: threads
     log: 
         hap1 = "logs/01-gargammel/create_human_contamination/{cont}_chr{chr}_haplo1.log",
         hap2 = "logs/01-gargammel/create_human_contamination/{cont}_chr{chr}_haplo2.log"
-    threads: 2
-    priority: 99
-    conda: "../envs/bcftools-1.15.yml"
+    benchmark: "benchmarks/01-gargammel/create_human_contamination/{cont}_chr{chr}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    priority:  99
+    threads:   2
     shell: """
     bcftools consensus -e '{params.exclude}' -H 1 -f {input.chr_ref} --sample {wildcards.cont} {input.vcf} -o {output.hap1} 2> {log.hap1} \
     & \
@@ -115,7 +124,11 @@ rule fetch_bacterial_contamination:
     params:
         url = "https://www.dropbox.com/s/obmr48d72ahjvhp/clovis.tar.gz?dl=1"
         #url = "https://www.dropbox.com/s/1pdbqbguw0jfzib/k14.tar.gz?dl=1"
-    log: "logs/01-gargammel/fetch_bacterial_contamination.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:     "logs/01-gargammel/fetch_bacterial_contamination.log"
+    conda:   "../envs/coreutils-9.1.yml"
+    threads: 1
     shell: """
         root_dir=$(pwd)
         cd {output.out_dir} > {log} 2>&1 
@@ -144,9 +157,15 @@ rule get_consensus:
         hap2 = temp("results/01-gargammel/{sample}/{chr}/endo/{sample}_chr{chr}_haplo2.fasta"),
     params:
         exclude = 'ALT~"<CN[0-9].*>"||ALT~"<INS:.*>" || ALT~"<INV>"'
+    resources:
+        runtime = 10,
+        mem_mb  = 128,
+        cores   = lambda w, threads: threads
     log: 
-        hap1 = "logs/01-gargammel/get_consensus/{sample}_chr{chr}_haplo1.log",
-        hap2 = "logs/01-gargammel/get_consensus/{sample}_chr{chr}_haplo2.log"
+        hap1 = "logs/01-gargammel/get_consensus/{sample}-chr{chr}_haplo1.log",
+        hap2 = "logs/01-gargammel/get_consensus/{sample}-chr{chr}_haplo2.log"
+    benchmark: "benchmarks/01-gargammel/get_consensus/{sample}-chr{chr}_haplo1.tsv",
+    conda:     "../envs/bcftools-1.15.yml"
     group: "scatter"
     threads: 2
     shell: """
@@ -260,11 +279,16 @@ rule run_gargammel:
         misincorporation = get_pmd_model,
         output_base_name = "results/01-gargammel/{sample}/{chr}",
         input_directory  = directory("results/01-gargammel/{sample}/{chr}"),
-    log: "logs/01-gargammel/run_gargammel/{sample}_chr{chr}.log"
-    group: "scatter"
-    conda: "../envs/gargammel-1.1.2.yml"
-    threads: 1
-    priority: 2
+    resources:
+        runtime = 10,
+        mem_mb  = 128, 
+        cores   = lambda w, threads: threads
+    log:       "logs/01-gargammel/run_gargammel/{sample}_chr{chr}.log"
+    benchmark: "benchmarks/01-gargammel/run_gargammel/{sample}_chr{chr}.tsv"
+    conda:     "../envs/gargammel-1.1.2.yml"
+    group:     "scatter"
+    priority:  2
+    threads:   1
     shell: """
         mkdir -p {params.output_base_name}/cont                             >  {log} 2>&1
         ln -sfrt {params.output_base_name}/cont {input.human_contamination} >> {log} 2>&1
@@ -307,7 +331,10 @@ rule run_dwgsim:
         coverage   = config['gargammel']['coverage'],
         output_dir = "results/01-gargammel/{sample}/{chr}/",
         seed       = set_dwgsim_seed
-    log: "logs/01-gargammel/run_dwgsim/{sample}_chr{chr}.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/01-gargammel/run_dwgsim/{sample}_chr{chr}.log"
+    benchmark: "benchmarks/01-gargammel/run_dwgsim/{sample}_chr{chr}.log"
     conda: "../envs/dwgsim-1.1.13.yml"
     threads: 2
     shell: """
@@ -334,9 +361,15 @@ rule merge_chromosomes:
     log: 
         forwd = "logs/01-gargammel/merge_chromosomes/{sample}_s1.log",
         revrs = "logs/01-gargammel/merge_chromosomes/{sample}_s2.log"
-    group: "scatter"
-    priority: 3
-    threads: 2
+    resources:
+        runtime = 10,
+        mem_mb  = 128, 
+        cores   = lambda w, threads: threads
+    benchmark: "benchmarks/01-gargammel/merge_chromosomes/{sample}.tsv"
+    conda:     "../envs/coreutils-9.1.yml"
+    group:     "scatter"
+    priority:  3
+    threads:   2
     shell: """
         zcat {input.forwd} | gzip > {output.forwd} 2> {log.forwd}
         zcat {input.revrs} | gzip > {output.revrs} 2> {log.revrs}

@@ -12,8 +12,12 @@ rule samtools_faidx:
         fasta = "{directory}/{fasta}.fa"
     output:
         fai   = "{directory}/{fasta}.fa.fai"
-    log:   "logs/generics/{directory}/samtools_faidx-{fasta}.log"
-    conda: "../envs/samtools-1.15.yml"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/generics/{directory}/samtools_faidx-{fasta}.log"
+    benchmark: "benchmarks/generics/{directory}/samtools_faidx-{fasta}.tsv"
+    conda:     "../envs/samtools-1.15.yml"
+    threads:   1
     shell: """
         samtools faidx {input.fasta} --fai-idx {output.fai}
     """
@@ -42,7 +46,12 @@ rule decompress_reference_genome:
         refgen = "data/refgen/GRCh37/{reference}.fa.gz"
     output:
         refgen = protected("data/refgen/GRCh37/{reference}.fa")
-    log: "logs/00-preprocess-reference/decompress_reference_genome/{reference}.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-reference/decompress_reference_genome/{reference}.log"
+    benchmark: "benchmarks/00-preprocess-reference/decompress_reference_genome/{reference}.tsv"
+    conda:     "../envs/coreutils-9.1.yml"
+    threads:   1
     shell: """
         gunzip -v {input.refgen} > {log} 2>&1
     """
@@ -59,15 +68,19 @@ rule index_reference_genome:
         refgen = config["reference"]
     output:
         amb = config["reference"] + ".amb",
-	    ann = config["reference"] + ".ann",
-	    bwt = config["reference"] + ".bwt",
-	    pac = config["reference"] + ".pac",
-	    sa  = config["reference"] + ".sa",
-    conda: "../envs/bwa-0.7.17.yml"
-    log: "logs/00-preprocess-reference/index_reference_genome.log"
+        ann = config["reference"] + ".ann",
+        bwt = config["reference"] + ".bwt",
+        pac = config["reference"] + ".pac",
+        sa  = config["reference"] + ".sa"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-reference/index_reference_genome.log"
+    benchmark: "benchmarks/00-preprocess-reference/index_reference_genome.tsv"
+    conda:     "../envs/bwa-0.7.17.yml"
+    threads:   1
     shell: """
-	    bwa index {input.refgen} >2 {log}
-	"""
+        bwa index {input.refgen} >2 {log}
+    """
 
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 03. Split the reference genome on a per-chromosome basis
@@ -80,7 +93,12 @@ rule split_reference_genome:
         refgen   = config["reference"]
     output:
         splitted = expand("data/refgen/GRCh37/splitted/{chr}.fasta", chr=range(1,23))
-    log: "logs/00-preprocess-reference/split_reference_genome.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-reference/split_reference_genome.log"
+    benchmark: "benchmarks/00-preprocess-reference/split_reference_genome.tsv"
+    conda:     "../envs/coreutils-9.1.yml"
+    threads:   1
     shell: """
         curr_wd=`pwd`
         cd $(dirname {output.splitted[0]}) 2> {log}
@@ -88,5 +106,5 @@ rule split_reference_genome:
         for i in xx* ; do                                  \
             n=$(sed 's/>// ; s/ .*// ; 1q' "$i") ;         \
             mv "$i" "$n.fasta" ;                           \
-        done 2>> {log}
+        done 2>> $curr_wd/{log}
     """

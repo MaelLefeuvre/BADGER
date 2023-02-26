@@ -23,7 +23,10 @@ rule download_1000_genomes:
         ))
     output:
         vcf = "data/vcf/1000g-phase3/00-original/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
-    log: "logs/00-FTP/download_1000_genomes/download_1000_genomes-chr{chr}.log"
+    log: "logs/00-netrules/download_1000_genomes/download_1000_genomes-chr{chr}.log"
+    resources:
+        cores=lambda w, threads: threads
+    threads: 1
     shell: """
         mv {input.vcf} {output.vcf} 2> {log}
     """
@@ -36,7 +39,10 @@ rule fetch_samples_panel:
         panel = FTP.remote("ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel")
     output:
         panel = "data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.ALL.panel"
-    log: "logs/00-FTP/fetch_samples_panel.log"
+    log: "logs/00-netrules/fetch_samples_panel.log"
+    resources:
+        cores=lambda w, threads: threads
+    threads: 1
     shell: """
         mv {input.panel} {output.panel} > {log} 2>&1
     """
@@ -54,7 +60,10 @@ rule download_reich_1240K:
         eigenstrat = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".snp", ".ind", ".geno")
     params:
         output_dir = lambda wildcards, output: dirname(output.eigenstrat[0])
-    log: "logs/00-FTP/download_reich_1240K.log"
+    resources:
+        cores=lambda w, threads: threads
+    log: "logs/00-netrules/download_reich_1240K.log"
+    threads: 1
     shell:"""
         tar -xvf {input.tarball} -C {params.output_dir} 2> {log}
     """
@@ -71,7 +80,10 @@ rule download_reference_genome:
         refgen = FTP.remote("ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/{reference}.fa.gz")
     output:
         refgen = "data/refgen/GRCh37/{reference}.fa.gz"
-    log: "logs/00-FTP/download_reference_genome/{reference}.log"
+    resources:
+        cores=lambda w, threads: threads
+    log: "logs/00-netrules/download_reference_genome/{reference}.log"
+    threads: 1
     shell: """
         mv {input.refgen} {output.refgen}
     """
@@ -92,7 +104,10 @@ rule download_HapMapII_recombination_map:
         readme  = temp("data/recombination-maps/HapMapII_GRCh37/README.txt")
     params:
         output_dir = lambda wildcards, output: dirname(output.map[0])
-    log: "logs/00-FTP/download_HapMapII_recombination_map.log"
+    resources:
+        cores=lambda w, threads: threads
+    log: "logs/00-netrules/download_HapMapII_recombination_map.log"
+    threads: 1
     shell: """
         tar -xvzf {input.tarball} -C {params.output_dir} 2>  {log}
         rm {input.tarball}                               2>> {log}
@@ -111,7 +126,10 @@ rule fetch_sex_specific_recombination_map:
     output:
         map_dir  = directory("data/recombination-maps/Refined_genetic_map_b37"),
         gen_maps = expand("data/recombination-maps/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"])
-    log: "logs/00-FTP/fetch_sex_specific_gen_map.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:     s"logs/00-netrules/fetch_sex_specific_gen_map.log"
+    threads: 1
     shell: """
         tar --strip-components=1 -xvzf {input.gen_map} -C {output.map_dir} 2> {log} && rm -rf {input.gen_map} >> {log} 2>&1
     """
@@ -130,7 +148,10 @@ rule fetch_interference_map:
         intf_map = HTTP.remote(config["ped-sim"]["input"]["interference-map-url"])
     output:
         intf_map = config['ped-sim']['data']['interference']
-    log: "logs/00-FTP/fetch_sex_specific_gen_map.log"
+    resources:
+        cores = lambda w, threads: threads
+    log: "logs/00-netrules/fetch_sex_specific_gen_map.log"
+    threads: 1
     shell: """
         mv {input.intf_map} {output.intf_map} > {log} 2>&1
     """
@@ -154,10 +175,13 @@ rule download_TKGWV2_support_files:
             ]
         )
     params:
-        url = config['kinship']['TKGWV2']['support-files-url'],
+        url        = config['kinship']['TKGWV2']['support-files-url'],
         output_dir = config['kinship']['TKGWV2']['support-files-dir']
-    conda: "../envs/gdown-4.6.0.yml"
-    log: "logs/04-kinship/TKGWV2/TKGWV2_download_support_files.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:     "logs/04-kinship/TKGWV2/TKGWV2_download_support_files.log"
+    conda:   "../envs/gdown-4.6.0.yml"
+    threads: 1
     shell: """
         gdown "{params.url}" -O {params.output_dir} --folder > {log} 2>&1
     """

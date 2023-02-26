@@ -34,14 +34,16 @@ rule archive_config_file:
     input:
         config_file = "config/config.yml"
     output:
-        archive = protected("{archive_dir}/run-{{run}}/{file}".format(
-            archive_dir = config['archive']['archive-dir'],
-            file       = "config/config.yml"
+        archive     = protected("{archive_dir}/run-{{run}}/{file}".format(
+            archive_dir=config['archive']['archive-dir'],
+            file       ="config/config.yml"
         )),
-        checksum = protected("{archive_dir}/run-{{run}}/{file}.md5sum".format(
-            archive_dir = config['archive']['archive-dir'],
-            file       = "config/config.yml"
+        checksum    = protected("{archive_dir}/run-{{run}}/{file}.md5sum".format(
+            archive_dir=config['archive']['archive-dir'],
+            file       ="config/config.yml"
         )),
+    resources:
+        cores       = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/archive_pipeline_metadata.log"
     threads:   1
     shell: """
@@ -59,14 +61,16 @@ rule archive_pipeline_metadata:
     input:
         metadata = "results/meta/pipeline-metadata.yml"
     output:
-        archive = protected("{archive_dir}/run-{{run}}/{file}".format(
-            archive_dir = config['archive']['archive-dir'],
-            file       = "results/meta/pipeline-metadata.yml"
+        archive  = protected("{archive_dir}/run-{{run}}/{file}".format(
+            archive_dir=config['archive']['archive-dir'],
+            file       ="results/meta/pipeline-metadata.yml"
         )),
         checksum = protected("{archive_dir}/run-{{run}}/{file}.md5sum".format(
-            archive_dir = config['archive']['archive-dir'],
-            file       = "results/meta/pipeline-metadata.yml"
+            archive_dir=config['archive']['archive-dir'],
+            file       ="results/meta/pipeline-metadata.yml"
         )),
+    resources:
+        cores    = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/archive_pipeline_metadata.log"
     benchmark: "benchmarks/07-archive/run{run}/archive_pipeline_metadata.tsv"
     threads:   1
@@ -84,17 +88,19 @@ rule archive_ped_sim_vcf:
     input:
         merged_vcf = rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop'])
     output:
-        archive = protected("{archive_dir}/run-{{run}}/{ped_sim_dir}.tar.xz".format(
-            archive_dir = config['archive']['archive-dir'],
-            ped_sim_dir = os.path.dirname(rules.dopplegang_twins.output.merged_vcf)
+        archive    = protected("{archive_dir}/run-{{run}}/{ped_sim_dir}.tar.xz".format(
+            archive_dir=config['archive']['archive-dir'],
+            ped_sim_dir=os.path.dirname(rules.dopplegang_twins.output.merged_vcf)
         )),
-        checksum = protected("{archive_dir}/run-{{run}}/{ped_sim_dir}.md5sums".format(
-            archive_dir = config['archive']['archive-dir'],
-            ped_sim_dir = os.path.dirname(rules.dopplegang_twins.output.merged_vcf)
+        checksum   = protected("{archive_dir}/run-{{run}}/{ped_sim_dir}.md5sums".format(
+            archive_dir=config['archive']['archive-dir'],
+            ped_sim_dir=os.path.dirname(rules.dopplegang_twins.output.merged_vcf)
         ))
     params:
         target_directory = os.path.dirname(rules.dopplegang_twins.output.merged_vcf),
         compress_level=config['archive']['compress-level']
+    resources:
+        cores     = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/archive_ped_sim_vcf.log"
     benchmark: "benchmarks/07-archive/run{run}/archive_ped_sim_vcf.tsv"
     threads:   16
@@ -116,18 +122,20 @@ rule archive_pedigree_bams:
         reference = config["reference"],
         metadata  = rules.create_archive_metadata.output,
     output:
-        cram = protected("{archive_dir}/run-{{run}}/{results_dir}/ped{{gen}}-merged.cram".format(
-            archive_dir = config['archive']['archive-dir'],
-            results_dir = "/".join(os.path.dirname(define_dedup_input_bam([])).strip("/").split('/')[:-1])
+        cram      = protected("{archive_dir}/run-{{run}}/{results_dir}/ped{{gen}}-merged.cram".format(
+            archive_dir=config['archive']['archive-dir'],
+            results_dir="/".join(os.path.dirname(define_dedup_input_bam([])).strip("/").split('/')[:-1])
         )),
-        checksum = protected("{archive_dir}/run-{{run}}/{results_dir}/ped{{gen}}-merged.md5sums".format(
-            archive_dir = config['archive']['archive-dir'],
-            results_dir = "/".join(os.path.dirname(define_dedup_input_bam([])).strip("/").split('/')[:-1])
+        checksum  = protected("{archive_dir}/run-{{run}}/{results_dir}/ped{{gen}}-merged.md5sums".format(
+            archive_dir=config['archive']['archive-dir'],
+            results_dir="/".join(os.path.dirname(define_dedup_input_bam([])).strip("/").split('/')[:-1])
         ))
     params:
-        opts = "seqs_per_slice=100000,level={level},use_lzma,use_fqz,use_arith".format(
+        opts      = "seqs_per_slice=100000,level={level},use_lzma,use_fqz,use_arith".format(
             level=config['archive']['compress-level']
         )
+    resources:
+        cores = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/ped{gen}/archive_pedigree_bams.log"
     benchmark: "benchmarks/07-archive/run{run}/ped{gen}/archive_pedigree_bams.tsv"
     conda:     "../envs/samtools-1.15.yml"
@@ -146,19 +154,21 @@ rule archive_variant_callset:
     Archive this run's interset panel.
     """
     input:
-        panel = rules.samtools_pileup.input.targets
+        panel    = rules.samtools_pileup.input.targets
 
     output:
-        archive = protected("{archive_dir}/run-{{run}}/{panel}.xz".format(
-            archive_dir = config['archive']['archive-dir'],
-            panel       = rules.samtools_pileup.input.targets
+        archive  = protected("{archive_dir}/run-{{run}}/{panel}.xz".format(
+            archive_dir=config['archive']['archive-dir'],
+            panel      =rules.samtools_pileup.input.targets
         )),
         checksum = protected("{archive_dir}/run-{{run}}/{panel}.md5sum".format(
-            archive_dir = config['archive']['archive-dir'],
-            panel       = rules.samtools_pileup.input.targets
+            archive_dir=config['archive']['archive-dir'],
+            panel      =rules.samtools_pileup.input.targets
         )),
     params:
-        compress_level=config['archive']['compress-level']
+        compress_level = config['archive']['compress-level']
+    resources:
+        cores         = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/archive_variant_callset.log"
     benchmark: "benchmarks/07-archive/run{run}/archive_variant_callset.tsv"
     threads:   4
@@ -184,6 +194,8 @@ rule archive_contaminants:
             archive_dir = config['archive']['archive-dir'],
             file       = rules.get_contamination_table.output.cont_table
         )),
+    resources:
+        cores = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/archive_contaminants.log"
     threads:   1
     shell: """
@@ -227,6 +239,8 @@ rule archive_READ_results:
     params:
         target_directory = "results/04-kinship/READ/{generation}",
         compress_level=config['archive']['compress-level']
+    resources:
+        cores = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/{generation}/archive_READ_results.log"
     benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_READ_results.tsv"
     threads:   4
@@ -261,6 +275,8 @@ rule archive_GRUPS_results:
     params:
         target_directory = "results/04-kinship/GRUPS/{generation}",
         compress_level   = config['archive']['compress-level']
+    resources:
+        cores = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/{generation}/archive_GRUPS_results.log"
     benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_GRUPS_results.tsv"
     threads:   4
@@ -287,6 +303,8 @@ rule archive_TKGWV2_results:
             archive_dir = config['archive']['archive-dir'],
             file        = rules.merge_TKGWV2_results.output.result
         )),
+    resources:
+        cores = lambda w, threads: threads
     log:     "logs/07-archive/run{run}/ped{gen}/archive_TKGWV2_results.log"
     threads: 1
     shell: """
@@ -314,6 +332,8 @@ rule archive_KIN_results:
         ))
     params:
         compress_level  = config['archive']['compress-level']
+    resources:
+        cores = lambda w, threads: threads
     log:       "logs/07-archive/run{run}/{generation}/archive_KIN_results.log"
     benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_KIN_results.tsv"
     threads:   4
@@ -379,6 +399,8 @@ rule check_duplicate_archives:
         ),
     output:
         metadata = temp(touch(f"{config['archive']['archive-dir']}/run-{{run}}-check_duplicate_archives.done"))
+    resources:
+        cores = lambda w, threads: threads
     log:     "logs/07-archive/run{run}/check_duplicate_archives.log"
     threads: 1 
     run:

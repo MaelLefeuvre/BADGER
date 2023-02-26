@@ -21,10 +21,15 @@ rule eigenstrat_to_UCSC_BED:
     (termed 'ucscbed', to avoid collisions with plink's file format).
     """
     input:
-        snp = "{directory}/{eigenstrat}.snp"
+        snp   = "{directory}/{eigenstrat}.snp"
     output:
-        bed = "{directory}/{eigenstrat}.ucscbed"
-    log:   "logs/generics/{directory}/eigenstrat_to_UCSC_BED-{eigenstrat}.log"
+        bed   = "{directory}/{eigenstrat}.ucscbed"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/generics/{directory}/eigenstrat_to_UCSC_BED-{eigenstrat}.log"
+    benchmark: "benchmarks/generics/{directory}/eigenstrat_to_UCSC_BED-{eigenstrat}.tsv"
+    conda:     "../envs/coreutils-9.1.yml"
+    threads:   1
     shell: """
         awk 'BEGIN{{OFS="\t"}}{{print $2, $4-1, $4, $5, $6}}' {input.snp} > {output.bed}
     """
@@ -35,13 +40,17 @@ rule plink_bfile_to_tped:
     Convert a binarized PLINK fileset into a human readable transposed set.
     """
     input:
-        bfile  = multiext("{directory}/{file}", ".bed", ".bim", ".fam"),
+        bfile    = multiext("{directory}/{file}", ".bed", ".bim", ".fam"),
     output:
-        tplink = multiext("{directory}/{file}", ".tped", ".tfam") 
+        tplink   = multiext("{directory}/{file}", ".tped", ".tfam") 
     params:
         basename = "{directory}/{file}"
-    log:   "logs/generics/{directory}/plink_bfile_to_tped-{file}.log"
-    conda: "../envs/plink-1.9.yml"
+    resources:
+        cores    = lambda w, threads: threads
+    log:       "logs/generics/{directory}/plink_bfile_to_tped-{file}.log"
+    benchmark: "benchmarks/generics/{directory}/plink_bfile_to_tped-{file}.log"
+    conda:     "../envs/plink-1.9.yml"
+    threads:   1
     shell: """
         plink \
         --bfile {params.basename} \
@@ -104,7 +113,11 @@ rule generate_bam_list:
         bamlist = get_pileup_input_bams
     output:
         bamlist = "results/03-variant-calling/01-pileup/{generation}/{generation}.bam.list"
-    log:   "logs/03-variant-calling/generate_bam_list/{generation}.log"
+    resources:
+        cores   = lambda w, threads: threads
+    log:      "logs/03-variant-calling/generate_bam_list/{generation}.log"
+    conda:    "../envs/coreutils-9.1.yml"
+    threads:  1
     priority: 15
     shell: """
         ls {input.bamlist} > {output.bamlist} 2> {log}
@@ -137,6 +150,12 @@ rule get_target_panel_intersect:
     the **super**-population on which this frequency is computed.
     - Uses the 1000g {POP}_AF annotations, which are kept in ped-sim's output vcf.
     - Mainly intended for lcMLkin (?).
+
+    # Benchmarks: 
+    | depth | max_rss |
+    | ----- | ------- |
+    | 0.01X |         |
+    | 0.05X | 51.91   |
     """
     input:
         ped_vcf = multiext(rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
@@ -145,6 +164,10 @@ rule get_target_panel_intersect:
         targets = "results/03-variant-calling/00-panel/variants-intersect-{superpop}_maf{maf}.ucscbed"
     params:
         exclude = lambda w: f"{w.superpop}_AF<{w.maf} || {w.superpop}_AF>{1-float(w.maf)}"
+    resources:
+        runtime = 10,
+        mem_mb  = 128,
+        cores   = lambda w, threads: threads
     log:       "logs/03-variant-calling/00-panel/get_target_panel_intersect-{superpop}-maf{maf}.log"
     benchmark: "benchmarks/03-variant-calling/00-panel/get_target_panel_intersect-{superpop}-maf{maf}.tsv"
     conda:     "../envs/bcftools-1.15.yml"
@@ -158,6 +181,13 @@ rule get_target_panel_intersect:
 rule samtools_pileup:
     """
     Generate a legacy pileup file using samtools mpileup.
+
+    # Benchmarks: 
+    | depth | max h:m:s | max_rss |
+    | ----- | --------- | ------- |
+    | 0.01X |           |         |
+    | 0.05X | 0:00:42   | 404     |
+
     """
     input:
         bamlist   = rules.generate_bam_list.output.bamlist,
@@ -173,9 +203,14 @@ rule samtools_pileup:
         min_MQ    = config['variant-calling']['pileup']['min-MQ'],
         min_BQ    = config['variant-calling']['pileup']['min-BQ'],
         optargs   = get_samtools_optargs
+    resources:
+        runtime = 10,
+        mem_mb  = 512,
+        cores   = lambda w, threads: threads
     log:       "logs/03-variant-calling/samtools_pileup/{generation}.log"
     benchmark: "benchmarks/03-variant-calling/samtools_pileup/{generation}.tsv"
     conda:     "../envs/samtools-1.15.yml"
+    threads:   1
     shell: """
         (samtools mpileup \
         -R {params.optargs} \
@@ -218,6 +253,12 @@ def parse_pileup_caller_flags(wildcards):
 rule pileup_caller:
     """
     Perform random sampling variant calling uing SequenceTools' pileupCaller
+
+    # Benchmarks: 
+    | depth | max h:m:s | max_rss |
+    | ----- | --------- | ------- |
+    | 0.01X |           |         |
+    | 0.05X | 0:00:39   | 17.64   |
     """
     input:
         pileup            = rules.samtools_pileup.output.pileup,
@@ -233,9 +274,14 @@ rule pileup_caller:
         min_depth         = config['variant-calling']["pileupCaller"]["min-depth"],
         seed              = config['variant-calling']['pileupCaller']["seed"],
         sample_names      = lambda wildcards: expand(get_samples_ids(wildcards), generation = wildcards.generation)
+    resources:
+        runtime = 10,
+        mem_mb  = 128,
+        cores   = lambda w, threads: threads
     log:       "logs/03-variant-calling/pileup_caller/{generation}.log"
     benchmark: "benchmarks/03-variant-calling/pileup_caller/{generation}.tsv"
     conda:     "../envs/sequencetools-1.5.2.yml"
+    threads:   1
     shell: """
         echo {params.sample_names} | tr ' ' '\n' > {output.sample_names_file}
 
@@ -264,6 +310,8 @@ rule ANGSD_random_haploid:
         haplos    = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.haplo.gz"
     params:
         out       = lambda wildcards, output: os.path.splitext(output.haplos)[0]
+    resources:
+        cores     = lambda w, threads: threads
     log:       "logs/03-variant-calling/ANGSD_random_haploid/{generation}.log"
     benchmark: "benchmarks/03-variant-calling/ANGSD_random_haploid/{generation}.tsv"
     threads:   4
@@ -293,9 +341,12 @@ rule ANGSD_haplo_to_plink:
         tfam    = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.tfam",
     params:
         out     = lambda wildcards, output: os.path.splitext(output.tped)[0]
+    resources:
+        cores   = lambda w, threads: threads
     log:       "logs/03-variant-calling/ANGSD_haplo_to_plink/{generation}.log"
     benchmark: "benchmarks/03-variant-calling/ANGSD_haplo_to_plink/{generation}.tsv"
     conda:     "../envs/angsd-0.939.yml"
+    threads:   1
     priority:  15
     shell: """
         haploToPlink {input.haplos} {params.out} 2>  {log}

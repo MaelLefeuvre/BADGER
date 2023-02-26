@@ -20,7 +20,11 @@ rule symlink_KINgaroo_input_bams:
     output:
         bamlist  = "results/04-kinship/KIN/{generation}/{generation}.bamlist",
         linkdir  = directory("results/04-kinship/KIN/{generation}/symbams/")
-    log:   "logs/04-kinship/KIN/symlink_KINgaroo_input_bams/{generation}.log"
+    resources:
+        cores    = lambda w, threads: threads
+    log:      "logs/04-kinship/KIN/symlink_KINgaroo_input_bams/{generation}.log"
+    conda:    "../envs/coreutils-9.1.yml"
+    threads: 1
     shell: """
         mkdir -p {output.linkdir} && ln -srft {output.linkdir} {input.bamlist} 2>  {log}
         basename -a {input.bamlist} | sed 's/.bam$//' > {output.bamlist}       2>> {log}
@@ -44,6 +48,12 @@ rule run_KINgaroo:
     """
     Run KINgaroo on a set of pedigree individuals (generation-wise.)
     # @ TODO: Add contamination estimate. 
+
+    # Benchmarks: 
+    | depth | max h:m:s | max_rss |
+    | ----- | --------- | ------- |
+    | 0.01X |           |         |
+    | 0.05X | 0:11:35   | 4922.52 | 
     """
     input:
         bamlist        = rules.symlink_KINgaroo_input_bams.output.bamlist,
@@ -66,6 +76,11 @@ rule run_KINgaroo:
         interval       = config['kinship']['KIN']['interval'],
         threshold      = config['kinship']['KIN']['p0-threshold'],
         optargs        = parse_KINgaroo_optargs
+    resources:
+        runtime        = 60,
+        mem_mb         = 6000,
+    resources:
+        cores          = lambda w, threads: threads
     log:       "logs/04-kinship/KIN/run_KINgaroo/{generation}.log"
     benchmark: "benchmarks/04-kinship/KIN/run_KINgaroo/{generation}.tsv"
     conda:      "../envs/kin-3.1.3.yml"
@@ -99,6 +114,21 @@ def parse_KIN_optargs(wildcards):
 
 
 rule run_KIN:
+    """
+    Perform generation-wise kinship estimation using KIN, and the output of KINgaroo.
+    See: Popli, D., Peyrégne, S. & Peter, B.M. KIN: a method to infer relatedness from low-coverage
+         ancient DNA. Genome Biol 24, 10 (2023). https://doi.org/10.1186/s13059-023-02847-7
+
+    Repo: https://github.com/DivyaratanPopli/Kinship_Inference.git
+
+    # @TODO: Add contamination estimate. 
+
+    # Benchmarks: 
+    | depth | max h:m:s | max_rss |
+    | ----- | --------- | ------- |
+    | 0.01X |           |         |
+    | 0.05X | 0:00:08   | 2464    | 
+    """
     input:
         bamlist      = rules.symlink_KINgaroo_input_bams.output.bamlist,
         linkdir      = rules.symlink_KINgaroo_input_bams.output.linkdir,
@@ -115,6 +145,10 @@ rule run_KIN:
         workdir      = lambda w, output: os.path.dirname(output.kin_results),
         interval     = config['kinship']['KIN']['interval'],
         optargs      = parse_KIN_optargs
+    resources:
+        runtime      = 10,
+        mem_mb       = 3000,
+        cores        = lambda w, threads: threads
     log:       "logs/04-kinship/KIN/run_KIN/{generation}.log"
     benchmark: "benchmarks/04-kinship/KIN/run_KIN/{generation}.tsv"
     conda:      "../envs/kin-3.1.3.yml"

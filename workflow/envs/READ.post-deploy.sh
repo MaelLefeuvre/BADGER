@@ -6,6 +6,7 @@ git clone https://bitbucket.org/tguenther/read.git
 
 cp read/READ.py read/READscript.R .
 
+chmod +x READ.py
 chmod +x READscript.R
 
 rm -rf ./read

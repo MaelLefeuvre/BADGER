@@ -50,8 +50,12 @@ rule format_sex_specific_gen_map:
         sim_map = config["ped-sim"]['data']["map"]
     params:
         #map_dir = rules.fetch_sex_specific_recombination_map.output.map_dir
-        map_dir = directory("data/recombination-maps/Refined_genetic_map_b37"),
-    log:   "logs/00-ped-sim/format_sex_specific_gen_map.log"
+        map_dir = directory("data/recombination-maps/Refined_genetic_map_b37")
+    resources:
+        cores = lambda w, threads: threads
+    log:     "logs/00-ped-sim/format_sex_specific_gen_map.log"
+    conda:   "../envs/coreutils-9.1.yml"
+    threads: 1
     shell: """
         printf "#chr\tpos\tmale_cM\tfemale_cM\n" > {output.sim_map}; \
         for chr in {{1..22}}; do \
@@ -96,7 +100,11 @@ rule format_pedigree_definition:
         definition = "results/00-ped-sim/pedigree.def"
     params:
         replicates = config['ped-sim']['replicates']
+    resources:
+        cores = lambda w, threads: threads
     log: "logs/00-ped-sim/format_pedigree_definition.log"
+    conda: "../envs/coreutils-9.1.yml"
+    threads: 1
     shell: """
         REPLICATES={params.replicates} envsubst < {input.template} > {output.definition} 2> {log}
     """
@@ -125,8 +133,12 @@ rule run_ped_sim:
         missingness      = config['ped-sim']['params']['missingness'],
         retain_extra     = config['ped-sim']['params']['retain-extra'],
         seed             = set_ped_sim_seed
-    log:   "logs/00-ped-sim/run_ped_sim/{POP}_ped-sim.log"
-    conda: "../envs/ped-sim-1.3.yml"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-ped-sim/{POP}/run_ped_sim.log"
+    benchmark: "benchmarks/00-ped-sim/{POP}/run_ped_sim.tsv"
+    conda:     "../envs/ped-sim-1.4.yml"
+    threads: 1
     shell: """
         ped-sim \
         -d {input.definition} \
@@ -173,8 +185,12 @@ rule dopplegang_twins:
         merged_vcf = "results/00-ped-sim/{POP}-pedigrees-twins-merged.vcf.gz"
     params:
         twins      = get_twins
-    log:       "logs/00-ped-sim/dopplegang_twins/dopplegang_twins-{POP}.log"
-    benchmark: "benchmarks/{POP}.dopplegang_twins.txt"
+    resources:
+        runtime = 30,
+        mem_mb  = 128,
+        cores   = lambda w, threads: threads
+    log:       "logs/00-ped-sim/{CEU}/dopplegang_twins.log"
+    benchmark: "benchmarks/00-ped-sim/{POP}/dopplegang_twins.tsv"
     conda:     "../envs/dopplegang-samples.yml"
     threads:   8
     shell: """
@@ -190,7 +206,11 @@ checkpoint get_samples:
         vcf = expand(rules.dopplegang_twins.output.merged_vcf, POP=config["ped-sim"]["params"]["pop"]),
     output:
         "results/00-ped-sim/sample_names.tsv"
-    log: "logs/00-ped-sim/get_samples.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:      "logs/00-ped-sim/get_samples.log"
+    conda:    "../envs/coreutils-9.1.yml"
+    threads:  3
     priority: 50
     shell: """
         zcat {input.vcf} | grep '#CHROM' | cut -f 10- > {output} 2> {log}

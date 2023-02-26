@@ -1,7 +1,7 @@
 # ---- Set config variables
 configfile: "./config/config.yml"
 
-localrules: symlink_original_data
+localrules: symlink_original_data, get_target_pop_samples
 
 
 # ------------------------------------------------------------------------------------------------------------------- #
@@ -15,8 +15,11 @@ rule tabix_vcf:
         vcf = "{directory}/{vcf}"
     output:
         tbi = "{directory}/{vcf}.tbi"
-    log:   "logs/generics/{directory}/tabix_vcf-{vcf}.log"
-    conda: "../envs/bcftools-1.15.yml"
+    resources:
+        cores = lambda w, threads: threads
+    log:     "logs/generics/{directory}/tabix_vcf-{vcf}.log"
+    conda:   "../envs/bcftools-1.15.yml"
+    threads: 1
     shell: """
         tabix {input.vcf}
     """
@@ -45,8 +48,11 @@ rule symlink_original_data:
         vcf = "data/vcf/1000g-phase3/00-original/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
     output:
         link = temp("data/vcf/1000g-phase3/01-filter/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz")
+    resources:
+        cores = lambda w, threads: threads
+    log:     "logs/00-preprocess-1000g/symlink_original_data/symlink_original_data-chr-{chr}.log"
+    conda:   "../envs/coreutils-9.1.yml"
     threads: 1
-    log: "logs/00-preprocess-1000g/symlink_original_data/symlink_original_data-chr-{chr}.log"
     shell: """
         ln -srt data/vcf/1000g-phase3/01-filter/ {input.vcf} > {log} 2>&1
     """
@@ -62,9 +68,12 @@ rule filter_indels_1000_genomes:
         link = rules.symlink_original_data.output.link
     output:
         bcf = pipe("data/vcf/1000g-phase3/01-filter/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.snps.bcf")
-    log: "logs/00-preprocess-1000g/filter_indels_1000_genomes/filter_indels_1000_genomes-chr{chr}.log"
-    conda: "../envs/bcftools-1.15.yml"
-    threads: workflow.cores / 22
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-1000g/01-filter/filter_indels_1000_genomes-chr{chr}.log"
+    benchmark: "benchmarks/00-preprocess-1000g/01-filter/filter_indels_1000_genomes-chr{chr}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    threads:    workflow.cores / 22
     shell: """
         bcftools view --threads {threads} -Ob -v snps < {input.link} > {output.bcf} 2> {log}
     """
@@ -89,9 +98,12 @@ rule normalize_1000_genomes:
         bcf = choose_filter_indel
     output:
         bcf = temp("data/vcf/1000g-phase3/01-filter/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.{steps}.norm.bcf")
-    log: "logs/00-preprocess-1000g/normalize_1000_genomes/normalize_1000_genomes.{steps}.chr{chr}.log"
-    conda: "../envs/bcftools-1.15.yml"
-    threads: workflow.cores / 22
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-1000g/01-filter/normalize_1000_genomes.{steps}.chr{chr}.log"
+    benchmark: "benchmarks/00-preprocess-1000g/01-filter/normalize_1000_genomes.{steps}.chr{chr}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    threads:   workflow.cores / 22
     shell: """
         bcftools norm --threads {threads} --multiallelics +both -Ob {input.bcf} > {output.bcf} 2> {log}
     """
@@ -107,9 +119,12 @@ rule filter_biallelic_1000_genomes:
         bcf = rules.normalize_1000_genomes.output.bcf
     output:
         bcf = temp("data/vcf/1000g-phase3/01-filter/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.{steps}.norm.m2.M2.bcf")
-    log: "logs/00-preprocess-1000g/filter_biallelic_1000_genomes/filter_biallelic_1000_genomes.{steps}.chr{chr}.log"
-    conda: "../envs/bcftools-1.15.yml"
-    threads: workflow.cores / 22
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-1000g/01-filter/filter_biallelic_1000_genomes.{steps}.chr{chr}.log"
+    benchmark: "benchmarks/00-preprocess-1000g/01-filter/filter_biallelic_1000_genomes.{steps}.chr{chr}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    threads:   workflow.cores / 22
     shell: """
         bcftools view --threads {threads} --phased --min-alleles 2 --max-alleles 2 -Ob < {input.bcf} > {output.bcf} 2> {log}
     """
@@ -127,7 +142,11 @@ rule get_target_pop_samples:
         panel = "data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.ALL.panel"
     output:
         target_list = "data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.{POP}.panel"
-    log: "logs/00-preprocess-1000g/get_target_pop_samples/get_target_pop_samples-{POP}.log"
+    resources:
+        cores = lambda w, threads: threads
+    log:     "logs/00-preprocess-1000g/get_target_pop_samples-{POP}.log"
+    conda:   "../envs/coreutils-9.1.yml"
+    threads: 1
     shell: """
         grep {wildcards.POP} {input.panel} | cut -f1 > {output.target_list} 2> {log}
     """
@@ -142,10 +161,13 @@ rule subset_1000_genomes:
 	    samples = rules.get_target_pop_samples.output.target_list
     output:
         bcf     = "data/vcf/1000g-phase3/02-subset/{POP}/{POP}.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.{steps}.norm.m2.M2.bcf"
-    log: "logs/00-preprocess-1000g/subset_1000_genomes/{POP}/subset_1000_genomes.{steps}.chr{chr}.log"
-    conda: "../envs/bcftools-1.15.yml"
-    group: "1000g-preprocess"
-    threads: 1
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-1000g/02-subset/{POP}/subset_1000_genomes.{steps}.chr{chr}.log"
+    benchmark: "benchmarks/00-preprocess-1000g/02-subset/{POP}/subset_1000_genomes.{steps}.chr{chr}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    group:     "1000g-preprocess"
+    threads:   workflow.cores / 22
     shell: """
         bcftools view --threads {threads} --samples-file {input.samples} -Ob < {input.bcf} > {output.bcf} 2> {log}
     """
@@ -164,10 +186,13 @@ rule update_allele_frequencies:
         bcf = rules.subset_1000_genomes.output.bcf
     output:
         bcf = pipe("data/vcf/1000g-phase3/02-subset/{POP}/{POP}.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.{steps}.norm.m2.M2.retagged.bcf")
-    log: "logs/00-preprocess-1000g/update_allele_frequencies/{POP}/update_allele_frequencies.{steps}.chr{chr}.log"
-    conda: "../envs/bcftools-1.15.yml"
-    group: "1000g-preprocess"
-    threads: 1
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-1000g/02-subset/{POP}/update_allele_frequencies.{steps}.chr{chr}.log"
+    benchmark: "benchmarks/00-preprocess-1000g/02-subset/{POP}/update_allele_frequencies.{steps}.chr{chr}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    group:     "1000g-preprocess"
+    threads:   1
     shell: """
         bcftools +fill-tags -Ob --threads {threads} -- -t AF < {input.bcf} > {output.bcf} 2> {log}
     """
@@ -182,10 +207,13 @@ rule filter_maf_1000_genomes:
         bcf = pipe("data/vcf/1000g-phase3/02-subset/{POP}/{POP}.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.{steps}.norm.m2.M2.maf05.bcf")
     params:
         maf = config['ped-sim']['filter-maf-threshold']
-    log: "logs/00-preprocess-1000g/filter_maf_1000_genomes/{POP}/filter_maf_1000_genomes.{steps}.chr{chr}.log"
-    conda: "../envs/bcftools-1.15.yml"
-    group: "1000g-preprocess"
-    threads: 1
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-1000g/02-subset/{POP}/filter_maf_1000_genomes.{steps}.chr{chr}.log"
+    benchmark: "benchmarks/00-preprocess-1000g/02-subset/{POP}/filter_maf_1000_genomes.{steps}.chr{chr}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    group:     "1000g-preprocess"
+    threads:   1
     shell: """
         bcftools view --threads {threads} --min-af {params.maf}:minor -Ob -o {output.bcf} < {input.bcf} 2> {log}
     """
@@ -222,10 +250,13 @@ rule concat_1000_genomes:
             indel_tag = ".snps" if config["ped-sim"]["filter-indels"] else "",
             maf_tag   = ".maf" + str(config["ped-sim"]["filter-maf-threshold"]).split(".")[1] if config["ped-sim"]["filter-maf"] else ""
         )
-    threads: 1
-    conda: "../envs/bcftools-1.15.yml"
-    log: "logs/00-preprocess-1000g/concat_1000_genomes/concat_1000_genomes-{POP}.log"
-    group: "1000g-preprocess"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/00-preprocess-1000g/03-merged/concat_1000_genomes-{POP}.log"
+    benchmark: "benchmarks/00-preprocess-1000g/03-merged/concat_1000_genomes-{POP}.tsv"
+    conda:     "../envs/bcftools-1.15.yml"
+    group:     "1000g-preprocess"
+    threads:   1
     shell: """
         bcftools concat --threads {threads} -Oz -o {output.merged_vcf} {input.split_vcfs} > {log} 2>&1
     """

@@ -28,7 +28,7 @@ rule GRUPS_generate_fst_set:
     """
     Generate a .fst and .fst.frq dataset from a set of VCF files. Allows for
     generally faster IO processing when performing multiple runs.
-    @ TODO: The download directive might be the reason why we have an FTP OS error
+    @ TODO: The download directive might be the reason why we have an FTP OS error   
     """
     input:
         #data    = expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
@@ -50,6 +50,8 @@ rule GRUPS_generate_fst_set:
     params:
         pedigree_pop = config["kinship"]["GRUPS"]["pedigree-pop"],
         contam_pop   = config["kinship"]["GRUPS"]["contam-pop"]
+    resources:
+        cores        = lambda w, threads: threads
     log:       "logs/04-kinship/GRUPS/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.log"
     benchmark: "benchmarks/04-kinship/GRUPS/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.tsv"
     conda:     "../envs/grups-rs.yml"
@@ -80,10 +82,24 @@ def format_seed(wildcards):
 
 rule run_GRUPS:
     """
-    Run grups on an entire pedigree generation.
-    @ TODO: VCF mode is not yet implemented within the pipeline.
-            A simple function should do the trick.
-    @ TODO: Fetch sample panel might be the cause of our download error.
+    Run grups-rs on an entire pedigree generation to perform kinship estimation.
+
+    See: Martin MD, Jay F, Castellano S, Slatkin M. Determination of genetic relatedness from 
+         low-coverage human genome sequences using pedigree simulations. 
+         Mol Ecol. 2017;26(16):4145-4157. https://doi.org/10.1111/mec.14188
+         
+    Repo: (py-grups) https://github.com/sameoldmike/grups/
+          (grups-rs) https://github.com/MaelLefeuvre/grups.git
+
+    # @ TODO: 
+    - VCF mode is not yet implemented within the pipeline. A simple function should do the trick.
+    - Fetch sample panel might be the cause of our FTP error.
+
+    # Benchmarks: 
+    | depth | max h:m:s | max_rss |
+    | ----- | --------- | ------- |
+    | 0.01X |           |         |
+    | 0.05X | 0:09:42   | 2013    | 
     """
     input:
         pileup       = rules.samtools_pileup.output.pileup,
@@ -111,6 +127,10 @@ rule run_GRUPS:
         maf          = config["kinship"]["GRUPS"]["maf"],
         q_error_rate = config["kinship"]["GRUPS"]["seq-error-rate"],
         seed         = format_seed
+    resources:
+        runtime = 60,
+        mem_mb  = 2048,
+        cores   = lambda w, threads: threads
     log:       "logs/04-kinship/GRUPS/run_GRUPS/{generation}-run_GRUPS.log"
     benchmark: "benchmarks/04-kinship/GRUPS/run_GRUPS/{generation}-run_GRUPS.tsv"
     conda:     "../envs/grups-rs.yml"

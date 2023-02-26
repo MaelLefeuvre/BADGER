@@ -1,4 +1,3 @@
-
 # ---- Utility functions
 def READ_output(wildcards):
     """
@@ -47,7 +46,14 @@ rule run_READ:
     Run the original, serialized version of READ
     See: Monroy Kuhn JM, Jakobsson M, Günther T (2018) Estimating genetic kin relationships in prehistoric populations.
          PLoS ONE 13(4): e0195491. https://doi.org/10.1371/journal.pone.0195491
-         https://bitbucket.org/tguenther/read.git
+         
+    Repo: https://bitbucket.org/tguenther/read.git
+
+    # Benchmarks: 
+    | depth | max h:m:s | max_rss |
+    | ----- | --------- | ------- |
+    | 0.01X |           |         |
+    | 0.05X | 0:00:49   | 47.87   | 
     """
     input:
         tplink = READ_define_random_haploid_caller
@@ -62,9 +68,13 @@ rule run_READ:
         norm_method = config["kinship"]["READ"]["norm-method"],
         norm_value  = get_READ_norm_value,
         basename    = lambda wildcards, input: splitext(input.tplink[0])[0],
-    conda:     "../envs/READ.yml"
+    resources:
+        runtime = 60,
+        mem_mb  = 128,
+        cores   = lambda w, threads: threads
     log:       "logs/04-kinship/READ/run_READ/{generation}.log"
     benchmark: "benchmarks/04-kinship/READ/run_READ/{generation}.tsv"
+    conda:     "../envs/READ.yml"
     threads:   1
     shell: """
         cwd=$(pwd)

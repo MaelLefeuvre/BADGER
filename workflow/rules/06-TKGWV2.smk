@@ -9,6 +9,16 @@ localrules: merge_TKGWV2_results
 #use rule download_TKGWV2_support_files from netrules
 
 
+# ---- Attempt to create plink file from panel intersect & pedigree vcf:
+# pop = config['kinship']['TKGWV2']['frq']['pop'] ### (== "EUR")
+# nchrobs=$(($(grep "{wildcards.pop}" data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.ALL.panel| wc -l) * 2));
+# bcftools view -H -v snps -m2 -M2 results/00-ped-sim/CEU-pedigrees-twins-merged.vcf.gz -R results/03-variant-calling/00-panel/variants-intersect-EUR_maf0.0.ucscbed \
+# | awk -v nchrobs="$nchrobs" 'BEGIN{FS="\t"; OFS=" "; print "CHR SNP A1 A2 MAF NCHROBS"}{match($8, /{wildcards.pop}_AF=[.0-9]+;/); split(substr($8,RSTART,RLENGTH),frq, "="); gsub(";$", "", frq[2]); print $1, $1"_"$2, $4, $5,frq[2], nchrobs}' \
+# | column -t -R 1,2,3,4,5,6 > test-frq.frq
+#
+# ...This may take a while... 
+# 9 minutes, to be exact
+
 def TKGWV2_output(wildcards):
     """
     Returns the list of required generation_wise comparisons from READ
@@ -68,6 +78,8 @@ rule TKGWV2_downsample_bam:
         workdir     = lambda wildcards, output: dirname(output.pairA),
         downsampleN = config['kinship']['TKGWV2']['downsample-N'],
         seed        = TKGWV2_downsample_seed,
+    resources:
+        cores       = lambda w, threads: threads
     log:       "logs/04-kinship/TKGWV2/TKGWV2_downsample_bam/ped{gen}/{pairA}_{pairB}.log"
     benchmark: "benchmarks/04-kinship/TKGWV2/TKGWV2_downsample_bam/ped{gen}/{pairA}_{pairB}.tsv"
     conda:     "../envs/TKGWV2.yml"
@@ -96,8 +108,20 @@ def define_TKGWV2_input(wildcards):
 
 rule run_TKGWV2:
     """
-    Run TKGWV2 on a single pair of individuals.
+    Perform kinship estimation on a single pair of individuals, using TKGWV2.
+    See: Fernandes DM, et al. TKGWV2: an ancient DNA relatedness pipeline for 
+         ultra-low coverage whole genome shotgun data. Sci Rep 11, 21262 (2021). 
+         https://doi.org/10.1038/s41598-021-00581-3
+
+    Repo: https://github.com/danimfernandes/tkgwv2.git
+    
     @ TODO: Keep track of the 'frq' and 'tped' output files (TKGWV2 reorders pairA and pairB in lexical order.......)
+
+    # Benchmarks: 
+    | depth | max h:m:s | max_rss |
+    | ----- | --------- | ------- |
+    | 0.01X |           |         |
+    | 0.05X | 0:05:33   | 3155    | 
     """
     input:
         bams          = define_TKGWV2_input,
@@ -127,9 +151,13 @@ rule run_TKGWV2:
         min_BQ     = config["kinship"]["TKGWV2"]["min-BQ"],
         min_depth  = config["kinship"]["TKGWV2"]["min-depth"],
         bam_ext    = lambda wildcards, input: basename(input.bams[0]).split(".",1)[1]
+    resources:
+        runtime    = 10,
+        mem_mb     = 4000,
+        cores      = lambda w, threads: threads
     log:       "logs/04-kinship/TKGWV2/run_TKGWV2/ped{gen}/{pairA}_{pairB}.log"
     benchmark: "benchmarks/04-kinship/TKGWV2/run_TKGWV2/ped{gen}/{pairA}_{pairB}.tsv"
-    conda: "../envs/TKGWV2.yml"
+    conda:     "../envs/TKGWV2.yml"
     threads:   1
     shell: """
         base_dir=`pwd`                                     # Keep a record of the base directory
@@ -193,8 +221,12 @@ rule merge_TKGWV2_results:
     input:
         results = define_TKGWV2_requested_dyads
     output:
-        result = "results/04-kinship/TKGWV2/ped{gen}/ped{gen}-TKGWV2_Results.txt"
-    log: "logs/04-kinship/TKGWV2/merge_TKGWV2_results/ped{gen}.log"
+        result  = "results/04-kinship/TKGWV2/ped{gen}/ped{gen}-TKGWV2_Results.txt"
+    resources:
+        cores   = lambda w, threads: threads
+    log:   "logs/04-kinship/TKGWV2/merge_TKGWV2_results/ped{gen}.log"
+    conda: "../envs/coreutils-9.1.yml"
+    threads: 1
     shell: """
         awk 'FNR>1 || NR==1' {input.results} > {output.result} 2> {log}
     """

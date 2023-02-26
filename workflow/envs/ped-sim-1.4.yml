@@ -1,0 +1,13 @@
+name: ped-sim-1.4
+channels:
+  - conda-forge
+dependencies:
+ - conda-forge::make>=4.3
+ - conda-forge::gsl>=2.7
+ - conda-forge::zlib>=1.2.13
+ - conda-forge::compilers>=1.5.2
+ - conda-forge::c-compiler>=1.5.2
+ - conda-forge::cxx-compiler>=1.5.2
+ - conda-forge::python>=3.11.0
+ - conda-forge::r-base>=4.0
+ - conda-forge::r-kinship2>=1.9.6

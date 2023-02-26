@@ -24,6 +24,12 @@ rule adapter_removal_pe:
     """
     Perform Adapter Trimming for Illumina Paired-End sequuencing data. Contrary to some other
     workflows, we don't output a combined fq file, to allow specific mapping using bwa aln.
+
+    # Benchmarks:
+    | depth | h:m:s   | max_rss |
+    | ----- | ------- | ------- | 
+    | 0.01X |         |         |
+    | 0.05X | 0:05:32 | 41.30   |
     """
     input:
         forwd       = "results/02-preprocess/00-raw/{sample}_s1.fq.gz",
@@ -43,9 +49,13 @@ rule adapter_removal_pe:
         min_quality = config["preprocess"]["trimming"]["min-quality"],
         quality_max = config["preprocess"]["trimming"]["qualitymax"],
         seed        = assign_adapter_removal_seed
-    log: "logs/02-preprocess/01-adapter_removal/adapter_removal_pe/{sample}.log"
+    resources:
+        runtime     = 10,
+        mem_mb      = 128,
+        cores       = lambda w, threads: threads
+    log:       "logs/02-preprocess/01-adapter_removal/adapter_removal_pe/{sample}.log"
     benchmark: "benchmarks/02-preprocess/01-adapter_removal/adapter_removal_pe/{sample}-bench.tsv"
-    conda: "../envs/adapterremoval-2.3.3.yml"
+    conda:     "../envs/adapterremoval-2.3.3.yml"
     priority: 4
     threads:  4
     shell: """
@@ -86,13 +96,26 @@ rule sam_to_tmp_bam:
         sam = "{directory}/{file}.sam"
     output:
         bam = temp("{directory}/{file}.tmp-bam")
-    log:     "logs/generics/{directory}/sam_to_tmp_bam-{file}.log"
-    conda:   "../envs/samtools-1.15.yml"
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/generics/{directory}/sam_to_tmp_bam-{file}.log"
+    benchmark: "benchmarks/generics/{directory}/sam_to_tmp_bam-{file}.tsv"
+    conda:      "../envs/samtools-1.15.yml"
     threads: 1
     shell: """
         samtools view -@ {threads} -OBAM {input.sam} > {output.bam}
     """
 
+def assign_bwa_aln_mem(wildcards):
+    match wildcards.extension:
+        case "collapsed":
+            return 7000
+        case "pair1.truncated" | "pair2.truncated":
+            return 3400
+        case "collapsed.truncated" | "singleton.truncated":
+            return 3000
+    raise RuntimeError(f"Invalid wildcard for bwa aln extension {wildcards.extension}")
+        
 
 rule bwa_aln:
     """
@@ -108,7 +131,13 @@ rule bwa_aln:
     | depth | .collapsed | .collapsed.truncated | .pair{1,2} | .singleton.truncated |
     | ----- | ---------- | -------------------- | ---------- | -------------------- |
     | 0.01X | 6911       | 2964                 | 3211       | 2964                 |
-    | 0.05X | 6997       | 2964                 | 3292       | 2964                 |
+    | 0.05X | 7000       | 2964                 | 3360       | 2964                 |
+
+    # Benchmarks h:m:s:
+    | depth | .collapsed | .collapsed.truncated | .pair{1,2} | .singleton.truncated |
+    | ----- | ---------- | -------------------- | ---------- | -------------------- |
+    | 0.01X |            |                      |            |                      |
+    | 0.05X | 0:25:22    | 0:02:53              | 0.29:02    | 0:02:48              |
     """
     input:
         trimmed       = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.{extension}.gz",
@@ -122,7 +151,9 @@ rule bwa_aln:
         missing_prob  = config['preprocess']['bwa']['bwa-aln']['max-miss-prob'],
         max_seed_diff = config['preprocess']['bwa']['bwa-aln']['max-seed-diff']
     resources:
-        mem_mb        = 7000
+        runtime       = 60,
+        mem_mb        = assign_bwa_aln_mem,
+        cores         = lambda w, threads: threads
     log:       "logs/02-preprocess/02-align/bwa_aln/{extension}/{sample}.log"
     benchmark: "benchmarks/02-preprocess/02-align/bwa_aln/{extension}/{sample}-bench.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
@@ -150,6 +181,12 @@ rule bwa_samse:
     | ----- | ---------- | -------------------- | -------------------- |
     | 0.01X | 4588       | 7.43                 | 7.35                 |
     | 0.05X | 4989       | 7.44                 | 18.23                |
+
+    # Benchmarks max h:m:s:
+    | depth | .collapsed | .collapsed.truncated | .singleton.truncated |
+    | ----- | ---------- | -------------------- | -------------------- |
+    | 0.01X |            |                      |                      |
+    | 0.05X | 0:25:30    | 0:02:53              | 0:02:48              |
     """
     input:
         trimmed   = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.{extension}.gz",
@@ -160,7 +197,9 @@ rule bwa_samse:
     params:
         RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina' ## ADD IT LATER (-r argument)
     resources:
-        mem_mb    = 5000
+        runtime   = 60,
+        mem_mb    = 5000,
+        cores     = lambda w, threads: threads
     log:       "logs/02-preprocess/02-align/bwa_samse/{sample}.{extension}.log"
     benchmark: "benchmarks/02-preprocess/02-align/bwa_samse/{extension}/{sample}-bench.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
@@ -176,11 +215,11 @@ rule bwa_sampe:
     Perform paired-end read mapping on a 'bwa aln' suffix array.
     extension: '.pair1.truncated' || '.pair2.truncated'
 
-    # Benchmark max RSS:
-    | depth | .paired |
-    | ----- | ------- | 
-    | 0.01X | 4478    |
-    | 0.05X | 4618    |
+    # Benchmarks :
+    | depth | max h:m:s | max_rss | 
+    | ----- | --------- | ------- | 
+    | 0.01X |           | 4478    |
+    | 0.05X |  0:29:33  | 4618    |
     """
     input:
         pair1     = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.pair1.truncated.gz",
@@ -193,7 +232,9 @@ rule bwa_sampe:
     params:
         RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina' # @TODO ADD it LATER
     resources:
-        mem_mb    = 5000
+        runtime   = 60,
+        mem_mb    = 5000,
+        cores     = lambda w, threads: threads
     log:       "logs/02-preprocess/02-align/bwa_sampe/{sample}.log"
     benchmark: "benchmarks/02-preprocess/02-align/bwa_sampe/{sample}.paired-bench.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
@@ -209,11 +250,11 @@ rule samtools_merge_aln:
     """
     Merge the outputs of bwa_samse & bwa_sampe for a given sample, and output a single merged bam file.
 
-    # Benchmarks max RSS:
-    | depth | .paired |
-    | ----- | ------- | 
-    | 0.01X | 122.77  | (VMS)
-    | 0.05X | 12.81   |
+    # Benchmarks:
+    | depth | max h:m:s | max_rss |
+    | ----- | --------- | ------- | 
+    | 0.01X |           |         |
+    | 0.05X | 0:1:15    | 12.81   |
     """
     input:
         paired_end = "results/02-preprocess/02-align/{sample}/{sample}.bwaaln.paired.tmp-bam",
@@ -225,6 +266,10 @@ rule samtools_merge_aln:
         merged    = "results/02-preprocess/02-align/{sample}/{sample}.bwaaln.merged.bam"
     params:
         RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina' # @TODO ADD it LATER
+    resources:
+        runtime   = 10,
+        mem_mb    = 128,
+        cores     = lambda w, threads: threads
     log:       "logs/02-preprocess/02-align/samtools_merge/{sample}.log"
     benchmark: "benchmarks/02-preprocess/02-align/samtools_merge/{sample}-bench.tsv"
     conda:     "../envs/samtools-1.15.yml"
@@ -267,6 +312,8 @@ rule bwa_mem_se:
         sam       = temp(pipe("results/02-preprocess/02-align/{sample}/{sample}.bwamem.{extension}.sam"))
     params:
         RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina'
+    resources:
+        cores     = lambda w, threads: threads
     log:       "logs/02-preprocess/02-align/bwa_mem_se/{sample}.bwamem.{extension}.log"
     benchmark: "benchmarks/02-preprocess/02-align/bwa_mem_se/{extension}/{sample}.bwamem-bench.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
@@ -291,7 +338,9 @@ rule bwa_mem_pe:
     output:
         sam       = temp(pipe("results/02-preprocess/02-align/{sample}/{sample}.bwamem.paired.sam"))
     params:
-        RG = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina'
+        RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina'
+    resources:
+        cores     = lambda w, threads: threads
     log:       "logs/02-preprocess/02-align/bwa_mem_pe/{sample}.bwamem.paired.log"
     benchmark: "benchmarks/02-preprocess/02-align/bwa_mem_pe/{sample}.paired-bench.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
@@ -316,7 +365,9 @@ rule samtools_merge_mem:
     output:
         merged     = "results/02-preprocess/02-align/{sample}/{sample}.bwamem.merged.bam"
     params:
-        RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina' # @TODO ADD it LATER
+        RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina'
+    resources:
+        cores     = lambda w, threads: threads
     log:       "logs/02-preprocess/02-align/samtools_merge/{sample}.log"
     benchmark: "benchmarks/02-preprocess/02-align/samtools_merge/{sample}.bwamem-bench.tsv"
     conda:     "../envs/samtools-1.15.yml"
