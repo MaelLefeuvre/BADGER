@@ -131,7 +131,6 @@ rule picard_rmdup:
     | 0.05X | 1612    |
     """
     input:
-        tmpdir  = config["tempdir"]
         bam     = rules.samtools_sort.output.bam,
     output:
         bam     = "results/02-preprocess/05-dedup/picard/{sample}/{sample}.srt.rmdup.bam",

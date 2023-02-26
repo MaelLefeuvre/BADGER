@@ -189,7 +189,7 @@ rule dopplegang_twins:
         runtime = 30,
         mem_mb  = 128,
         cores   = lambda w, threads: threads
-    log:       "logs/00-ped-sim/{CEU}/dopplegang_twins.log"
+    log:       "logs/00-ped-sim/{POP}/dopplegang_twins.log"
     benchmark: "benchmarks/00-ped-sim/{POP}/dopplegang_twins.tsv"
     conda:     "../envs/dopplegang-samples.yml"
     threads:   8
