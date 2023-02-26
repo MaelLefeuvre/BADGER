@@ -100,7 +100,8 @@ rule sam_to_tmp_bam:
         cores = lambda w, threads: threads
     log:       "logs/generics/{directory}/sam_to_tmp_bam-{file}.log"
     benchmark: "benchmarks/generics/{directory}/sam_to_tmp_bam-{file}.tsv"
-    conda:      "../envs/samtools-1.15.yml"
+    conda:     "../envs/samtools-1.15.yml"
+    group:     f"bwa{config['preprocess']['bwa']['aligner']}"
     threads: 1
     shell: """
         samtools view -@ {threads} -OBAM {input.sam} > {output.bam}

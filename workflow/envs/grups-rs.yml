@@ -5,3 +5,8 @@ dependencies:
   - conda-forge::rust=1.65
   - conda-forge::r
   - conda-forge::libsvm
+  - conda-forge::make>=4.3
+  - conda-conda::cmake>=3.25
+  - conda-forge::compilers>=1.5.2
+  - conda-forge::c-compiler>=1.5.2
+  - conda-forge::cxx-compiler>=1.5.2
