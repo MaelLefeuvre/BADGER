@@ -134,8 +134,8 @@ rule run_ped_sim:
         retain_extra     = config['ped-sim']['params']['retain-extra'],
         seed             = set_ped_sim_seed
     resources:
-        #runtime = 60,
-        cores = lambda w, threads: threads
+        runtime = 90,
+        cores   = lambda w, threads: threads
     log:       "logs/00-ped-sim/{POP}/run_ped_sim.log"
     benchmark: "benchmarks/00-ped-sim/{POP}/run_ped_sim.tsv"
     conda:     "../envs/ped-sim-gsl-1.4.yml"
@@ -187,7 +187,7 @@ rule dopplegang_twins:
     params:
         twins      = get_twins
     resources:
-        #runtime = 60,
+        runtime = 90,
         mem_mb  = 128,
         cores   = lambda w, threads: threads
     log:       "logs/00-ped-sim/{POP}/dopplegang_twins.log"
