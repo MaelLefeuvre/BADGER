@@ -158,7 +158,7 @@ rule bwa_aln:
     log:       "logs/02-preprocess/02-align/bwa_aln/{extension}/{sample}.log"
     benchmark: "benchmarks/02-preprocess/02-align/bwa_aln/{extension}/{sample}-bench.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
-    group:     "bwaaln"
+    #group:     "bwaaln"
     threads:   align_thread_assign
     priority:  50
     shell: """
@@ -204,7 +204,7 @@ rule bwa_samse:
     log:       "logs/02-preprocess/02-align/bwa_samse/{sample}.{extension}.log"
     benchmark: "benchmarks/02-preprocess/02-align/bwa_samse/{extension}/{sample}-bench.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
-    group:     "bwaaln"
+    #group:     "bwaaln"
     priority:  50
     threads:   1
     shell: """
@@ -239,7 +239,7 @@ rule bwa_sampe:
     log:       "logs/02-preprocess/02-align/bwa_sampe/{sample}.log"
     benchmark: "benchmarks/02-preprocess/02-align/bwa_sampe/{sample}.paired-bench.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
-    group:     "bwaaln"
+    #group:     "bwaaln"
     priority: 50
     threads: 1
     shell: """
@@ -268,13 +268,13 @@ rule samtools_merge_aln:
     params:
         RG        = '@RG\\tID:{sample}\\tSM:{sample}\\tPL:illumina' # @TODO ADD it LATER
     resources:
-        runtime   = 10,
+        runtime   = 60,
         mem_mb    = 128,
         cores     = lambda w, threads: threads
     log:       "logs/02-preprocess/02-align/samtools_merge/{sample}.log"
     benchmark: "benchmarks/02-preprocess/02-align/samtools_merge/{sample}-bench.tsv"
     conda:     "../envs/samtools-1.15.yml"
-    group:     "bwaaln"
+    #group:     "bwaaln"
     threads:   1
     priority:  60
     shell: """
