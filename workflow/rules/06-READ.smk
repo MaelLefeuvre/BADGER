@@ -53,7 +53,8 @@ rule run_READ:
     | depth | max h:m:s | max_rss |
     | ----- | --------- | ------- |
     | 0.01X |           |         |
-    | 0.05X | 0:00:49   | 47.87   | 
+    | 0.05X | 0:00:49   | 47.87   |
+    | 0.10X | 0:04:10   | 30.97   |
     """
     input:
         tplink = READ_define_random_haploid_caller

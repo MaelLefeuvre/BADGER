@@ -30,6 +30,7 @@ rule adapter_removal_pe:
     | ----- | ------- | ------- | 
     | 0.01X |         |         |
     | 0.05X | 0:05:32 | 41.30   |
+    | 0.10X | 0:03:31 | 23      |
     """
     input:
         forwd       = "results/02-preprocess/00-raw/{sample}_s1.fq.gz",
@@ -133,12 +134,14 @@ rule bwa_aln:
     | ----- | ---------- | -------------------- | ---------- | -------------------- |
     | 0.01X | 6911       | 2964                 | 3211       | 2964                 |
     | 0.05X | 7000       | 2964                 | 3360       | 2964                 |
+    | 0.10X | 7200       | 2960                 | 3370       | 2960                 |
 
     # Benchmarks h:m:s:
     | depth | .collapsed | .collapsed.truncated | .pair{1,2} | .singleton.truncated |
     | ----- | ---------- | -------------------- | ---------- | -------------------- |
     | 0.01X |            |                      |            |                      |
     | 0.05X | 0:25:22    | 0:02:53              | 0.29:02    | 0:02:48              |
+    | 0.10X |            |                      |            |                      |
     """
     input:
         trimmed       = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.{extension}.gz",
@@ -182,6 +185,7 @@ rule bwa_samse:
     | ----- | ---------- | -------------------- | -------------------- |
     | 0.01X | 4588       | 7.43                 | 7.35                 |
     | 0.05X | 4989       | 7.44                 | 18.23                |
+    | 0.10X | 4583       | 21.67                | 29.45                |
 
     # Benchmarks max h:m:s:
     | depth | .collapsed | .collapsed.truncated | .singleton.truncated |
@@ -221,6 +225,7 @@ rule bwa_sampe:
     | ----- | --------- | ------- | 
     | 0.01X |           | 4478    |
     | 0.05X |  0:29:33  | 4618    |
+    | 0.10X |           | 4755    |
     """
     input:
         pair1     = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.pair1.truncated.gz",
@@ -256,6 +261,7 @@ rule samtools_merge_aln:
     | ----- | --------- | ------- | 
     | 0.01X |           |         |
     | 0.05X | 0:1:15    | 12.81   |
+    | 0.10X |           | 30.12   |
     """
     input:
         paired_end = "results/02-preprocess/02-align/{sample}/{sample}.bwaaln.paired.tmp-bam",

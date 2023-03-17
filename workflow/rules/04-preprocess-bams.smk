@@ -55,6 +55,7 @@ rule samtools_filter_unmapped:
     | ----- | ------- | 
     | 0.01X |         |
     | 0.05X | 7.59    |
+    | 0.10X | 30.89   |
     """
     input:
         sam        = assign_aligner_algorithm,
@@ -97,6 +98,7 @@ rule samtools_sort:
     | ----- | ------- | 
     | 0.01X |         |
     | 0.05X | 898     |
+    | 0.10X | 894     |
     """
     
     input:
@@ -129,6 +131,7 @@ rule picard_rmdup:
     | ----- | ------- |
     | 0.01X |         |
     | 0.05X | 1612    |
+    | 0.10X | 1828    |
     """
     input:
         bam     = rules.samtools_sort.output.bam,
@@ -281,6 +284,7 @@ rule run_mapdamage:
     | ----- | --------- | ------- |
     | 0.01X |           |         |
     | 0.05X | 0:20:21   | 537     |
+    | 0.10X |           | 500     |
     """
     input:
         bam       = define_dedup_input_bam,

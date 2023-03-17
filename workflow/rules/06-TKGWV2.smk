@@ -121,7 +121,8 @@ rule run_TKGWV2:
     | depth | max h:m:s | max_rss |
     | ----- | --------- | ------- |
     | 0.01X |           |         |
-    | 0.05X | 0:05:33   | 3155    | 
+    | 0.05X | 0:05:33   | 3155    |
+    | 0.10X | 0:04:37   | 7325    |
     """
     input:
         bams          = define_TKGWV2_input,

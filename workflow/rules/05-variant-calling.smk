@@ -156,6 +156,7 @@ rule get_target_panel_intersect:
     | ----- | ------- |
     | 0.01X |         |
     | 0.05X | 51.91   |
+    | 0.10X | 37.91   |
     """
     input:
         ped_vcf = multiext(rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
@@ -187,6 +188,7 @@ rule samtools_pileup:
     | ----- | --------- | ------- |
     | 0.01X |           |         |
     | 0.05X | 0:00:42   | 404     |
+    | 0.10X |           | 398     |
 
     """
     input:
@@ -259,6 +261,7 @@ rule pileup_caller:
     | ----- | --------- | ------- |
     | 0.01X |           |         |
     | 0.05X | 0:00:39   | 17.64   |
+    | 0.10X |           | 30.15   |
     """
     input:
         samples_def       = rules.get_samples.output, 

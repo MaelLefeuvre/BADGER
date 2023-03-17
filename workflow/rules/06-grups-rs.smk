@@ -99,7 +99,8 @@ rule run_GRUPS:
     | depth | max h:m:s | max_rss |
     | ----- | --------- | ------- |
     | 0.01X |           |         |
-    | 0.05X | 0:09:42   | 2013    | 
+    | 0.05X | 0:09:42   | 2013    |
+    | 0.10X | 0:44:15   | 2157    |
     """
     input:
         samples_def       = rules.get_samples.output, 

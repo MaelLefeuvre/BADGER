@@ -53,7 +53,8 @@ rule run_KINgaroo:
     | depth | max h:m:s | max_rss |
     | ----- | --------- | ------- |
     | 0.01X |           |         |
-    | 0.05X | 0:11:35   | 4922.52 | 
+    | 0.05X | 0:11:35   | 4922.52 |
+    | 0.10X | 0:45:00   | 3539    |
     """
     input:
         bamlist        = rules.symlink_KINgaroo_input_bams.output.bamlist,
@@ -127,7 +128,8 @@ rule run_KIN:
     | depth | max h:m:s | max_rss |
     | ----- | --------- | ------- |
     | 0.01X |           |         |
-    | 0.05X | 0:00:08   | 2464    | 
+    | 0.05X | 0:00:08   | 2464    |
+    | 0.10X | 0:00:17   | 2121    |
     """
     input:
         bamlist      = rules.symlink_KINgaroo_input_bams.output.bamlist,
