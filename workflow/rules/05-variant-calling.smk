@@ -165,7 +165,7 @@ rule get_target_panel_intersect:
     params:
         exclude = lambda w: f"{w.superpop}_AF<{w.maf} || {w.superpop}_AF>{1-float(w.maf)}"
     resources:
-        runtime = 10,
+        runtime = 60,
         mem_mb  = 128,
         cores   = lambda w, threads: threads
     log:       "logs/03-variant-calling/00-panel/get_target_panel_intersect-{superpop}-maf{maf}.log"
@@ -261,6 +261,7 @@ rule pileup_caller:
     | 0.05X | 0:00:39   | 17.64   |
     """
     input:
+        samples_def       = rules.get_samples.output, 
         pileup            = rules.samtools_pileup.output.pileup,
         bamlist           = rules.generate_bam_list.output.bamlist,
         targets           = os.path.splitext(config["kinship"]["targets"])[0] + ".snp",

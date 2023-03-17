@@ -17,6 +17,8 @@ ln -s tkgwv2-develop/helpers/* .
 ln -s tkgwv2-develop/TKGWV2.py
 ln -s tkgwv2-develop/TK-helpers.py
 
+# Convert '#!/usr/bin/python3' to '#!/usr/bin/env python3'
+find tkgwv2-develop -type f -name "*.py" -exec sed -i 's/#!\/usr\/bin\//#!\/usr\/bin\/env /' {} \;
 # Permanently add to path
 #conda develop `pwd`/tkgwv2-master/scripts
 #conda develop `pwd`/tkgwv2-master/helpers
