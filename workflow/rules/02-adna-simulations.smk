@@ -168,7 +168,7 @@ rule get_consensus:
         hap2 = "logs/01-gargammel/get_consensus/{sample}-chr{chr}_haplo2.log"
     benchmark: "benchmarks/01-gargammel/get_consensus/{sample}-chr{chr}_haplo1.tsv",
     conda:     "../envs/bcftools-1.15.yml"
-    #group: "scatter"
+    group: "scatter"
     threads: 2
     shell: """
         bcftools consensus -e '{params.exclude}' -H 1 -f {input.chr_ref} --sample {wildcards.sample} {input.vcf} -o {output.hap1} 2> {log.hap1} \
@@ -289,7 +289,7 @@ rule run_gargammel:
     log:       "logs/01-gargammel/run_gargammel/{sample}_chr{chr}.log"
     benchmark: "benchmarks/01-gargammel/run_gargammel/{sample}_chr{chr}.tsv"
     conda:     "../envs/gargammel-1.1.2.yml"
-    #group:     "scatter"
+    group:     "scatter"
     priority:  2
     threads:   1
     shell: """
@@ -371,7 +371,7 @@ rule merge_chromosomes:
         cores   = lambda w, threads: threads
     benchmark: "benchmarks/01-gargammel/merge_chromosomes/{sample}.tsv"
     conda:     "../envs/coreutils-9.1.yml"
-    #group:     "scatter"
+    group:     "scatter"
     priority:  3
     threads:   2
     shell: """
