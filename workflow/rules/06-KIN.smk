@@ -77,14 +77,14 @@ rule run_KINgaroo:
         threshold      = config['kinship']['KIN']['p0-threshold'],
         optargs        = parse_KINgaroo_optargs
     resources:
-        runtime        = 60,
+        #runtime        = 60,
         mem_mb         = 6000,
     resources:
         cores          = lambda w, threads: threads
     log:       "logs/04-kinship/KIN/run_KINgaroo/{generation}.log"
     benchmark: "benchmarks/04-kinship/KIN/run_KINgaroo/{generation}.tsv"
     conda:      "../envs/kin-3.1.3.yml"
-    threads:    32
+    threads:    22
     shell: """
         CWD=`pwd`
         cd {output.kingaroo_dir}
@@ -146,7 +146,7 @@ rule run_KIN:
         interval     = config['kinship']['KIN']['interval'],
         optargs      = parse_KIN_optargs
     resources:
-        runtime      = 10,
+        #runtime      = 10,
         mem_mb       = 3000,
         cores        = lambda w, threads: threads
     log:       "logs/04-kinship/KIN/run_KIN/{generation}.log"

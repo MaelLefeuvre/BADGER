@@ -92,6 +92,7 @@ rule create_human_contamination:
     params:
         exclude = 'ALT~"<CN[0-9].*>"||ALT~"<INS:.*>" || ALT~"<INV>"'
     resources:
+        tmpdir  = config["tempdir"],
         runtime = 10,
         mem_mb  = 128,
         cores   = lambda w, threads: threads
@@ -158,6 +159,7 @@ rule get_consensus:
     params:
         exclude = 'ALT~"<CN[0-9].*>"||ALT~"<INS:.*>" || ALT~"<INV>"'
     resources:
+        tmpdir  = config["tempdir"],
         runtime = 10,
         mem_mb  = 128,
         cores   = lambda w, threads: threads
@@ -280,6 +282,7 @@ rule run_gargammel:
         output_base_name = "results/01-gargammel/{sample}/{chr}",
         input_directory  = directory("results/01-gargammel/{sample}/{chr}"),
     resources:
+        tmpdir  = config["tempdir"],
         runtime = 10,
         mem_mb  = 128, 
         cores   = lambda w, threads: threads
@@ -362,6 +365,7 @@ rule merge_chromosomes:
         forwd = "logs/01-gargammel/merge_chromosomes/{sample}_s1.log",
         revrs = "logs/01-gargammel/merge_chromosomes/{sample}_s2.log"
     resources:
+        tmpdir  = config["tempdir"],
         runtime = 10,
         mem_mb  = 128, 
         cores   = lambda w, threads: threads

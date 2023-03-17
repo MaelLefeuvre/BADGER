@@ -102,6 +102,7 @@ rule run_GRUPS:
     | 0.05X | 0:09:42   | 2013    | 
     """
     input:
+        samples_def       = rules.get_samples.output, 
         pileup       = rules.samtools_pileup.output.pileup,
         data         = rules.GRUPS_generate_fst_set.output.fst,
         #panel        = rules.fetch_samples_panel.output.panel,
