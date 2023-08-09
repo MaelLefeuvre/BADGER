@@ -1,0 +1,8 @@
+name: pcangsd-0.99
+channels:
+  - conda-forge
+dependencies:
+  - conda-forge::python>=3.6
+  - conda-forge::numpy
+  - conda-forge::scipy
+  - conda-forge::cython

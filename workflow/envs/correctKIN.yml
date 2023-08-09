@@ -1,0 +1,6 @@
+name: correctKIN
+channels:
+  - conda-forge
+dependencies: 
+  - conda-forge::go>=1.18.5
+  - conda-forge::make>=4.3

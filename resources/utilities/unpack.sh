@@ -39,11 +39,12 @@ function uncram() {
 
     # Put each unpacked bam in its own directory 
     for bam in ./${rep}*.bam; do
-        local bam_dir="${bam%.bam}"
+        local bam_dir="${bam%.bam}" # name of the individual. i.e ped1_g1-b1-i1
 	log INFO "Moving ${bam} in ${target_dir}/${bam_dir}"
 	mkdir $bam_dir
 	chmod 444 $bam
-	mv $bam $bam_dir
+	# Mova and rename using the picard wildcard (.srt.rmdup)
+	mv $bam "${bam_dir}/${bam_dir}.srt.rmdup.bam"
     done
     cd - 
 }
@@ -95,27 +96,29 @@ function unpack_xz_file() {
 # ---- Main
 function main() {
     FILETYPE="${1}"
-    OUT_DIR="${2}"
+    OUT_DIR="${@: -1}"
     BASE_DIR=`pwd`
     
     THREADS=16
 
-    case "${FILETYPE}" in
-        "uncram")
-	    uncram_all "${OUT_DIR}"
-            ;;
-	"metadata")
-	    copy_file "${OUT_DIR}" "meta/pipeline-metadata.yml"
-	    ;;
-	"contaminants")
-	    copy_file "${OUT_DIR}" "contaminants.tsv"
-	    ;;
-	"pedigree")
-	    unpack_pedigree "${OUT_DIR}"
-	    ;;
-	"variants")
-	    unpack_xz_file "${OUT_DIR}" "variants-intersect-[A-Z]{3}-maf[.0-9]+.ucscbed.xz"
-    esac
+    for FILETYPE in "$@"; do
+        case "${FILETYPE}" in
+            "uncram")
+                uncram_all "${OUT_DIR}"
+                ;;
+            "metadata")
+                copy_file "${OUT_DIR}" "meta/pipeline-metadata.yml"
+                ;;
+            "contaminants")
+                copy_file "${OUT_DIR}" "contaminants.tsv"
+                ;;
+            "pedigree")
+                unpack_pedigree "${OUT_DIR}"
+                ;;
+            "variants")
+                unpack_xz_file "${OUT_DIR}" "variants-intersect-[A-Z]{3}-maf[.0-9]+.ucscbed.xz"
+        esac
+    done
 }
 
 

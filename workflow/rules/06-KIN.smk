@@ -85,7 +85,7 @@ rule run_KINgaroo:
     log:       "logs/04-kinship/KIN/run_KINgaroo/{generation}.log"
     benchmark: "benchmarks/04-kinship/KIN/run_KINgaroo/{generation}.tsv"
     conda:      "../envs/kin-3.1.3.yml"
-    threads:    22
+    threads:    16
     shell: """
         CWD=`pwd`
         cd {output.kingaroo_dir}

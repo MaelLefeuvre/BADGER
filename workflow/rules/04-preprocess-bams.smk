@@ -105,7 +105,7 @@ rule samtools_sort:
         bam       = rules.samtools_filter_unmapped.output.bam,
         reference = config["reference"]
     output:
-        bam       = "results/02-preprocess/04-sort/{sample}/{sample}.srt.bam"
+        bam       = temp("results/02-preprocess/04-sort/{sample}/{sample}.srt.bam")
     resources:
         runtime       = 10,
         mem_mb        = 1024,
@@ -292,7 +292,8 @@ rule run_mapdamage:
         reference = config["reference"],
         metadata     = "results/meta/pipeline-metadata.yml"
     output:
-        bam = "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam"
+        bam = "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
+        misincorporation = "results/02-preprocess/06-mapdamage/{sample}/misincorporation.txt"
     params:
         downsample_seed = define_mapdamage_seed
     resources:
@@ -316,3 +317,30 @@ rule run_mapdamage:
     """
 
 
+def define_masking_input_bam(wildcards):
+    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
+    if rescaler is None:
+        return define_dedup_input_bam(wildcards)
+    else:
+        return define_rescale_input_bam(wildcards)
+    raise RuntimeError("Failed to define a proper input bam file for pmd-mask")
+
+
+rule run_pmd_mask:
+    input:
+        bam              = define_masking_input_bam,
+        bai              = lambda wildcards: define_masking_input_bam(wildcards) + ".bai",
+        reference        = config["reference"],
+        misincorporation = rules.run_mapdamage.output.misincorporation
+    output:
+        bam     = "results/02-preprocess/06-pmd-mask/{sample}/{sample}.pmdmasked.bam",
+        metrics = "results/02-preprocess/06-pmd-mask/{sample}/{sample}.pmdmasked.metrics",
+    params:
+        threshold = config['preprocess']['pmd-rescaling']['pmd-mask']['threshold']
+    log:       "logs/02-preprocess/06-pmd-mask/run_pmd_mask/{sample}.log"
+    benchmark: "benchmarks/02-preprocess/06-pmd-mask/run_pmd_mask/{sample}.tsv" 
+    conda:     "../envs/pmd-mask-0.3.yml"
+    threads:   8
+    shell: """
+        pmd-mask -@ {threads} -b {input.bam} -f {input.reference} -m {input.misincorporation} --threshold {params.threshold} -M {output.metrics} -Ob -o {output.bam} --verbose > {log} 2>&1
+    """

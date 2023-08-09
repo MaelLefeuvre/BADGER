@@ -29,29 +29,50 @@ def TKGWV2_output(wildcards):
 
 
 def get_TKGWV2_input_bams(wildcards):
-    """
-    Define the appropriate input bam files for TKGWV2, based on which PMD
-    rescaler was requested by the user
-    """
+    apply_masking = config['preprocess']['pmd-rescaling']['apply-masking']
     rescaler = config['preprocess']['pmd-rescaling']['rescaler']
-    match rescaler:
-        case "mapdamage":
-            print("NOTE: Using MapDamage rescaled bams for TKGWV2", file=sys.stderr)
-            root = "results/02-preprocess/06-mapdamage/ped{gen}_{pairs}/ped{gen}_{pairs}.srt.rmdup.rescaled.{ext}"
-        case "pmdtools":
-            print("NOTE: Using PMDTools rescaled bams for TKGWV2", file=sys.stderr)
-            root = "results/02-preprocess/06-pmdtools/ped{gen}_{pairs}/ped{gen}_{pairs}.srt.rmdup.filtercontam.{ext}"
-        case None:
-            print("WARNING: Skipping PMD rescaling for TKGWV2!", file=sys.stderr)
-            root = expand(define_dedup_input_bam(wildcards), sample = "{gen}_{pairs}")
-        case other:
-            raise RuntimeError(f'Invalid rescaler value "{rescaler}')
+    if apply_masking:
+        print("Applying pmd-mask for TKGWV2", file=sys.stderr)
+        root = expand(rules.run_pmd_mask.output.bam, sample = "ped{gen}_{pairs}")
 
+
+    elif rescaler is None:
+        print("WARNING: Skipping PMD rescaling for TKGWV2!", file = sys.stderr)
+        root = expand(define_dedup_input_bam(wildcards), sample = "ped{gen}_{pairs}")
+    else:
+        root = expand(define_rescale_input_bam(wildcards), sample = "ped{gen}_{pairs}")
+    
     return expand(root,
-        gen   = "{gen}",
+        gen = "{gen}",
         pairs = ["{pairA}", "{pairB}"],
-        ext   = ["bam", "bam.bai"] 
+        ext = ["bam", "bam.bai"]
     )
+
+
+#def get_TKGWV2_input_bams(wildcards):
+#    """
+#    Define the appropriate input bam files for TKGWV2, based on which PMD
+#    rescaler was requested by the user
+#    """
+#    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
+#    match rescaler:
+#        case "mapdamage":
+#            print("NOTE: Using MapDamage rescaled bams for TKGWV2", file=sys.stderr)
+#            root = "results/02-preprocess/06-mapdamage/ped{gen}_{pairs}/ped{gen}_{pairs}.srt.rmdup.rescaled.{ext}"
+#        case "pmdtools":
+#            print("NOTE: Using PMDTools rescaled bams for TKGWV2", file=sys.stderr)
+#            root = "results/02-preprocess/06-pmdtools/ped{gen}_{pairs}/ped{gen}_{pairs}.srt.rmdup.filtercontam.{ext}"
+#        case None:
+#            print("WARNING: Skipping PMD rescaling for TKGWV2!", file=sys.stderr)
+#            root = expand(define_dedup_input_bam(wildcards), sample = "{gen}_{pairs}")
+#        case other:
+#            raise RuntimeError(f'Invalid rescaler value "{rescaler}')
+#
+#    return expand(root,
+#        gen   = "{gen}",
+#        pairs = ["{pairA}", "{pairB}"],
+#        ext   = ["bam", "bam.bai"] 
+#    )
 
 
 def TKGWV2_downsample_seed(wildcards):
@@ -94,6 +115,22 @@ rule TKGWV2_downsample_bam:
         find . -maxdepth 1 -type l -delete      >> $root_dir/{log}       # delete symlinks.
     """
 
+rule intersect_freq_file:
+    input:
+        frequencies   = config['kinship']['TKGWV2']['target-frequencies'],
+        targets       = os.path.splitext(config["kinship"]["targets"])[0] + ".snp",
+        intersect     = expand(rules.get_target_panel_intersect.output.targets, 
+            maf      = config['variant-calling']['maf'],
+            superpop = config['variant-calling']['maf-superpop'],
+        ),
+    output:
+        frequencies   = "results/04-kinship/TKGWV2/{file}.frq".format(file = basename(splitext(config['kinship']['TKGWV2']['target-frequencies'])[0]))
+    params:
+    conda: "../envs/TKGWV2.yml"
+    shell: """
+        workflow/scripts/intersect-plink-frq.R {input.frequencies} {input.targets} {input.intersect} > {output.frequencies}
+    """
+
 
 def define_TKGWV2_input(wildcards):
     """
@@ -129,23 +166,24 @@ rule run_TKGWV2:
         reference     = config["reference"],
         bed_targets   = "data/TKGWV2/genomeWideVariants_hg19/1000GP3_22M_noFixed_noChr.bed",
         plink_targets = multiext("data/TKGWV2/genomeWideVariants_hg19/DummyDataset_EUR_22M_noFixed", ".bed", ".bim", ".fam"),
-        frequencies   = config['kinship']['TKGWV2']['target-frequencies']
+        #frequencies   = config['kinship']['TKGWV2']['target-frequencies']
+        frequencies   = rules.intersect_freq_file.output.frequencies
     output:
         results = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/TKGWV2_Results.txt",
         #frq     = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/commped{gen}_{A}____ped{gen}_{B}.frq",
         #tped    = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}____ped{gen}_{pairB}.tped",
-        peds    = [
+        peds    = temp([
             "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.ped",
             "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.ped"
-        ],
-        maps    = [
+        ]),
+        maps    = temp([
             "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.map",
             "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.map"
-        ],
-        pileups = [
+        ]),
+        pileups = temp([
             "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.pileupsamtools.gwv.txt",
             "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.pileupsamtools.gwv.txt"
-        ],
+        ]),
     params:
         plink_basename = lambda wildcards, input: splitext(input.plink_targets[0])[0],
         min_MQ     = config["kinship"]["TKGWV2"]["min-MQ"],

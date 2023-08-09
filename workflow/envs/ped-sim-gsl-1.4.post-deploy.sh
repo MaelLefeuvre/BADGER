@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
-eval "$(conda shell.bash hook)"
-conda activate ped-sim-gsl-1.4
+#eval "$(conda shell.bash hook)"
+#conda activate "$(basename ${0%.post-deploy.sh})"
 
-set -euxo pipefail
+
+#set -euo pipefail
 
 OPT_LEVEL=2
 
@@ -16,5 +17,5 @@ wget -O- ${GIT_RELEASE} | tar -xvzf- &&
 cd ${BUILD_DIR} &&
 sed -i 's/-O2/-O$(OPT_LEVEL)/' Makefile-gsl &&
 
-make -f Makefile-gsl OPT_LEVEL=$OPT_LEVEL DEFINES="-DUSEGSL -I$CONDA_PREFIX/include -L$CONDA_PREFIX/lib" && 
+make -f Makefile-gsl OPT_LEVEL=$OPT_LEVEL DEFINES="-march=native -DUSEGSL -I$CONDA_PREFIX/include -L$CONDA_PREFIX/lib" && 
 cp ped-sim fam2def.py plot-fam.R $CONDA_PREFIX/bin && rm -r ${BUILD_DIR}

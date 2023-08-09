@@ -72,6 +72,17 @@ rule plink_bfile_to_tped:
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 01. Generate a list of input BAM list for cohort variant calling (one list per pedigree).
 
+def define_rescale_input_bam(wildcards):
+    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
+    match rescaler:
+        case "mapdamage":
+            return "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
+        case "pmdtools":
+            return "results/02-preprocess/06-pmdtools/{sample}/{sample}.srt.rmdup.filtercontam.bam",
+        case other:
+            raise RuntimeError(f'Invalid rescaler value "{rescaler}"')
+
+
 def get_pileup_input_bams(wildcards):
     """
     Define the appropriate input bam for the variant caller, based on which 
@@ -80,29 +91,23 @@ def get_pileup_input_bams(wildcards):
     # Run through the initial samples files and extract pedigree ids 
     samples_ids = get_samples_ids(wildcards)
 
+    # If masking is required, delegate input definition to the appropriate rule.
+    apply_masking = config['preprocess']['pmd-rescaling']['apply-masking']
+    if apply_masking:
+        print("Applying pmd-mask for variant calling.", file=sys.stderr)
+        return expand(rules.run_pmd_mask.output.bam, sample = samples_ids)
+
+
     # Return a list of input bam files for pileup
     rescaler = config['preprocess']['pmd-rescaling']['rescaler']
-    match rescaler:
-        case "mapdamage":
-            print("NOTE: Using MapDamage rescaled bams for variant calling.", file=sys.stderr)
-            return expand(
-                "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
-                sample = samples_ids,
-            )
-        case "pmdtools":
-            print("NOTE: Using PMDTools rescaled bams for variant calling.", file=sys.stderr)
-            return expand(
-                "results/02-preprocess/06-pmdtools/{sample}/{sample}.srt.rmdup.filtercontam.bam",
-                sample = samples_ids,
-
-            )
-        case None:
-            print("WARNING: Skipping PMD Rescaling for variant calling!", file=sys.stderr)
-            return expand(
-                define_dedup_input_bam(wildcards),
-                sample = samples_ids
-            )
-    raise RuntimeError(f'Invalid rescaler value "{rescaler}')
+    if rescaler is None:
+        print("WARNING: Skipping PMD Rescaling for variant calling!", file=sys.stderr)
+        return expand(define_dedup_input_bam(wildcards), sample = samples_ids)
+    else:
+        print("NOTE: Applying {rescaler} for variant calling.", file=sys.stderr)
+        return expand(define_rescale_input_bam(wildcards), sample = samples_ids)        
+    
+    raise RuntimeError(f'Invalid rescaler value "{rescaler}"')
 
 
 rule generate_bam_list:

@@ -13,7 +13,7 @@ archive:
   compress-level: 9
 
 ped-sim:
-  replicates:                1
+  replicates:                10
   filter-indels:             False
   filter-maf:                False
   filter-maf-threshold:      0.05
@@ -29,12 +29,12 @@ ped-sim:
     error_rate:              0
     missingness:             0
     retain-extra:            0 
-    pop:                     "CEU"
-    seed:                    ~        # Random if empty '~'
+    pop:                     "ASW"
+    seed:                    ~                   # Random if empty '~'
 
-simulator: "gargammel"                # "gargammel" | "dwgsim"
+simulator:                   "gargammel"         # "gargammel" | "dwgsim"
 gargammel:
-  coverage:                  0.05
+  coverage:                  0.01
   comp_endo:                 1.00
   comp_cont:                 0.00
   comp_bact:                 0.00
@@ -76,7 +76,8 @@ preprocess:
   dedup:
     method: picard                             # "samtools" | "picard" | "dedup"
   pmd-rescaling:
-    rescaler: mapdamage                        # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
+    rescaler:                ~                 # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
+    apply-masking:           True
     map-damage:
       rescale:               True
       downsample:            ~                 # No downsampling if empty (0 < downsample < 1)
@@ -84,6 +85,8 @@ preprocess:
     pmdtools:
       threshold:             -19999            # in LOD. Recommended: 3 | set to -19999 to disable
       mask-terminal-deams:   0                 # in bases. Default 0 
+    pmd-mask:
+      threshold:             0.01
 
 variant-calling:
   caller:                    "pileupCaller"    # ANGSD || pileupCaller
@@ -123,6 +126,7 @@ kinship:
     downsample-N:            57600000
     downsample-seed:         ~                 # Random seed if empty (~)
     target-frequencies:      "data/TKGWV2/1240K/1000GP3_EUR_1240K.frq"
+    #target-frequencies:      "data/TKGWV2/genomeWideVariants_hg19/1000GP3_EUR_22M_noFixed.frq"
     min-BQ:                  30
     min-MQ:                  20
     min-depth:               1
