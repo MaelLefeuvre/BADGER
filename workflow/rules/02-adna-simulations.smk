@@ -288,7 +288,7 @@ rule run_gargammel:
         cores   = lambda w, threads: threads
     log:       "logs/01-gargammel/run_gargammel/{sample}_chr{chr}.log"
     benchmark: "benchmarks/01-gargammel/run_gargammel/{sample}_chr{chr}.tsv"
-    conda:     "../envs/gargammel-1.1.2.yml"
+    conda:     "../envs/gargammel-1.1.4.yml"
     group:     "scatter"
     priority:  2
     threads:   1
