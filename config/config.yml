@@ -7,13 +7,13 @@ FTP:
 reference:                   "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary_assembly.fa"
 
 tempdir:                     "/tmp/mlefeuvre"
-
+make-qc:                     True
 archive:
   archive-dir:               "/data/mlefeuvre/Projects/20230206-aDNA-kinship-simulations/archive"
   compress-level: 9
 
 ped-sim:
-  replicates:                10
+  replicates:                2
   filter-indels:             False
   filter-maf:                False
   filter-maf-threshold:      0.05
@@ -21,23 +21,23 @@ ped-sim:
     interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
     refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
   data:
-    codes:                   "resources/ped-sim/ped-definition/pedigree_codes.txt"
-    definition:              "resources/ped-sim/ped-definition/pedigree.def"
+    codes:                   "resources/ped-sim/ped-definition/inbred/pedigree_codes.txt"
+    definition:              "resources/ped-sim/ped-definition/inbred/pedigree.def"
     map:                     "data/ped-sim/recombination_maps/refined_mf.simmap"
     interference:            "data/ped-sim/interference_maps/nu_p_campbell.tsv"
   params:
     error_rate:              0
     missingness:             0
     retain-extra:            0 
-    pop:                     "ASW"
+    pop:                     "CEU"
     seed:                    ~                   # Random if empty '~'
 
 simulator:                   "gargammel"         # "gargammel" | "dwgsim"
 gargammel:
-  coverage:                  0.01
-  comp_endo:                 1.00
-  comp_cont:                 0.00
-  comp_bact:                 0.00
+  coverage:                  0.02
+  comp_endo:                 1.0
+  comp_cont:                 0.0
+  comp_bact:                 0.0
   pmd-model:                 "misincorporation"  # "misincorporation" | "briggs"
   misincorporation:
     file:                    "resources/gargammel/misincorporations/Chan_meso/misincorporation.txt"
@@ -51,7 +51,9 @@ gargammel:
   sizefreq:                  "resources/gargammel/sizefreqs/Chan_Meso-sizefreq.txt"
   qshift:                    0                 # 0. MAX:93 (Note: higher values DECREASES the error rate)
   params:
-    contam-pop:              "AFR"
+    contam-pop:              "GBR"
+    contaminate-samples:     ~                # All samples if ~, specific samples may be specified using a file (see resources/gargammel/contaminate-samples-list.txt)
+    #contaminate-samples:     "resources/gargammel/contaminate-samples-list.txt"
 dwgsim:
   seed:                      ~                 # Random seed if empty
 
@@ -79,7 +81,7 @@ preprocess:
     rescaler:                ~                 # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
     apply-masking:           True
     map-damage:
-      rescale:               True
+      rescale:               False
       downsample:            ~                 # No downsampling if empty (0 < downsample < 1)
       downsample-seed:       ~                 # Random seed if empty (~)
     pmdtools:
@@ -104,14 +106,26 @@ variant-calling:
 
 kinship:
   targets:                   "data/Reich-dataset/1240K/v52.2_1240K_public.snp"
+  exclude-samples:
+    - g3-b3-i1
+    - g3-b4-i1
+    - g4-b1-i1
   READ:
     window-size:             1000000
     norm-method:             "median"          # median || mean || max || value
     norm-value:              ~                 # (Float). Ignored if norm-method != "value"
+  READv2:
+    window-est:              False             # Default: False
+    window-size:             5000000           # Default: 5000000
+    norm-method:             "median"          # Default: median
+    norm-value:              ~                 # Default: None
+    2pow:                    False             # Default: False (alternative classification thresholds):
+                                               # - When False: [0.96875,0.90625,0.8125,0.625]
+                                               # - When True:  [1-1/(2**4.5),1-1/(2**3.5),1-1/(2**2.5),1-1/(2**1.5)]
   GRUPS:
-    pedigree:                "workflow/scripts/grups/resources/pedigrees/siblings-pedigree.txt"
+    pedigree:                "resources/grups-rs/pedigrees/siblings-pedigree.ped"
     pedigree-pop:            "EUR"
-    contam-pop:              "AFR"
+    contam-pop:              "EUR"
     min-depth:               1
     mode:                    "fst"
     reps:                    1000
@@ -136,3 +150,6 @@ kinship:
     roh-threshold:           ~                # (ignored if None)
     diversity-parameter:     ~                # (ignored if None)
     noisy-windows:           ~                # (ignored if None)
+  correctKin:
+    deplete-indivs:          False
+    reference-pop:           "EUR"

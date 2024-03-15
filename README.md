@@ -68,7 +68,7 @@ snakemake archive --cores `nproc` --use-conda --conda-frontend mamba --printshel
 ## @TODO:
 - [ ] (URGENT) Restructure config file and fully isolate snakefiles into their own submodules. Especially `00-netrules` and `07-archive`
 - [ ] (URGENT) Fix bug regarding FTP Permission denied...This is likely caused by snakemake running the connection **before** the checkpoint is validated Thus, the connection is times-out. Generate a MR example and submit an issue to github ?
-- [ ] Bump to ped-sim-1.4 and source compile.
+- [x] Bump to ped-sim-1.4 and source compile.
 - [ ] Finish implementing `dedup`. A bit time consuming, since I need to add FixAdapterRemovalPrefix before running bwa. 
 - [ ] There's no need to simulate contaminating genome when gargammel's cont value are @ zero...
 - [ ] Unit testing not yet implemented.

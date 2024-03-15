@@ -1,5 +1,7 @@
 configfile: "./config/config.yml"
 #include: "rules/00-netrules.smk"
+include: "rules/common.smk"
+include: "rules/00-qc.smk"
 include: "rules/00-preprocess-reference.smk"
 include: "rules/00-preprocess-1000g-phase3.smk"
 include: "rules/01-pedigree-sims.smk"
@@ -9,22 +11,25 @@ include: "rules/04-preprocess-bams.smk"
 include: "rules/05-variant-calling.smk"
 include: "rules/06-KIN.smk"
 include: "rules/06-READ.smk"
+include: "rules/06-READv2.smk"
 include: "rules/06-grups-rs.smk"
 include: "rules/06-TKGWV2.smk"
+include: "rules/06-correctKin.smk"
 include: "rules/07-archive.smk"
 
 localrules: meta, READ, GRUPS, TKGWV2, ped_sim, all
 
 wildcard_constraints:
-    chr    = "\d+",
-    sample = "ped[0-9]{1,2}_[-gGbBiIsS0-9]+"
+    chr    = r"\d+",
+    sample = "ped[0-9]{1,2}_[-gGbBiIsS0-9]+",
+    POP    = "[A-Z]{3}"
 
 # ---- Download dataset 
 #module netrules:
 #    snakefile: "rules/00-netrules.smk"
 #    config: config
 #use rule * from netrules
-
+#
 #rule fetch_data:
 #    input:
 #        expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
@@ -41,6 +46,10 @@ wildcard_constraints:
 #    snakefile: "rules/07-archive.smk"
 #    config: config
 #use rule archive from archive_run
+
+#onstart:
+#    get_pileup_input_bams(None, print_log = True)
+
 
 # ---- Generate a global metadata file. Keeps track of seeding values + commit hashes.
 rule meta:
@@ -59,31 +68,71 @@ rule READ:
         rules.meta.output,
         READ_output
 
+rule READv2:
+    input:
+        rules.meta.output,
+        READv2_output
+
 rule GRUPS:
     input:
         rules.meta.output,
         GRUPS_output
-
 
 rule TKGWV2:
     input:
         rules.meta.output,
         TKGWV2_output
 
+rule correctKin:
+    input:
+        rules.meta.output,
+        correctKin_output
+
 rule ped_sim:
     input: 
-        rules.meta.output,
-        expand("results/00-ped-sim/{POP}-pedigrees-M2-m2-snps-merged.vcf.gz", POP=config['ped-sim']['params']['pop'])
+        meta = rules.meta.output,
+        plot = expand(rules.plot_ped_sim.output.pdf, POP=config['ped-sim']['params']['pop']) if config['make-qc'] else "",
+        vcf  = expand(rules.merge_ped_sim.output.vcf, POP=config['ped-sim']['params']['pop'])
 
+rule adna_simulation:
+    input:
+        meta  = rules.meta.output,
+        files = lambda w: expand(rules.merge_chromosomes.output, sample=get_all_samples_ids(w)),
+        qc    = rules.multiqc_adna_simulations.output if config['make-qc'] else ""
+
+rule align:
+    input:
+        meta  = rules.meta.output,
+        files = lambda w: expand(assign_aligner_algorithm(w), sample = get_all_samples_ids(w)),
+        qc    = rules.multiqc_align_fastqs.output if config['make-qc'] else ""
+
+rule preprocess:
+    input:
+        meta  = rules.meta.output,
+        files = lambda w: expand(get_pileup_input_bams(w, filter_samples = False), generation = get_generations()),
+        qc    = (
+            expand(rules.plot_covstats.output.plot, generation=get_generations()) + 
+            rules.multiqc_preprocess_bams.output 
+            if config['make-qc'] else ""
+        )
 
 rule all:
     default_target: True
     input:
         rules.meta.output,
+        rules.ped_sim.input.plot,
+        rules.adna_simulation.input.qc,
+        rules.align.input.qc,
+        rules.preprocess.input.qc,
+        rules.preprocess.input.files,
         rules.KIN.input,
         rules.READ.input,
+        rules.READv2.input,
         rules.GRUPS.input,
-        rules.TKGWV2.input
+        rules.TKGWV2.input,
+        rules.correctKin.input,
+
+
 
 
 

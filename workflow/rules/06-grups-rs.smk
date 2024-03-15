@@ -13,14 +13,13 @@ import yaml
 def GRUPS_output(wildcards):
     """
     Returns the list of required generation_wise comparisons for GRUPS-rs
-    @ TODO: This checkpoint is not needed anymore
     """
-    with checkpoints.get_samples.get().output[0].open() as f:
-        samples = str.split(f.readline().replace('\n', ''), '\t')
-        generations = set([sample.split('_')[0] for sample in samples])
-        return directory(expand("results/04-kinship/GRUPS/{generation}", generation=generations))
-    #generations = range(1, config['ped-sim']['replicates'])
-    #return directory(expand("results/04-kinship/GRUPS/{generation}", generation=generations))
+    # Get the number of expected generations.
+    gen_no   = config['ped-sim']['replicates']
+    template = expand("results/04-kinship/GRUPS/{{generation}}/{{generation}}.{ext}",
+        ext=["pwd", "result", "probs"]
+    )
+    return expand(template, generation = get_generations())
 
 # ------------------------------------------------------------------------------------------------------------------- #
 
@@ -52,12 +51,12 @@ rule GRUPS_generate_fst_set:
         contam_pop   = config["kinship"]["GRUPS"]["contam-pop"]
     resources:
         cores        = lambda w, threads: threads
-    log:       "logs/04-kinship/GRUPS/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.log"
-    benchmark: "benchmarks/04-kinship/GRUPS/GRUPS_generate_fst_set/{params.pedigree_pop}-{params.contam_pop}-GRUPS_generate_fst_set.tsv"
-    conda:     "../envs/grups-rs.yml"
+    log:       "logs/04-kinship/GRUPS/GRUPS_generate_fst_set/GRUPS_generate_fst_set.log"
+    benchmark: "benchmarks/04-kinship/GRUPS/GRUPS_generate_fst_set/GRUPS_generate_fst_set.tsv"
+    conda:     "../envs/grups-rs-0.3.2.yml"
     threads:   22
     shell: """
-        grups fst \
+        grups-rs fst \
         --vcf-dir $(dirname {input.data} | uniq) \
         --output-dir $(dirname {output.fst} | uniq) \
         --pop-subset {params.pedigree_pop} {params.contam_pop} \
@@ -103,7 +102,7 @@ rule run_GRUPS:
     | 0.10X | 0:44:15   | 2157    |
     """
     input:
-        samples_def       = rules.get_samples.output, 
+        samples_def  = rules.get_samples.output, 
         pileup       = rules.samtools_pileup.output.pileup,
         data         = rules.GRUPS_generate_fst_set.output.fst,
         #panel        = rules.fetch_samples_panel.output.panel,
@@ -112,33 +111,33 @@ rule run_GRUPS:
         targets      = config["kinship"]["targets"],
         metadata     = "results/meta/pipeline-metadata.yml"
     output:
-        output_dir   = directory("results/04-kinship/GRUPS/{generation}/"),
-        results      = multiext("results/04-kinship/GRUPS/{generation}/{generation}", ".pwd", ".result")
+        results      = multiext("results/04-kinship/GRUPS/{generation}/{generation}", ".pwd", ".result", ".probs")
     params:
-        sample_names = lambda wildcards: expand(get_samples_ids(wildcards), generation = wildcards.generation),
-        samples      = lambda wildcards: len(get_samples_ids(wildcards)) - 1,
-        data_dir     = lambda wildcards, input: dirname(input.data[0]),
-        recomb_dir   = lambda wildcards, input: dirname(input.recomb_map[0]),
-        pedigree     = config["kinship"]["GRUPS"]["pedigree"],
-        pedigree_pop = config["kinship"]["GRUPS"]["pedigree-pop"],
-        contam_pop   = config["kinship"]["GRUPS"]["contam-pop"],
-        reps         = config["kinship"]["GRUPS"]["reps"],
-        mode         = config["kinship"]["GRUPS"]["mode"],
-        min_depth    = config["kinship"]["GRUPS"]["min-depth"],
-        min_quality  = config["kinship"]["GRUPS"]["min-qual"], 
-        maf          = config["kinship"]["GRUPS"]["maf"],
-        q_error_rate = config["kinship"]["GRUPS"]["seq-error-rate"],
-        seed         = format_seed
+        output_dir     = "results/04-kinship/GRUPS/{generation}/",
+        sample_names   = lambda wildcards: expand(get_samples_ids_filtered(wildcards), generation = wildcards.generation),
+        samples        = lambda wildcards: len(get_samples_ids_filtered(wildcards)) - 1,
+        data_dir       = lambda wildcards, input: dirname(input.data[0]),
+        recomb_dir     = lambda wildcards, input: dirname(input.recomb_map[0]),
+        pedigree       = config["kinship"]["GRUPS"]["pedigree"],
+        pedigree_pop   = config["kinship"]["GRUPS"]["pedigree-pop"],
+        contam_pop     = config["kinship"]["GRUPS"]["contam-pop"],
+        reps           = config["kinship"]["GRUPS"]["reps"],
+        mode           = config["kinship"]["GRUPS"]["mode"],
+        min_depth      = config["kinship"]["GRUPS"]["min-depth"],
+        min_quality    = config["kinship"]["GRUPS"]["min-qual"], 
+        maf            = config["kinship"]["GRUPS"]["maf"],
+        seq_error_rate = config["kinship"]["GRUPS"]["seq-error-rate"],
+        seed           = format_seed
     resources:
         runtime = 60,
         mem_mb  = 2048,
         cores   = lambda w, threads: threads
     log:       "logs/04-kinship/GRUPS/run_GRUPS/{generation}-run_GRUPS.log"
     benchmark: "benchmarks/04-kinship/GRUPS/run_GRUPS/{generation}-run_GRUPS.tsv"
-    conda:     "../envs/grups-rs.yml"
+    conda:     "../envs/grups-rs-0.3.2.yml"
     threads:   1
     shell: """
-        grups pedigree-sims \
+        grups-rs pedigree-sims \
         --pileup {input.pileup} \
         --data-dir {params.data_dir} \
         --recomb-dir {params.recomb_dir} \
@@ -150,12 +149,11 @@ rule run_GRUPS:
         --sample-names {params.sample_names} \
         --reps {params.reps} \
         --mode {params.mode} \
-        --output-dir {output.output_dir} \
+        --output-dir {params.output_dir} \
         --maf {params.maf} \
         --min-qual {params.min_quality} \
-        --seq-error-rate {params.q_error_rate} \
+        --seq-error-rate {params.seq_error_rate} \
         --seed {params.seed} \
-        --print-blocks \
-        --ignore-dels \
+        --overwrite \
         --verbose > {log} 2>&1
     """

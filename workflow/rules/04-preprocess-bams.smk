@@ -20,27 +20,6 @@ rule samtools_index:
         samtools index -@ {threads} {input.bam}
     """
 
-
-# ------------------------------------------------------------------------------------------------------------------- #
-# ---- 00. Resolve the required aligner algorithm.
-
-def assign_aligner_algorithm(wildcards):
-    """
-    Decide on the appropriate bwa algorithm (aln or mem), based on the user input.
-    """
-
-    if config["preprocess"]["bwa"]["aligner"] == "mem":
-        if config["preprocess"]["bwa"]["collapsed-only"]:
-            return expand(rules.bwa_mem_se.output.sam, sample="{sample}", extension="collapsed")
-        else:
-            return rules.samtools_merge_mem.output.merged
-    elif config["preprocess"]["bwa"]["aligner"] == "aln":
-        if config["preprocess"]["bwa"]["collapsed-only"]:
-            return expand(rules.bwa_samse.output.sam, sample="{sample}", extension="collapsed")
-        else:
-            return rules.samtools_merge_aln.output.merged
-
-
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 01. Perform read-length and BQ quality filtration.
 
@@ -290,12 +269,53 @@ rule run_mapdamage:
         bam       = define_dedup_input_bam,
         bai       = lambda wildcards: define_dedup_input_bam(wildcards) + ".bai",
         reference = config["reference"],
-        metadata     = "results/meta/pipeline-metadata.yml"
+        metadata  = "results/meta/pipeline-metadata.yml"
     output:
-        bam = "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
-        misincorporation = "results/02-preprocess/06-mapdamage/{sample}/misincorporation.txt"
+        bam              = [] if config['preprocess']['pmd-rescaling']['apply-masking'] else "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
+        g2a_freq         = "results/02-preprocess/06-mapdamage/{sample}/3pGtoA_freq.txt",
+        c2t_freq         = "results/02-preprocess/06-mapdamage/{sample}/5pCtoT_freq.txt",
+        dnacomp_genome   = "results/02-preprocess/06-mapdamage/{sample}/dnacomp_genome.csv",
+        dnacomp          = "results/02-preprocess/06-mapdamage/{sample}/dnacomp.txt",
+        lgdistribution   = "results/02-preprocess/06-mapdamage/{sample}/lgdistribution.txt",
+        misincorporation = "results/02-preprocess/06-mapdamage/{sample}/misincorporation.txt",
+        runtime_log      = "results/02-preprocess/06-mapdamage/{sample}/Runtime_log.txt",
+        mcmc_prob        = "results/02-preprocess/06-mapdamage/{sample}/Stats_out_MCMC_correct_prob.csv",
+        mcmc_iter        = "results/02-preprocess/06-mapdamage/{sample}/Stats_out_MCMC_iter.csv",
+        mcmc_iter_summ   = "results/02-preprocess/06-mapdamage/{sample}/Stats_out_MCMC_iter_summ_stat.csv",
+        frag_plot        = report("results/02-preprocess/06-mapdamage/{sample}/Fragmisincorporation_plot.pdf",
+            caption     = "../report/04-preprocess-bams/run_mapdamage/frag-plot.rst",
+            category    = "03. BAM Preprocessing",
+            subcategory = "06. MapDamage",
+            labels      = {"sample": "{sample}", "figure": "Fragment misincorporation"}
+        ),
+        length_plot      = report("results/02-preprocess/06-mapdamage/{sample}/Length_plot.pdf",
+            caption     = "../report/04-preprocess-bams/run_mapdamage/length-plot.rst",
+            category    = "03. BAM Preprocessing",
+            subcategory = "06. MapDamage",
+            labels      = {"sample": "{sample}", "figure": "Fragment Length distribution"}
+        ),
+        mcmc_post_pred   = report("results/02-preprocess/06-mapdamage/{sample}/Stats_out_MCMC_post_pred.pdf",
+            caption     = "../report/04-preprocess-bams/run_mapdamage/mcmc-post-pred.rst",
+            category    = "03. BAM Preprocessing",
+            subcategory = "06. MapDamage",
+            labels      = {"sample": "{sample}", "figure": "MCMC Posterior Prediction intervals"}
+        ),
+        mcmc_hist        = report("results/02-preprocess/06-mapdamage/{sample}/Stats_out_MCMC_hist.pdf",
+            caption     = "../report/04-preprocess-bams/run_mapdamage/mcmc-hist.rst",
+            category    = "03. BAM Preprocessing",
+            subcategory = "06. MapDamage",
+            labels      = {"sample": "{sample}", "figure": "MCMC posterior distributions histogram"}
+        ),
+        mcmc_trace       = report("results/02-preprocess/06-mapdamage/{sample}/Stats_out_MCMC_trace.pdf",
+            caption     = "../report/04-preprocess-bams/run_mapdamage/mcmc-trace.rst",
+            category    = "03. BAM Preprocessing",
+            subcategory = "06. MapDamage",
+            labels      = {"sample": "{sample}", "figure": "MCMC parameter trace plots"}
+        )
     params:
-        downsample_seed = define_mapdamage_seed
+        downsample_seed  = define_mapdamage_seed,
+        rescale          = "" if config['preprocess']['pmd-rescaling']['apply-masking'] else "--rescale",
+        rescale_out_flag = "" if config['preprocess']['pmd-rescaling']['apply-masking'] else "--rescale-out"
     resources:
         runtime = 60,
         mem_mb  = 1024,
@@ -307,12 +327,12 @@ rule run_mapdamage:
     priority: 10
     shell: """
         mapDamage \
-        -i {input.bam}                   \
-        -r {input.reference}             \
-        --rescale                        \
-        --folder $(dirname {output.bam}) \
-        --rescale-out {output.bam}       \
-        {params.downsample_seed}         \
+        -i {input.bam} \
+        -r {input.reference} \
+        --folder $(dirname {output.misincorporation}) \
+        {params.downsample_seed} \
+        {params.rescale} \
+        {params.rescale_out_flag} {output.bam} \
         --verbose > {log} 2>&1 
     """
 
@@ -344,3 +364,139 @@ rule run_pmd_mask:
     shell: """
         pmd-mask -@ {threads} -b {input.bam} -f {input.reference} -m {input.misincorporation} --threshold {params.threshold} -M {output.metrics} -Ob -o {output.bam} --verbose > {log} 2>&1
     """
+
+
+
+
+def get_contaminants(wildcards):
+    """
+    Returns a list of random ID(s) from a list of potential individuals to use as contamination.
+    This will give out a single contaminating individual for each pedigree replicate.
+    @ TODO: Maybe adding this info to the global metadata.yml file would be a good idea ?
+    """
+
+    # Prevent unneccessary rule re-run trigger events: If the contamination table already exists,
+    # simply print out its contents and leave...
+    if Path(rules.get_contamination_table.output.cont_table).exists():
+        with open(rules.get_contamination_table.output.cont_table, "r") as contamination_table:
+            samples = [line.strip("\n").split()[1] for line in contamination_table.readlines()]
+            return samples
+
+    # else, open the pedigree generation file and 1000g panel definition file and return a list
+    # of random samples.
+    # @ TODO: This might be where the FTP OS error is located ?
+    #with open(rules.run_ped_sim.input.definition) as f, open(rules.fetch_samples_panel.output.panel) as samples:
+
+    gen_no              = config['ped-sim']['replicates']
+    contam_samples_file = rules.get_target_pop_samples.output.target_list.format(
+        POP=config["gargammel"]["params"]["contam-pop"]
+    )
+    with open(contam_samples_file) as samples:
+        # Fetch sample-IDs matching the user-provided contaminating population tag ('EUR', 'AFR', 'YRI', etc...)
+        cont_pop_tag = config["gargammel"]["params"]["contam-pop"]
+        contaminants = [sample.strip("\n").split("\t")[0] for sample in samples.readlines()]
+        # Return a random list of size gen_no (one contaminating individual per replicate).
+        return random.sample(contaminants, gen_no)
+
+
+# ------------------------------------------------------------------------------------------------ #
+# ---- Define the output of this smk. Optionally output QC statistics with FastQC + MultiQC
+
+def define_rescale_input_bam(wildcards):
+    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
+    match rescaler:
+        case "mapdamage":
+            return "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
+        case "pmdtools":
+            return "results/02-preprocess/06-pmdtools/{sample}/{sample}.srt.rmdup.filtercontam.bam",
+        case other:
+            raise RuntimeError(f'Invalid rescaler value "{rescaler}"')
+
+
+def get_pileup_input_bams(wildcards, print_log = False, logfile = sys.stderr, filter_samples = True):
+    """
+    Define the appropriate input bam for the variant caller, based on which 
+    PMD-rescaling method was requested by the user.
+    """
+    # Run through the initial samples files and extract pedigree ids 
+    samples_ids = get_samples_ids_filtered(wildcards) if filter_samples else get_samples_ids(wildcards)
+
+    # If masking is required, delegate input definition to the appropriate rule.
+    apply_masking = config['preprocess']['pmd-rescaling']['apply-masking']
+    if apply_masking:
+        if print_log:
+            print("Applying pmd-mask for variant calling.", file=logfile)
+        return expand(rules.run_pmd_mask.output.bam, sample = samples_ids)
+
+
+    # Return a list of input bam files for pileup
+    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
+    if rescaler is None:
+        if print_log:
+            print("WARNING: Skipping PMD Rescaling for variant calling!", file=logfile)
+        return expand(define_dedup_input_bam(wildcards), sample = samples_ids)
+    else:
+        if print_log:
+            print(f"NOTE: Applying {rescaler} for variant calling.", file=logfile)
+        return expand(define_rescale_input_bam(wildcards), sample = samples_ids)        
+    
+    raise RuntimeError(f'Invalid rescaler value "{rescaler}"')
+
+
+ruleorder: multiqc_preprocess_bams > multiqc
+use rule multiqc as multiqc_preprocess_bams with:
+    input:
+        required_files = lambda w: temp(expand(
+            expand(rules.run_fastqc_bam.output.data, zip,
+                directory=[dirname(file) for file in get_pileup_input_bams(w)],
+                file=[basename(splitext(file)[0]) for file in get_pileup_input_bams(w)]
+            ),
+            generation = get_generations()
+        )),
+    output: 
+        html = report("results/00-qc/04-preprocess-bams/multiqc-report.html",
+            caption     = "../report/04-preprocess-bams/multiqc-preprocess.rst",
+            category    = "03. BAM Preprocessing",
+            subcategory = "MultiQC"
+        )
+    params:
+        extra_dirs = "results/02-preprocess",
+        extra_args = expand("--ignore results/02-preprocess/{subdir}", subdir = ["00-raw", "01-adapter_removal", "02-align"])
+
+
+rule goleft_covstats:
+    input:
+        bam = lambda w: expand(get_pileup_input_bams(w),
+            sample = get_samples_ids(w),
+            generation="{generation}"
+        ),
+        bai = lambda w: expand([bam + ".bai" for bam in get_pileup_input_bams(w)],
+            sample = get_samples_ids(w),
+            generation="{generation}"
+        )
+    output:
+        covstats = "results/00-qc/04-preprocess-bams/coveragestats/{generation}-covstats.tsv"
+    log:       "logs/00-qc/04-preprocess-bams/{generation}-goleft_covstats.log"
+    benchmark: "benchmarks/00-qc/04-preprocess-bams/{generation}-goleft_covstats.tsv"
+    conda: "../envs/goleft-0.2.4.yml"
+    shell: """
+        goleft covstats {input.bam} > {output.covstats} 2> {log}
+    """
+
+rule plot_covstats:
+    input:
+        covstats = rules.goleft_covstats.output.covstats
+    output:
+        plot = report("results/00-qc/04-preprocess-bams/coveragestats/{generation}-covstats.svg",
+            category    = "03. BAM Preprocessing",
+            subcategory = "Coverage",
+            labels      = {"replicate": "{generation}", "figure": "goleft-covstats-plot"}
+
+        )
+    params:
+        expected = config['gargammel']['coverage']
+    conda: "../envs/plot-covstats.yml"
+    shell: """
+        workflow/scripts/plot-covstats.py --input {input.covstats} --output {output.plot} --expect {params.expected}
+    """
+

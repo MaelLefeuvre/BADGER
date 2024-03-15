@@ -1,20 +1,5 @@
 localrules: generate_bam_list
 
-# ------------------------------------------------------------------------------------------------------------------- #
-# ---- Generic / Utility rules and functions.
-
-def get_samples_ids(wildcards):
-    """
-    Get each pedigree sample's id based on each unique pedigree sample id + the
-    number of pedigree replicates. This list is sorted to match UNIX's 
-    """
-    # Run through the initial samples files and extract pedigree ids 
-    with checkpoints.get_samples.get().output[0].open() as f:
-        samples = str.split(f.readline().replace('\n', ''), '\t')
-        ids     = set([sample.split('_')[1] for sample in samples])
-        return sorted(expand("{generation}_{ids}", ids=ids, generation="{generation}"), key=str.casefold)
-
-
 rule eigenstrat_to_UCSC_BED:
     """
     Convert an eigensoft's .snp file to a generic bed file 
@@ -72,43 +57,6 @@ rule plink_bfile_to_tped:
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- 01. Generate a list of input BAM list for cohort variant calling (one list per pedigree).
 
-def define_rescale_input_bam(wildcards):
-    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
-    match rescaler:
-        case "mapdamage":
-            return "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
-        case "pmdtools":
-            return "results/02-preprocess/06-pmdtools/{sample}/{sample}.srt.rmdup.filtercontam.bam",
-        case other:
-            raise RuntimeError(f'Invalid rescaler value "{rescaler}"')
-
-
-def get_pileup_input_bams(wildcards):
-    """
-    Define the appropriate input bam for the variant caller, based on which 
-    PMD-rescaling method was requested by the user.
-    """
-    # Run through the initial samples files and extract pedigree ids 
-    samples_ids = get_samples_ids(wildcards)
-
-    # If masking is required, delegate input definition to the appropriate rule.
-    apply_masking = config['preprocess']['pmd-rescaling']['apply-masking']
-    if apply_masking:
-        print("Applying pmd-mask for variant calling.", file=sys.stderr)
-        return expand(rules.run_pmd_mask.output.bam, sample = samples_ids)
-
-
-    # Return a list of input bam files for pileup
-    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
-    if rescaler is None:
-        print("WARNING: Skipping PMD Rescaling for variant calling!", file=sys.stderr)
-        return expand(define_dedup_input_bam(wildcards), sample = samples_ids)
-    else:
-        print("NOTE: Applying {rescaler} for variant calling.", file=sys.stderr)
-        return expand(define_rescale_input_bam(wildcards), sample = samples_ids)        
-    
-    raise RuntimeError(f'Invalid rescaler value "{rescaler}"')
-
 
 rule generate_bam_list:
     """
@@ -164,7 +112,8 @@ rule get_target_panel_intersect:
     | 0.10X | 37.91   |
     """
     input:
-        ped_vcf = multiext(rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
+        ped_vcf = multiext(rules.merge_ped_sim.output.vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
+        #ped_vcf = multiext(rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
         targets = os.path.splitext(config["kinship"]["targets"])[0] + ".ucscbed",
     output:
         targets = "results/03-variant-calling/00-panel/variants-intersect-{superpop}_maf{maf}.ucscbed"
@@ -282,7 +231,7 @@ rule pileup_caller:
         optargs           = parse_pileup_caller_flags,
         min_depth         = config['variant-calling']["pileupCaller"]["min-depth"],
         seed              = config['variant-calling']['pileupCaller']["seed"],
-        sample_names      = lambda wildcards: expand(get_samples_ids(wildcards), generation = wildcards.generation)
+        sample_names      = lambda wildcards: expand(get_samples_ids_filtered(wildcards), generation = wildcards.generation)
     resources:
         runtime = 10,
         mem_mb  = 128,
@@ -357,7 +306,7 @@ rule ANGSD_haplo_to_plink:
     conda:     "../envs/angsd-0.939.yml"
     threads:   1
     priority:  15
-    shell: """
+    shell: r""" # use of raw string to prevent python SyntaxWarning, as this rule contains escape characters such as \. 
         haploToPlink {input.haplos} {params.out} 2>  {log}
         sed -i 's/N/0/g' {output.tped}           2>> {log}
         cat {input.bamlist} \

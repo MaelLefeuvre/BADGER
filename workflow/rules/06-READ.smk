@@ -2,14 +2,10 @@
 def READ_output(wildcards):
     """
     Returns the list of required generation_wise comparisons from READ
-    @ TODO: This checkpoint is not needed anymore
     """
-    with checkpoints.get_samples.get().output[0].open() as f:
-        samples     = str.split(f.readline().replace('\n', ''), '\t')
-        generations = set([sample.split('_')[0] for sample in samples])
-        return expand("results/04-kinship/READ/{generation}/READ_results", generation=generations)
-    #generations = range(1, config['ped-sim']['replicates'])
-    #return expand("results/04-kinship/READ/{generation}/READ_results", generation=generations)
+    # Get the number of expected generations.
+    template = "results/04-kinship/READ/{generation}/READ_results"
+    return expand(template, generation = get_generations())
 
 
 def READ_define_random_haploid_caller(wildcards):
@@ -62,7 +58,12 @@ rule run_READ:
         results = "results/04-kinship/READ/{generation}/READ_results",
         means   = "results/04-kinship/READ/{generation}/meansP0_AncientDNA_normalized",
         raw     = "results/04-kinship/READ/{generation}/READ_output_ordered",
-        plot    = "results/04-kinship/READ/{generation}/READ_results_plot.pdf",
+        plot    = report("results/04-kinship/READ/{generation}/READ_results_plot.pdf",
+            caption     = "../report/06-READ/run-READ/plot.rst",
+            category    = "04. Kinship",
+            subcategory = "READ",
+            labels      = {"replicate": "{generation}", "figure": "READ results plot"}
+        ),
         tempraw = temp("results/04-kinship/READ/{generation}/Read_intermediate_output"),
     params:
         window_size = config["kinship"]["READ"]["window-size"],
@@ -77,7 +78,7 @@ rule run_READ:
     benchmark: "benchmarks/04-kinship/READ/run_READ/{generation}.tsv"
     conda:     "../envs/READ.yml"
     threads:   1
-    shell: """
+    shell: r""" # use of raw string to prevent python escape character SyntaxWarning
         cwd=$(pwd)
         cd $(dirname {output.results})               2>  $cwd/{log}
         ln -srf $(which READscript.R) READscript.R   2>> $cwd/{log}

@@ -11,19 +11,39 @@ def define_archived_bams(wildcards):
     return expand(expand(archived_bams, sample=samples), generation="ped{gen}")
 
 
-def define_run_number():
+def define_run_number(wildcards, run_prefix="run-"):
     base_dir = config['archive']['archive-dir']
     os.makedirs(base_dir, exist_ok=True)
-
     regex          = re.compile("run-([0-9])+")
     found_archives = list(filter(regex.match, os.listdir(base_dir)))
-    archive_runs   = sorted( [int(archive.removeprefix("run-")) for archive in found_archives], reverse=True)
-    next_archive   = 0 if len(archive_runs) == 0 else archive_runs[0] + 1
+    archive_runs   = sorted([int(archive.removeprefix(run_prefix)) for archive in found_archives], reverse=True)
+    (last_archive, next_archive) = (archive_runs[0], archive_runs[0] + 1) if archive_runs else (None, 0)
+
+    # ---- Load the global checksum yaml and check if the last run was completed.
+    # Prompt the user if he wishes to overwrite the previous run.
+    yml = checkpoints.create_archive_metadata.get().output[0]
+    global_checksums = yaml.load(yml, Loader=yaml.FullLoader)
+    format_run = lambda x: f"{run_prefix}{x:03d}"
+    if last_archive is not None and format_run(last_archive) not in global_checksums:
+        while True:
+            prompt = input((
+                "Last run appears to be incomplete "
+                f"({format_run(last_archive)}). "
+                "Do you wish to overrwite it? [Yes/no]: "
+            ))
+            match prompt.lower():
+                case "yes":
+                    next_archive = last_archive
+                    break
+                case "no" | "n":
+                    next_archive = next_archive
+                    break
+                case _:
+                    continue
     return f"{next_archive:03d}"
-    #return next_archive
 
 
-rule create_archive_metadata:
+checkpoint create_archive_metadata:
     output: f"{config['archive']['archive-dir']}/archive-metadata.yml"
     shell: """
         touch {output}
@@ -86,18 +106,22 @@ rule archive_ped_sim_vcf:
     Archive ped-sim's pedigree simulations vcf for the entire run. Compressed in lzma1
     """
     input:
-        merged_vcf = rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop'])
+        merged_vcf = rules.merge_ped_sim.output.vcf.format(POP=config['ped-sim']['params']['pop'])
+        #merged_vcf = rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop'])
     output:
         archive    = protected("{archive_dir}/run-{{run}}/{ped_sim_dir}.tar.xz".format(
             archive_dir=config['archive']['archive-dir'],
-            ped_sim_dir=os.path.dirname(rules.dopplegang_twins.output.merged_vcf)
+            ped_sim_dir=os.path.dirname(rules.merge_ped_sim.output.vcf)
+            #ped_sim_dir=os.path.dirname(rules.dopplegang_twins.output.merged_vcf)
         )),
         checksum   = protected("{archive_dir}/run-{{run}}/{ped_sim_dir}.md5sums".format(
             archive_dir=config['archive']['archive-dir'],
-            ped_sim_dir=os.path.dirname(rules.dopplegang_twins.output.merged_vcf)
+            ped_sim_dir=os.path.dirname(rules.merge_ped_sim.output.vcf)
+            #ped_sim_dir=os.path.dirname(rules.dopplegang_twins.output.merged_vcf)
         ))
     params:
-        target_directory = os.path.dirname(rules.dopplegang_twins.output.merged_vcf),
+        target_directory = os.path.dirname(rules.merge_ped_sim.output.vcf),
+        #target_directory = os.path.dirname(rules.dopplegang_twins.output.merged_vcf),
         compress_level=config['archive']['compress-level']
     resources:
         cores     = lambda w, threads: threads
@@ -105,10 +129,11 @@ rule archive_ped_sim_vcf:
     benchmark: "benchmarks/07-archive/run{run}/archive_ped_sim_vcf.tsv"
     threads:   16
     shell: """
-        XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {params.target_directory} > {log} 2>&1 
+        XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} $(find {params.target_directory} -maxdepth 1 -type f) > {log} 2>&1 
 
         # store checksums in metadata file yaml-like format.
-        md5sum $(dirname {input.merged_vcf})/* > {output.checksum} 2>> {log}
+        # md5sum $(dirname {input.merged_vcf})/* > {output.checksum} 2>> {log}
+        md5sum $(find $(dirname {input.merged_vcf}) -maxdepth 1 -type f) > {output.checksum} 2>> {log}
     """
 
 
@@ -146,6 +171,29 @@ rule archive_pedigree_bams:
         
         # store checksums in metadata file yaml-like format.
         md5sum {input.bams} > {output.checksum} 2>> {log}
+    """
+
+rule archive_mapdamage_misincorporation:
+    input:
+        misincorporation = rules.run_mapdamage.output.misincorporation
+    output:
+        archive = protected("{archive_dir}/run-{{run}}/{file}".format(
+            archive_dir = config['archive']['archive-dir'],
+            file        = rules.run_mapdamage.output.misincorporation
+        )),
+        checksum = protected("{archive_dir}/run-{{run}}/{file}.md5sum".format(
+            archive_dir = config['archive']['archive-dir'],
+            file        = rules.run_mapdamage.output.misincorporation
+        ))
+    resources:
+        cores = lambda w, threads: threads
+    log:     "logs/07-archive/run{run}/{sample}-archive_contaminants.log"
+    threads: 1
+    shell: """
+        cp {input.misincorporation} {output.archive} > {log} 2>&1
+        
+        # store checksums in metadata file yaml-like format
+        md5sum {input.misincorporation} > {output.checksum} 2>> {log}
     """
 
 
@@ -251,10 +299,47 @@ rule archive_READ_results:
         md5sum {params.target_directory}/* > {output.checksum} 2>> {log}
     """
 
+def make_snakemake_happy_with_READv2_checkpoint(wildcards):
+    with checkpoints.get_samples.get().output[0].open() as f:
+        return [
+            rules.run_READv2.output.results,
+            rules.run_READv2.output.meansP0
+        ]
+
+rule archive_READv2_results:
+    """
+    Create a generation-wise archive of READ's result. Results are compressed in lzma format.
+    """
+    input:
+        results = make_snakemake_happy_with_READv2_checkpoint,
+    output:
+        archive = protected("{archive_dir}/run-{{run}}/{READv2_dir}.tar.xz".format(
+            archive_dir = config['archive']['archive-dir'],
+            READv2_dir = "results/04-kinship/READv2/{generation}"
+        )),
+        checksum = protected("{archive_dir}/run-{{run}}/{READv2_dir}.md5sums".format(
+            archive_dir = config['archive']['archive-dir'],
+            READv2_dir = "results/04-kinship/READv2/{generation}"
+        ))
+    params:
+        target_directory = "results/04-kinship/READv2/{generation}",
+        compress_level=config['archive']['compress-level']
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/07-archive/run{run}/{generation}/archive_READ_results.log"
+    benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_READ_results.tsv"
+    threads:   4
+    shell: """
+        XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {params.target_directory} > {log} 2>&1 
+
+        # store checksums in metadata file yaml-like format.
+        md5sum {params.target_directory}/* > {output.checksum} 2>> {log}
+    """
+
 
 def make_snakemake_happy_with_GRUPS_checkpoint(wildcards):
     with checkpoints.get_samples.get().output[0].open() as f:
-        return rules.run_GRUPS.output.output_dir
+        return rules.run_GRUPS.params.output_dir
 
 rule archive_GRUPS_results:
     """
@@ -280,7 +365,7 @@ rule archive_GRUPS_results:
     log:       "logs/07-archive/run{run}/{generation}/archive_GRUPS_results.log"
     benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_GRUPS_results.tsv"
     threads:   4
-    shell: """
+    shell: r""" # use of raw string to prevent python escape character SyntaxWarning
         XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {params.target_directory} > {log} 2>&1 
 
         # Store checksums in metadata file yaml-like format. Skip hidden files
@@ -305,7 +390,7 @@ rule archive_TKGWV2_results:
         )),
     resources:
         cores = lambda w, threads: threads
-    log:     "logs/07-archive/run{run}/ped{gen}/archive_TKGWV2_results.log"
+    log:     "logs/07-archive/run{run}/{generation}/archive_TKGWV2_results.log"
     threads: 1
     shell: """
         cp {input.results} {output.archive} > {log} 2>&1
@@ -320,7 +405,8 @@ rule archive_KIN_results:
     Note that MD5 checksums are only computed for files located 1-level deep in the results directory.
     """
     input:
-        results = rules.run_KIN.output.kin_results
+        results = rules.run_KIN.output.kin_results,
+        overlap = rules.run_KINgaroo.output.overlap
     output:
         archive = protected("{archive_dir}/run-{{run}}/{KIN_dir}.tar.xz".format(
             archive_dir = config['archive']['archive-dir'],
@@ -337,12 +423,55 @@ rule archive_KIN_results:
     log:       "logs/07-archive/run{run}/{generation}/archive_KIN_results.log"
     benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_KIN_results.tsv"
     threads:   4
-    shell: """
-        XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {input.results} > {log} 2>&1 
+    shell: r""" # use of raw string to prevent python escape character SyntaxWarning
+        XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {input.results} {input.overlap} > {log} 2>&1 
 
         # Store checksums in metadata file yaml-like format. Skip hidden files & subdirectories (so many files...)
         find {input.results} -type f -not -path '*/.*' -maxdepth 1 -exec md5sum {{}} \; > {output.checksum} 2>> {log}
     """
+
+rule archive_correctKin_results:
+    """
+    Create a generation-wise archive of correctKin's result. Results are compressed in lzma format
+    """
+    input:
+        filter_relates = expand(rules.correctKin_filterRelates.output, refpop=config['kinship']['correctKin']['reference-pop'], generation="{generation}"),
+        overlap        = expand(rules.correctKin_markerOverlap.output, refpop=config['kinship']['correctKin']['reference-pop'], generation="{generation}")
+    output:
+        archive = protected("{archive_dir}/run-{{run}}/{correctKin_dir}.tar.xz".format(
+            archive_dir    = config['archive']['archive-dir'],
+            correctKin_dir = "results/04-kinship/correctKin/{generation}"
+        )),
+        checksum = protected("{archive_dir}/run-{{run}}/{correctKin_dir}.md5sums".format(
+            archive_dir    = config['archive']['archive-dir'],
+            correctKin_dir = "results/04-kinship/correctKin/{generation}"
+        ))
+    params:
+        compress_level     = config['archive']['compress-level']
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/07-archive/run{run}/{generation}/archive_correctKin_results.log"
+    benchmark: "benchmarks/07-archive/run{run}/{generation}/archive_correctKin_results.tsv"
+    threads:   4
+    shell: """ # use of raw string to prevent python escape character SyntaxWarning
+        XZ_OPT="-{params.compress_level} -T{threads}" tar -cJvf {output.archive} {input.filter_relates} {input.overlap} > {log} 2>&1 
+
+        # Store checksums in metadata file yaml-like format. Skip hidden files & subdirectories (so many files...)
+        md5sum {input.filter_relates} {input.overlap} > {output.checksum} 2>> {log}
+    """
+
+
+def expand_checksums(
+    checksum,
+    genlist = get_generations(),
+    runlist = "{run}"
+):
+    """
+    Thin wrapper to the expand() function, allows for a bit more concise declaration in rule
+    check_duplicate_archives.
+    """
+    return expand(checksum, generation = genlist, run = runlist)
+
 
 rule check_duplicate_archives:
     """
@@ -360,43 +489,31 @@ rule check_duplicate_archives:
         ),
 
         # ---- Pipeline config file
-        pipeline_config = rules.archive_config_file.output.checksum,
-
+        pipeline_config           = rules.archive_config_file.output.checksum,
         # ---- Pipeline metadata
-        pipeline_meta_checksum = rules.archive_pipeline_metadata.output.checksum,
-
+        pipeline_meta_checksum    = rules.archive_pipeline_metadata.output.checksum,
         # ---- Pedigree simulations
-        ped_sim_checksum = rules.archive_ped_sim_vcf.output.checksum,
-
+        ped_sim_checksum          = rules.archive_ped_sim_vcf.output.checksum,
         # ---- Gargammel contaminant table
-        cont_checksum = rules.archive_contaminants.output.checksum,
-
+        cont_checksum             = rules.archive_contaminants.output.checksum,
+        # ---- MapDamage misincorporation.txt file
+        misincorporation_checksum = lambda w: expand(rules.archive_mapdamage_misincorporation.output.checksum,
+             sample = get_all_samples_ids(w), run="{run}"
+        ),
         # ---- Variant calling callset.
-        callset_checksum = rules.archive_variant_callset.output.checksum,
-
+        callset_checksum          = rules.archive_variant_callset.output.checksum,
         # ---- KIN results callset.
-        KIN_checksums = expand(rules.archive_KIN_results.output.checksum,
-            generation    = ["ped" + str(rep) for rep in range(1, config['ped-sim']['replicates'] + 1)],
-            run = "{run}"
-        ),
-
+        KIN_checksums             = expand_checksums(rules.archive_KIN_results.output.checksum),
         # ---- READ results callset.
-        READ_checksums = expand(rules.archive_READ_results.output.checksum,
-            generation    = ["ped" + str(rep) for rep in range(1, config['ped-sim']['replicates'] + 1)],
-            run = "{run}"
-        ),
-
+        READ_checksums            = expand_checksums(rules.archive_READ_results.output.checksum),
+        # ---- READv2 results callset.
+        READv2_checksums          = expand_checksums(rules.archive_READv2_results.output.checksum),
         # ---- GRUPS results callset.
-        GRUPS_checksums = expand(rules.archive_GRUPS_results.output.checksum,
-            generation    = ["ped" + str(rep) for rep in range(1, config['ped-sim']['replicates'] + 1)],
-            run = "{run}"
-        ),
-
+        GRUPS_checksums           = expand_checksums(rules.archive_GRUPS_results.output.checksum),
         # ---- TKGWV2 results callset.
-        TKGWV2_checksums = expand(rules.archive_TKGWV2_results.output.checksum,
-            gen    = range(1, config['ped-sim']['replicates'] + 1),
-            run = "{run}"
-        ),
+        TKGWV2_checksums          = expand_checksums(rules.archive_TKGWV2_results.output.checksum),
+        # ---- correctKin results callset.
+        correctKin_checksums      = expand_checksums(rules.archive_correctKin_results.output.checksum),
     output:
         metadata = temp(touch(f"{config['archive']['archive-dir']}/run-{{run}}-check_duplicate_archives.done"))
     resources:
@@ -434,11 +551,14 @@ rule check_duplicate_archives:
                 "bams"            : dict(),
                 "ped-sim"         : dict(),
                 "variant-callset" : dict(),
+                "misincorporation": dict(),
                 "contaminants"    : dict(),
                 "KIN"             : dict(),
                 "READ"            : dict(),
+                "READv2"          : dict(),
                 "GRUPS"           : dict(),
                 "TKGWV2"          : dict(),
+                "correctKin"      : dict(),
             }
         
         # Extend our global checksum file w/ the bam checksums of this run.
@@ -463,6 +583,10 @@ rule check_duplicate_archives:
         # Extend our global checksum file w/ the contamination table of this run.
         extend_checksums(global_checksums, input.cont_checksum, run_key, "contaminants")
 
+        # Extend our global checksum file w/ the misincorporation file of this run
+        for checksum in input.misincorporation_checksum:
+            extend_checksums(global_checksums, checksum, run_key, "misincorporation")
+
         # Extend our global checksum file w/ the variant callset of this run.
         extend_checksums(global_checksums, input.callset_checksum, run_key, "variant-callset")
 
@@ -474,6 +598,10 @@ rule check_duplicate_archives:
         for checksum in input.READ_checksums:
             extend_checksums(global_checksums, checksum, run_key, "READ")
 
+        # Extend our global checksum file w/ each pedigree's READ result.
+        for checksum in input.READv2_checksums:
+            extend_checksums(global_checksums, checksum, run_key, "READv2")
+
         # Extend our global checksum file w/ each pedigree's GRUPS result.
         for checksum in input.GRUPS_checksums:
             extend_checksums(global_checksums, checksum, run_key, "GRUPS")
@@ -482,13 +610,20 @@ rule check_duplicate_archives:
         for checksum in input.TKGWV2_checksums:
             extend_checksums(global_checksums, checksum, run_key, "TKGWV2")
 
+        # Extend our global checksum file w/ each pedigree's correctKin result.
+        for checksum in input.correctKin_checksums:
+            extend_checksums(global_checksums, checksum, run_key, "correctKin")
+
         with open(input.metadata[0], "w") as yml:
             documents = yaml.dump(global_checksums, yml)
 
 
 rule archive:
     input: 
-        # run number must be defined ONCE, at the final rule, or the function will be executed multiple times.
+        # run number must be defined ONCE, at the final rule, or the function will be executed
+        # multiple times.
         # Caching does not seem to resolve the trick.
         # @ TODO: READ & GRUPS Checkpoints is causing rule re-triggering...
-        checksums =  expand(rules.check_duplicate_archives.output, run=define_run_number())
+        checksums =  lambda w: expand(rules.check_duplicate_archives.output,
+            run=define_run_number(w)
+        )

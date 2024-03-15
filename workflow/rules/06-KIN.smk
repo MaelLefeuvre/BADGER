@@ -4,14 +4,10 @@ localrules: symlink_KINgaroo_input_bams
 def KIN_output(wildcards):
     """
     Returns the list of required generation_wise comparisons from KIN
-    @ TODO: This checkpoint is not needed anymore
     """
-    with checkpoints.get_samples.get().output[0].open() as f:
-        samples     = str.split(f.readline().replace('\n', ''), '\t')
-        generations = set([sample.split('_')[0] for sample in samples])
-        return expand("results/04-kinship/KIN/{generation}/{generation}-KIN-results/KIN_results.csv", generation=generations)
-    #generations = range(1, config['ped-sim']['replicates'])
-    #return expand("results/04-kinship/READ/{generation}/READ_results", generation=generations)
+    # Get the number of expected generations.
+    template = "results/04-kinship/KIN/{generation}/{generation}-KIN-results/KIN_results.csv"
+    return expand(template, generation = get_generations())
 
 
 rule symlink_KINgaroo_input_bams:
@@ -43,7 +39,6 @@ def parse_KINgaroo_optargs(wildcards):
     return optargs
 
 
-
 rule run_KINgaroo:
     """
     Run KINgaroo on a set of pedigree individuals (generation-wise.)
@@ -61,18 +56,19 @@ rule run_KINgaroo:
         linkdir        = rules.symlink_KINgaroo_input_bams.output.linkdir,
         targets        = os.path.splitext(config["kinship"]["targets"])[0] + ".ucscbed",
     output:
-        kingaroo_dir   =  directory("results/04-kinship/KIN/{generation}/kingaroo"),
-        bedfiles       = directory("results/04-kinship/KIN/{generation}/kingaroo/bedfiles"),
-        hapProbs       = directory("results/04-kinship/KIN/{generation}/kingaroo/hapProbs"),
-        hbd_results    = directory("results/04-kinship/KIN/{generation}/kingaroo/hbd_results"),
-        hmm_parameters = directory("results/04-kinship/KIN/{generation}/kingaroo/hmm_parameters"),
-        splitbams      = directory("results/04-kinship/KIN/{generation}/kingaroo/splitbams"),
-        goodpairs      = "results/04-kinship/KIN/{generation}/kingaroo/goodpairs.csv",
-        overlap        = "results/04-kinship/KIN/{generation}/kingaroo/identical_overlap.csv",
-        diffs_hmm      = "results/04-kinship/KIN/{generation}/kingaroo/input_diffs_hmm.csv",
-        hbd_hmm_diffs  = "results/04-kinship/KIN/{generation}/kingaroo/input_hbd_hmm_diffs.csv",
-        hbd_hmm_total  = "results/04-kinship/KIN/{generation}/kingaroo/input_hbd_hmm_total.csv",
-        total_hmm      = "results/04-kinship/KIN/{generation}/kingaroo/input_total_hmm.csv"
+        kingaroo_dir      =  directory("results/04-kinship/KIN/{generation}/kingaroo"),
+        bedfiles          = directory("results/04-kinship/KIN/{generation}/kingaroo/bedfiles"),
+        hapProbs          = directory("results/04-kinship/KIN/{generation}/kingaroo/hapProbs"),
+        hbd_results       = directory("results/04-kinship/KIN/{generation}/kingaroo/hbd_results"),
+        hmm_parameters    = directory("results/04-kinship/KIN/{generation}/kingaroo/hmm_parameters"),
+        splitbams         = directory("results/04-kinship/KIN/{generation}/kingaroo/splitbams"),
+        goodpairs         = "results/04-kinship/KIN/{generation}/kingaroo/goodpairs.csv",
+        overlap           = "results/04-kinship/KIN/{generation}/kingaroo/overlap.csv",
+        identical_overlap = "results/04-kinship/KIN/{generation}/kingaroo/identical_overlap.csv",
+        diffs_hmm         = "results/04-kinship/KIN/{generation}/kingaroo/input_diffs_hmm.csv",
+        hbd_hmm_diffs     = "results/04-kinship/KIN/{generation}/kingaroo/input_hbd_hmm_diffs.csv",
+        hbd_hmm_total     = "results/04-kinship/KIN/{generation}/kingaroo/input_hbd_hmm_total.csv",
+        total_hmm         = "results/04-kinship/KIN/{generation}/kingaroo/input_total_hmm.csv"
     params:
         interval       = config['kinship']['KIN']['interval'],
         threshold      = config['kinship']['KIN']['p0-threshold'],

@@ -158,7 +158,7 @@ rule subset_1000_genomes:
     """
     input:
         bcf     = rules.filter_biallelic_1000_genomes.output.bcf,
-	    samples = rules.get_target_pop_samples.output.target_list
+        samples = rules.get_target_pop_samples.output.target_list
     output:
         bcf     = "data/vcf/1000g-phase3/02-subset/{POP}/{POP}.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.{steps}.norm.m2.M2.bcf"
     resources:

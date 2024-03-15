@@ -385,3 +385,43 @@ rule samtools_merge_mem:
         samtools merge -@ {threads} -o - {input.paired_end} {input.single_end} \
         | samtools addreplacerg -r '{params.RG}' -w -OBAM -o {output.merged} - 2> {log}
     """
+
+
+# ------------------------------------------------------------------------------------------------------------------- #
+# ---- 00. Resolve the required aligner algorithm.
+
+def assign_aligner_algorithm(wildcards):
+    """
+    Decide on the appropriate bwa algorithm (aln or mem), based on the user input.
+    """
+
+    if config["preprocess"]["bwa"]["aligner"] == "mem":
+        if config["preprocess"]["bwa"]["collapsed-only"]:
+            return expand(rules.bwa_mem_se.output.sam, sample="{sample}", extension="collapsed")
+        else:
+            return rules.samtools_merge_mem.output.merged
+    elif config["preprocess"]["bwa"]["aligner"] == "aln":
+        if config["preprocess"]["bwa"]["collapsed-only"]:
+            return expand(rules.bwa_samse.output.sam, sample="{sample}", extension="collapsed")
+        else:
+            return rules.samtools_merge_aln.output.merged
+
+
+ruleorder: multiqc_align_fastqs > multiqc
+use rule multiqc as multiqc_align_fastqs with:
+    input:
+        required_files = lambda w: temp(expand(expand(
+                rules.run_fastqc_bam.output.data,
+                directory=dirname(assign_aligner_algorithm(w)),
+                file=basename(splitext(assign_aligner_algorithm(w))[0])
+            ),
+            sample = get_all_samples_ids(w)
+        )),
+    output: 
+        html = report("results/00-qc/03-align-fastqs/multiqc-report.html",
+            caption     = "../report/03-align-fastqs/multiqc-bwa.rst",
+            category    = "02. Align"
+        )
+    params:
+        extra_args = rules.multiqc.params.extra_args,
+        extra_dirs = expand("results/02-preprocess/{subdir}", subdir=["01-adapter_removal", "02-align"]),

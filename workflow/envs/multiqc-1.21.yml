@@ -1,0 +1,6 @@
+name: multiqc-1.21
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - multiqc=1.21

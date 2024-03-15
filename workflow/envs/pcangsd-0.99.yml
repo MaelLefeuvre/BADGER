@@ -6,3 +6,4 @@ dependencies:
   - conda-forge::numpy
   - conda-forge::scipy
   - conda-forge::cython
+  - conda-forge::pandas

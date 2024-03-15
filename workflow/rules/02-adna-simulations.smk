@@ -150,8 +150,10 @@ rule get_consensus:
     (Copy Number Variants, i.e. 'CN[0-9]+' are unsupported by bcftools, thus they must be excluded.)
     """
     input:
-        vcf     = expand(rules.dopplegang_twins.output.merged_vcf, POP=config["ped-sim"]["params"]["pop"]),
-        tbi     = expand(rules.dopplegang_twins.output.merged_vcf + ".tbi", POP=config["ped-sim"]["params"]["pop"]),
+        vcf     = expand(rules.merge_ped_sim.output.vcf, POP=config["ped-sim"]["params"]["pop"]),
+        tbi     = expand(rules.merge_ped_sim.output.vcf + ".tbi", POP=config["ped-sim"]["params"]["pop"]),
+        #vcf     = expand(rules.dopplegang_twins.output.merged_vcf, POP=config["ped-sim"]["params"]["pop"]),
+        #tbi     = expand(rules.dopplegang_twins.output.merged_vcf + ".tbi", POP=config["ped-sim"]["params"]["pop"]),
         chr_ref = lambda wildcards: dirname(config["reference"]) + "/splitted/{chr}.fasta"
     output:
         hap1 = temp("results/01-gargammel/{sample}/{chr}/endo/{sample}_chr{chr}_haplo1.fasta"),
@@ -212,7 +214,6 @@ def find_contaminant(wildcards):
         contamination_table = rules.get_contamination_table.output.cont_table
     else:
         contamination_table = checkpoints.get_contamination_table.get().output.cont_table
-
     marked = False
     with open(contamination_table) as f:
         for line in f.readlines():
@@ -226,7 +227,10 @@ def find_contaminant(wildcards):
         raise RuntimeError("Failed to find {gen} pattern in {contamination_table}")
 
     out = "results/01-gargammel/contaminants/{cont}/{{chr}}/{cont}_chr{{chr}}_haplo{haplo}.fasta"
-    return expand(out, cont=contaminant, chr=chromo, haplo=[1,2])
+    if config['gargammel']['comp_cont'] > 0.0:
+        return expand(out, cont=contaminant, chr=chromo, haplo=[1,2])
+    else:
+        return []
 
 
 def get_pmd_model(wildcards):
@@ -253,6 +257,25 @@ def get_pmd_model(wildcards):
            raise RuntimeError(f"Invalid Gargammel pmd-model value: '{pmd_model}'")
 
 
+def parse_gargammel_comp(wildcards):
+    cont = config['gargammel']['comp_cont']
+    endo = config['gargammel']['comp_endo']
+    bact = config['gargammel']['comp_bact']
+
+
+    if config['gargammel']['params']['contaminate-samples'] is None:
+        pass
+    else: 
+        try:
+            with open(config['gargammel']['params']['contaminate-samples']) as f:
+                candidates = [line.strip('\n') for line in f.readlines()]
+            if wildcards.sample.split("_")[1] not in candidates:
+                (endo, cont) = (1.0, 0.0)
+        except Exception as e:
+            raise e
+    return f"{bact},{cont},{endo}"
+
+
 rule run_gargammel:
     """
     Perform raw ancient DNA sequencing data using Gargammel.
@@ -272,15 +295,13 @@ rule run_gargammel:
         d     = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}_d.fa.gz"),
         e     = temp("results/01-gargammel/{sample}/{chr}/{sample}_chr{chr}.e.fa.gz")
     params:
-        coverage         = config['gargammel']['coverage'],
-        size_freq        = config['gargammel']['sizefreq'],
-        comp_endo        = config['gargammel']['comp_endo'],
-        comp_cont        = config['gargammel']['comp_cont'],
-        comp_bact        = config['gargammel']['comp_bact'],
-        qshift           = config['gargammel']['qshift'],
-        misincorporation = get_pmd_model,
-        output_base_name = "results/01-gargammel/{sample}/{chr}",
-        input_directory  = directory("results/01-gargammel/{sample}/{chr}"),
+        comp               = parse_gargammel_comp,
+        coverage           = config['gargammel']['coverage'],
+        size_freq          = config['gargammel']['sizefreq'],
+        qshift             = config['gargammel']['qshift'],
+        misincorporation   = get_pmd_model,
+        output_base_name   = "results/01-gargammel/{sample}/{chr}",
+        input_directory    = directory("results/01-gargammel/{sample}/{chr}"),
     resources:
         tmpdir  = config["tempdir"],
         runtime = 10,
@@ -294,10 +315,13 @@ rule run_gargammel:
     threads:   1
     shell: """
         mkdir -p {params.output_base_name}/cont                             >  {log} 2>&1
-        ln -sfrt {params.output_base_name}/cont {input.human_contamination} >> {log} 2>&1
         ln -sfrt {params.output_base_name} {input.bacterial_contamination}  >> {log} 2>&1
+        if [ "{input.human_contamination}" ]; then
+            ln -sfrt {params.output_base_name}/cont {input.human_contamination} >> {log} 2>&1
+        fi
+
         gargammel \
-        --comp {params.comp_bact},{params.comp_cont},{params.comp_endo} \
+        --comp {params.comp} \
         {params.misincorporation} \
         -c {params.coverage} \
         -f {params.size_freq} \
@@ -315,7 +339,6 @@ def set_dwgsim_seed(wildcards):
         with open(rules.meta.output.metadata) as f:
             metadata = yaml.load(f, Loader=yaml.loader.SafeLoader)
             seed     = metadata['seed']
-    
     return seed
 
 rule run_dwgsim:
@@ -378,3 +401,21 @@ rule merge_chromosomes:
         zcat {input.forwd} | gzip > {output.forwd} 2> {log.forwd}
         zcat {input.revrs} | gzip > {output.revrs} 2> {log.revrs}
     """
+
+ruleorder: multiqc_adna_simulations > multiqc
+use rule multiqc as multiqc_adna_simulations with:
+    input:
+        required_files = lambda w: temp(
+            expand(rules.run_fastqc_fq.output.data,
+                directory="results/02-preprocess/00-raw",
+                file=[f"{sample}_{s}" for sample in get_all_samples_ids(w) for s in ("s1", "s2")]
+            )
+        ),
+    output: 
+        html = report("results/02-preprocess/00-raw/multiqc-report.html",
+            caption     = "../report/02-adna-simulations/multiqc-raw.rst",
+            category    = "01. Ancient DNA simulations",
+        )
+    params:
+        extra_args = rules.multiqc.params.extra_args,
+        extra_dirs = directory(expand("results/02-preprocess/{subdir}", subdir=["00-raw"]))

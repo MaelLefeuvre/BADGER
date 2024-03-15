@@ -21,31 +21,36 @@ localrules: merge_TKGWV2_results
 
 def TKGWV2_output(wildcards):
     """
-    Returns the list of required generation_wise comparisons from READ
+    Returns the list of required generation_wise comparisons from TKGWV2
     """
     # Get the number of expected generations.
     gen_no = config['ped-sim']['replicates']
-    return expand("results/04-kinship/TKGWV2/ped{gen}/ped{gen}-TKGWV2_Results.txt", gen=range(1,gen_no+1))
+    template = "results/04-kinship/TKGWV2/{generation}/{generation}-TKGWV2_Results.txt"
+    return expand(template, generation=["ped" + str(i) for i in range(1, gen_no + 1)])
 
 
-def get_TKGWV2_input_bams(wildcards):
+def get_TKGWV2_input_bams(wildcards, print_log = False, logfile = sys.stderr):
     apply_masking = config['preprocess']['pmd-rescaling']['apply-masking']
     rescaler = config['preprocess']['pmd-rescaling']['rescaler']
     if apply_masking:
-        print("Applying pmd-mask for TKGWV2", file=sys.stderr)
-        root = expand(rules.run_pmd_mask.output.bam, sample = "ped{gen}_{pairs}")
+        if print_log:
+            print("Applying pmd-mask for TKGWV2", file=logfile)
+        root = expand(rules.run_pmd_mask.output.bam, sample = "{generation}_{pairs}")
 
 
     elif rescaler is None:
-        print("WARNING: Skipping PMD rescaling for TKGWV2!", file = sys.stderr)
-        root = expand(define_dedup_input_bam(wildcards), sample = "ped{gen}_{pairs}")
+        if print_log: 
+            print("WARNING: Skipping PMD rescaling for TKGWV2!", file=logfile)
+        root = expand(define_dedup_input_bam(wildcards), sample = "{generation}_{pairs}")
     else:
-        root = expand(define_rescale_input_bam(wildcards), sample = "ped{gen}_{pairs}")
+        if print_log:
+            print(f"Using: {rescaler} bam files for TKGWV2", file=logfile)
+        root = expand(define_rescale_input_bam(wildcards), sample = "{generation}_{pairs}")
     
     return expand(root,
-        gen = "{gen}",
-        pairs = ["{pairA}", "{pairB}"],
-        ext = ["bam", "bam.bai"]
+        generation = "{generation}",
+        pairs      = ["{pairA}", "{pairB}"],
+        ext        = ["bam", "bam.bai"]
     )
 
 
@@ -93,16 +98,16 @@ rule TKGWV2_downsample_bam:
         pairs =  get_TKGWV2_input_bams,
         metadata = "results/meta/pipeline-metadata.yml"
     output:
-        pairA = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.srt.rmdup.rescaled_subsampled.bam",
-        pairB = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.srt.rmdup.rescaled_subsampled.bam"
+        pairA = "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairA}.srt.rmdup.rescaled_subsampled.bam",
+        pairB = "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairB}.srt.rmdup.rescaled_subsampled.bam"
     params:
         workdir     = lambda wildcards, output: dirname(output.pairA),
         downsampleN = config['kinship']['TKGWV2']['downsample-N'],
         seed        = TKGWV2_downsample_seed,
     resources:
         cores       = lambda w, threads: threads
-    log:       "logs/04-kinship/TKGWV2/TKGWV2_downsample_bam/ped{gen}/{pairA}_{pairB}.log"
-    benchmark: "benchmarks/04-kinship/TKGWV2/TKGWV2_downsample_bam/ped{gen}/{pairA}_{pairB}.tsv"
+    log:       "logs/04-kinship/TKGWV2/TKGWV2_downsample_bam/{generation}/{pairA}_{pairB}.log"
+    benchmark: "benchmarks/04-kinship/TKGWV2/TKGWV2_downsample_bam/{generation}/{pairA}_{pairB}.tsv"
     conda:     "../envs/TKGWV2.yml"
     threads:   1
     shell: """
@@ -169,20 +174,20 @@ rule run_TKGWV2:
         #frequencies   = config['kinship']['TKGWV2']['target-frequencies']
         frequencies   = rules.intersect_freq_file.output.frequencies
     output:
-        results = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/TKGWV2_Results.txt",
+        results = "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/TKGWV2_Results.txt",
         #frq     = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/commped{gen}_{A}____ped{gen}_{B}.frq",
         #tped    = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}____ped{gen}_{pairB}.tped",
         peds    = temp([
-            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.ped",
-            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.ped"
+            "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairA}.ped",
+            "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairB}.ped"
         ]),
         maps    = temp([
-            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.map",
-            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.map"
+            "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairA}.map",
+            "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairB}.map"
         ]),
         pileups = temp([
-            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}.pileupsamtools.gwv.txt",
-            "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairB}.pileupsamtools.gwv.txt"
+            "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairA}.pileupsamtools.gwv.txt",
+            "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairB}.pileupsamtools.gwv.txt"
         ]),
     params:
         plink_basename = lambda wildcards, input: splitext(input.plink_targets[0])[0],
@@ -194,8 +199,8 @@ rule run_TKGWV2:
         runtime    = 10,
         mem_mb     = 4000,
         cores      = lambda w, threads: threads
-    log:       "logs/04-kinship/TKGWV2/run_TKGWV2/ped{gen}/{pairA}_{pairB}.log"
-    benchmark: "benchmarks/04-kinship/TKGWV2/run_TKGWV2/ped{gen}/{pairA}_{pairB}.tsv"
+    log:       "logs/04-kinship/TKGWV2/run_TKGWV2/{generation}/{pairA}_{pairB}.log"
+    benchmark: "benchmarks/04-kinship/TKGWV2/run_TKGWV2/{generation}/{pairA}_{pairB}.tsv"
     conda:     "../envs/TKGWV2.yml"
     threads:   1
     shell: """
@@ -240,7 +245,7 @@ def define_TKGWV2_requested_dyads(wildcards):
         out = expand(rules.run_TKGWV2.output.results,
             pairA="{pairA}",
             pairB="{pairB}",
-            gen="{{gen}}"
+            generation="{{generation}}"
         )
         relevant_comparisons = expand(
             out,
@@ -260,10 +265,10 @@ rule merge_TKGWV2_results:
     input:
         results = define_TKGWV2_requested_dyads
     output:
-        result  = "results/04-kinship/TKGWV2/ped{gen}/ped{gen}-TKGWV2_Results.txt"
+        result  = "results/04-kinship/TKGWV2/{generation}/{generation}-TKGWV2_Results.txt"
     resources:
         cores   = lambda w, threads: threads
-    log:   "logs/04-kinship/TKGWV2/merge_TKGWV2_results/ped{gen}.log"
+    log:   "logs/04-kinship/TKGWV2/merge_TKGWV2_results/{generation}.log"
     conda: "../envs/coreutils-9.1.yml"
     threads: 1
     shell: """

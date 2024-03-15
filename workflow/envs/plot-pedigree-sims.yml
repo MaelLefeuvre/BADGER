@@ -1,0 +1,8 @@
+name: plot-pedigree-sims
+channels:
+  - conda-forge
+  - r
+dependencies:
+  - conda-forge::r-base
+  - conda-forge::r-kinship2>=1.9.6
+  - r::r-plot.matrix>=1.6.2

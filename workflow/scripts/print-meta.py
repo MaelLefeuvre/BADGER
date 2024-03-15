@@ -36,7 +36,8 @@ def dump_yaml(yaml_dictionary, output_path):
 def parse_git_commits(yaml_dictionary):
     gitted_directories = {
         "aDNA-kinship-simulations": ".",
-        "GRUPS-rs": "workflow/scripts/grups/"
+        "pmd-mask": "workflow/scripts/pmd-mask/",
+        #"GRUPS-rs": "workflow/scripts/grups-rs/"
     }
 
     for (repo, path) in gitted_directories.items():
