@@ -359,7 +359,7 @@ rule run_pmd_mask:
         threshold = config['preprocess']['pmd-rescaling']['pmd-mask']['threshold']
     log:       "logs/02-preprocess/06-pmd-mask/run_pmd_mask/{sample}.log"
     benchmark: "benchmarks/02-preprocess/06-pmd-mask/run_pmd_mask/{sample}.tsv" 
-    conda:     "../envs/pmd-mask-0.3.yml"
+    conda:     "../envs/pmd-mask-0.3.2.yml"
     threads:   8
     shell: """
         pmd-mask -@ {threads} -b {input.bam} -f {input.reference} -m {input.misincorporation} --threshold {params.threshold} -M {output.metrics} -Ob -o {output.bam} --verbose > {log} 2>&1
@@ -406,9 +406,9 @@ def define_rescale_input_bam(wildcards):
     rescaler = config['preprocess']['pmd-rescaling']['rescaler']
     match rescaler:
         case "mapdamage":
-            return "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
+            return "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam"
         case "pmdtools":
-            return "results/02-preprocess/06-pmdtools/{sample}/{sample}.srt.rmdup.filtercontam.bam",
+            return "results/02-preprocess/06-pmdtools/{sample}/{sample}.srt.rmdup.filtercontam.bam"
         case other:
             raise RuntimeError(f'Invalid rescaler value "{rescaler}"')
 

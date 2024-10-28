@@ -1,20 +1,22 @@
 name: gargammel-1.1.4
 channels:
-  - defaults
-  - bioconda
   - conda-forge
+  - bioconda
+  - defaults
 dependencies:
   - conda-forge::cmake
   - conda-forge::make>=4.3
-  - conda-forge::gsl>=2.7
+  - conda-forge::gsl>=1.16
   - conda-forge::c-compiler>=1.5.2
   - conda-forge::cxx-compiler>=1.5.2
   - conda-forge::python=2.7
   - conda-forge::numpy
   - conda-forge::scipy
   - conda-forge::biopython
-  - bioconda::samtools=1.15.0
+  - conda-forge::msprime=0.5.0
+  - bioconda::ms
+  - conda-forge::libdeflate
+  - bioconda:samtools=1.15.0
+  - bioconda::htslib=1.15
   - bioconda::seq-gen>=1.3.4
   - bioconda::art
-  - bioconda::msprime
-  - bioconda::ms

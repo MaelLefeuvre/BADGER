@@ -4,7 +4,10 @@ cd $CONDA_PREFIX/bin
 
 git clone https://bitbucket.org/tguenther/read.git
 
-cp read/READ.py read/READscript.R .
+cd read
+git checkout v1.0
+cp READ.py READscript.R ../
+cd - 
 
 chmod +x READ.py
 chmod +x READscript.R

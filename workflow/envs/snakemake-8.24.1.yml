@@ -1,9 +1,9 @@
-name: snakemake-8.5.4
+name: snakemake-8.24.1
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
 dependencies:
-  - bioconda::snakemake=8.5.4
+  - conda-forge::python=3.11
+  - bioconda::snakemake=8.24.1
   - bioconda::snakemake-storage-plugin-ftp
   - bioconda::snakemake-storage-plugin-http
-  - conda-forge::python>=3.11

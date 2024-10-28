@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 VERSION="v0.3.2"
-REPO_URL="https://github.com/MaelLefeuvre/grups-rs.git"
+REPO_URL="https://github.com/MaelLefeuvre/grups-rs"
 
 REPO="$CONDA_PREFIX/$(basename ${REPO_URL%.git})"
 BUILD_DIR="${REPO}/target"
