@@ -2,8 +2,10 @@ name: pcangsd-0.99
 channels:
   - conda-forge
 dependencies:
+  - conda-forge::compilers
   - conda-forge::python>=3.6
+  - conda-forge::setuptools
   - conda-forge::numpy
   - conda-forge::scipy
-  - conda-forge::cython
+  - conda-forge::cython<3.0.0
   - conda-forge::pandas
