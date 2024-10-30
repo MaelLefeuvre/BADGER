@@ -1,7 +1,7 @@
 configfile: "./config/config.yml"
-#include: "rules/00-netrules.smk"
-include: "rules/common.smk"
+
 include: "rules/00-qc.smk"
+include: "rules/common.smk"
 include: "rules/00-preprocess-reference.smk"
 include: "rules/00-preprocess-1000g-phase3.smk"
 include: "rules/01-pedigree-sims.smk"
@@ -17,39 +17,55 @@ include: "rules/06-TKGWV2.smk"
 include: "rules/06-correctKin.smk"
 include: "rules/07-archive.smk"
 
+# ------------------------------------------------------------------------------------------------ #
+# ---- Download data
+# The checkpointing system of snakemake forces us to isolate this ruleset from the rest of the 
+# workflow, and ensure that 00-netrules.smk only gets included when explicitly requesting fetch_data
+# Not doing the latter can result in FTP.OsError exceptions from timeouts, permisison denied and/or
+# Connection reset by peer errors
+import sys
+if "fetch_data" in sys.argv:
+    module netrules:
+        snakefile: "rules/00-netrules.smk"
+        config: config
+    use rule * from netrules
+
+    rule fetch_data:
+        input:
+            expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
+            rules.fetch_samples_panel.output.panel,
+            rules.download_reference_genome.output.refgen.format(reference="Homo_sapiens.GRCh37.dna.primary_assembly"),
+            rules.download_HapMapII_recombination_map.output.map,
+            rules.fetch_sex_specific_recombination_map.output.gen_maps,
+            rules.fetch_interference_map.output.intf_map,
+            rules.download_reich_1240K.output.eigenstrat,
+            rules.download_TKGWV2_support_files.output.support_files,
+
+    # -- Smk-7 does not store FTP file hierarchy in .snakemake...
+    CLEANUP_FTP_DIRS=["ftp.1000Ggenomes.ebi.ac.uk", "ftp.ncbi.nlm.nih.gov", "github.com", "reichdata.hms.harvard.edu"]
+    def rmdirs(dirs: [str]):
+        import shutil
+        for directory in dirs:
+            shutil.rmtree(directory, ignore_errors = True)
+
+    onsuccess:
+        rmdirs(CLEANUP_FTP_DIRS)
+    onerror:
+        rmdirs(CLEANUP_FTP_DIRS)
+        
+
 localrules: meta, READ, GRUPS, TKGWV2, ped_sim, all
 
 wildcard_constraints:
     chr    = r"\d+",
     sample = "ped[0-9]{1,2}_[-gGbBiIsS0-9]+",
-    POP    = "[A-Z]{3}"
-
-# ---- Download dataset 
-#module netrules:
-#    snakefile: "rules/00-netrules.smk"
-#    config: config
-#use rule * from netrules
-#
-#rule fetch_data:
-#    input:
-#        expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
-#        rules.fetch_samples_panel.output.panel,
-#        rules.download_reference_genome.output.refgen.format(reference="Homo_sapiens.GRCh37.dna.primary_assembly"),
-#        rules.download_HapMapII_recombination_map.output.map,
-#        rules.fetch_sex_specific_recombination_map.output.gen_maps,
-#        rules.fetch_interference_map.output.intf_map,
-#        rules.download_reich_1240K.output.eigenstrat,
-#        rules.download_TKGWV2_support_files.output.support_files,
+    POP    = "(?!ALL)([A-Z]{3})"
 
 # ---- Archive and compress results into a separate directory (see config.yml)
 #module archive_run:
 #    snakefile: "rules/07-archive.smk"
 #    config: config
 #use rule archive from archive_run
-
-#onstart:
-#    get_pileup_input_bams(None, print_log = True)
-
 
 # ---- Generate a global metadata file. Keeps track of seeding values + commit hashes.
 rule meta:
@@ -91,29 +107,29 @@ rule correctKin:
 rule ped_sim:
     input: 
         meta = rules.meta.output,
-        plot = expand(rules.plot_ped_sim.output.pdf, POP=config['ped-sim']['params']['pop']) if config['make-qc'] else "",
+        plot = lambda w: expand(rules.plot_ped_sim.output.pdf, POP=config['ped-sim']['params']['pop']) if config['make-qc'] else [],
         vcf  = expand(rules.merge_ped_sim.output.vcf, POP=config['ped-sim']['params']['pop'])
 
 rule adna_simulation:
     input:
         meta  = rules.meta.output,
         files = lambda w: expand(rules.merge_chromosomes.output, sample=get_all_samples_ids(w)),
-        qc    = rules.multiqc_adna_simulations.output if config['make-qc'] else ""
+        qc    = lambda w: rules.multiqc_adna_simulations.output if config['make-qc'] else []
 
 rule align:
     input:
         meta  = rules.meta.output,
         files = lambda w: expand(assign_aligner_algorithm(w), sample = get_all_samples_ids(w)),
-        qc    = rules.multiqc_align_fastqs.output if config['make-qc'] else ""
+        qc    = lambda w: rules.multiqc_align_fastqs.output if config['make-qc'] else []
 
 rule preprocess:
     input:
         meta  = rules.meta.output,
         files = lambda w: expand(get_pileup_input_bams(w, filter_samples = False), generation = get_generations()),
-        qc    = (
+        qc    = lambda w: (
             expand(rules.plot_covstats.output.plot, generation=get_generations()) + 
             rules.multiqc_preprocess_bams.output 
-            if config['make-qc'] else ""
+            if config['make-qc'] else []
         )
 
 rule all:
@@ -130,9 +146,4 @@ rule all:
         rules.READv2.input,
         rules.GRUPS.input,
         rules.TKGWV2.input,
-        rules.correctKin.input,
-
-
-
-
-
+        rules.correctKin.input

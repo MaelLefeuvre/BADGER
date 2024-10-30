@@ -1,46 +1,10 @@
-
-#from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
-#from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
-#FTP  = FTPRemoteProvider(retry=config['FTP']['retries']) # Anonymous 
-#HTTP = HTTPRemoteProvider() # Anonymous 
-
 from os.path import dirname
 
-configfile: "config/config.yml"
-
-# ---- storage definition
-storage g1k:
-    provider                = "ftp",
-    max_requests_per_second = 1,
-    username                = None,
-    password                = None,
-    active_mode             = False
-
-storage ensembl:
-    provider                = "ftp",
-    max_requests_per_second = 1,
-    username                = None,
-    password                = None,
-    active_mode             = False
-
-storage ncbi:
-    provider                = "ftp",
-    max_requests_per_second = 1,
-    username                = None,
-    password                = None,
-    active_mode             = False
-
-storage reich:
-    provider                = "http",
-    max_requests_per_second = 1,
-    auth                    = None,
-    allow_redirects         = True
-
-storage github:
-    provider                = "http",
-    max_requests_per_second = 1,
-    auth                    = None,
-    allow_redirects         = True
+# ---- remote provider definition
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
+FTP  = FTPRemoteProvider(retry=config['FTP']['retries']) # Anonymous 
+HTTP = HTTPRemoteProvider() # Anonymous 
 
 # ------------------------------------------------------------------------------------------------ #
 # ---- 1000g-phase3 dataset
@@ -51,11 +15,7 @@ rule download_1000_genomes:
     http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr${chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
     """
     input:
-        #vcf = FTP.remote(expand("{url}/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
-        #    url=config["FTP"]["1000g"],
-        #    chr = "{chr}"
-        #))
-        storage.g1k(expand("ftp://{url}/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
+        vcf = FTP.remote(expand("{url}/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
             url=config["FTP"]["1000g"],
             chr = "{chr}"
         ))
@@ -66,7 +26,7 @@ rule download_1000_genomes:
         cores=lambda w, threads: threads
     threads: 1
     shell: """
-        mv {input.vcf} {output.vcf} 2> {log}
+        mv {input.vcf} {output.vcf} > {log} 2>&1
     """
 
 rule fetch_samples_panel:
@@ -74,8 +34,7 @@ rule fetch_samples_panel:
     Download samples metadata from the 1000g FTP website
     """
     input:
-        #panel = FTP.remote("ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel")
-        panel = storage.g1k("ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel")
+        panel = FTP.remote("ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel")
     output:
         panel = "data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.ALL.panel"
     log: "logs/00-netrules/fetch_samples_panel.log"
@@ -94,8 +53,7 @@ rule download_reich_1240K:
     Download the 1240K dataset from Reich Lab's website.
     """
     input:
-        #tarball    = HTTP.remote(config["FTP"]["1240K"])
-        tarball    = storage.reich(config["FTP"]["1240K"])
+        tarball    = HTTP.remote(config["FTP"]["1240K"])    # ---- Snakemake-7
     output:
         eigenstrat = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".snp", ".ind", ".geno")
     params:
@@ -105,7 +63,7 @@ rule download_reich_1240K:
     log: "logs/00-netrules/download_reich_1240K.log"
     threads: 1
     shell:"""
-        tar -xvf {input.tarball} -C {params.output_dir} 2> {log}
+        tar -xvf {input.tarball} -C {params.output_dir} > {log} 2>&1
     """
 
 # ------------------------------------------------------------------------------------------------ #
@@ -117,8 +75,7 @@ rule download_reference_genome:
     human_g1k_v37 is malformed... see: https://github.com/hammerlab/biokepi/issues/117
     """
     input:
-        #refgen = FTP.remote("ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/{reference}.fa.gz")
-        refgen = storage.ensembl("ftp://ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/{reference}.fa.gz")
+        refgen = FTP.remote("ftp.ensembl.org/pub/grch37/release-113/fasta/homo_sapiens/dna/{reference}.fa.gz")
     output:
         refgen = "data/refgen/GRCh37/{reference}.fa.gz"
     resources:
@@ -138,8 +95,7 @@ rule download_HapMapII_recombination_map:
     Download the 2011 HapMapII recombination map from ncbi.
     """
     input:
-        #tarball = HTTP.remote("http://ftp.ncbi.nlm.nih.gov/hapmap/recombination/2011-01_phaseII_B37/genetic_map_HapMapII_GRCh37.tar.gz")
-        tarball = storage.ncbi("ftp://ftp.ncbi.nlm.nih.gov/hapmap/recombination/2011-01_phaseII_B37/genetic_map_HapMapII_GRCh37.tar.gz")
+        tarball = HTTP.remote("http://ftp.ncbi.nlm.nih.gov/hapmap/recombination/2011-01_phaseII_B37/genetic_map_HapMapII_GRCh37.tar.gz")
     output:
         map     = expand("data/recombination-maps/HapMapII_GRCh37/genetic_map_GRCh37_chr{chr}.txt", chr=range(1, 23)),
         exclude = temp(expand("data/recombination-maps/HapMapII_GRCh37/genetic_map_GRCh37_chr{chr}.txt", chr=["X", "X_par1", "X_par2"])),
@@ -151,8 +107,8 @@ rule download_HapMapII_recombination_map:
     log: "logs/00-netrules/download_HapMapII_recombination_map.log"
     threads: 1
     shell: """
-        tar -xvzf {input.tarball} -C {params.output_dir} 2>  {log}
-        rm {input.tarball}                               2>> {log}
+        tar -xvzf {input.tarball} -C {params.output_dir} > {log} 2>&1
+        rm {input.tarball}                               > {log} 2>&1
     """
 
 
@@ -164,8 +120,7 @@ rule fetch_sex_specific_recombination_map:
      - https://github.com/cbherer/Bherer_etal_SexualDimorphismRecombination
     """
     input:
-        #gen_map = HTTP.remote(config["ped-sim"]["input"]["refined-genetic-map-url"])
-        gen_map = storage.github("https://" + config["ped-sim"]["input"]["refined-genetic-map-url"])
+        gen_map = HTTP.remote(config["ped-sim"]["input"]["refined-genetic-map-url"])
     output:
         map_dir  = directory("data/recombination-maps/Refined_genetic_map_b37"),
         gen_maps = expand("data/recombination-maps/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"])
@@ -174,7 +129,7 @@ rule fetch_sex_specific_recombination_map:
     log:     "logs/00-netrules/fetch_sex_specific_gen_map.log"
     threads: 1
     shell: """
-        tar --strip-components=1 -xvzf {input.gen_map} -C {output.map_dir} 2> {log} && rm -rf {input.gen_map} >> {log} 2>&1
+        tar --strip-components=1 -xvzf {input.gen_map} -C {output.map_dir} > {log} 2>&1 && rm -rf {input.gen_map} >> {log} 2>&1
     """
 
 # ------------------------------------------------------------------------------------------------ #
@@ -188,8 +143,7 @@ rule fetch_interference_map:
      - https://github.com/williamslab/ped-sim/blob/master/interfere/nu_p_campbell.tsv
     """
     input:
-        #intf_map = HTTP.remote(config["ped-sim"]["input"]["interference-map-url"])
-        intf_map = storage.github("https://" + config["ped-sim"]["input"]["interference-map-url"])
+        intf_map = HTTP.remote(config["ped-sim"]["input"]["interference-map-url"])
     output:
         intf_map = config['ped-sim']['data']['interference']
     resources:
