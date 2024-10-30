@@ -42,11 +42,11 @@ class Logger:
         self.base_depth = len(inspect.stack())
         colorama_init()
         
-    def hr(self, level: LogLevel = LogLevel.INFO):
+    def hr(self, level: LogLevel = LogLevel.INFO, file=sys.stdout):
         if level > self.level:
             return
         width: int = os.get_terminal_size().columns if sys.stdout.isatty() else 80
-        print("\u2500" * width)
+        print("\u2500" * width, file=file)
 
     def log(self, msg, file=sys.stdout, level: LogLevel =LogLevel.INFO, indent = False):
         if level > self.level:

@@ -15,10 +15,7 @@ BADGER_MODULES = {
 """
 Separate badger args from snakemake args into two separate lists.
 """
-def _split_args(split_flag='--'):
-
-    args = sys.argv
-
+def _split_args(args = sys.argv, split_flag='--'):
     try:
         switch = args.index(split_flag)
     except ValueError:
@@ -57,9 +54,9 @@ def _badger_cli():
 
 
 
-def main():
+def main(args = sys.argv):
     parser = _badger_cli()
-    args   = _split_args()
+    args   = _split_args(args)
 
     if len(args['badger']) < 1:
         parser.print_help(sys.stderr)

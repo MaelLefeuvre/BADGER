@@ -34,7 +34,6 @@ def run(args, smk_args, **kwargs):
         except Exception as e:
             logger.error("Failed to download the required datasets form BADGER.")
             raise e
-    print("hey")
     if args.no_create_envs is False:
         logger.info("Creating all conda environments...")
         logger.hr()

@@ -57,12 +57,6 @@ class SmkHandler:
             self.defaults  = []
             self.resources = []
 
-        def fmt(self) -> str:
-            args = f"{' '.join(self.args)}"
-            if self.resources:
-                args = args + f"--resources {' '.join(self.resources)}"
-            print(args)
-
         def add_targets(self, targets) -> Self:
             if type(targets) is str:
                 targets = [targets]
