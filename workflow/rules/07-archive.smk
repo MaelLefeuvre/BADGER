@@ -143,7 +143,7 @@ rule archive_pedigree_bams:
     """
     input: 
         bams      = define_archived_bams,
-        reference = config["reference"],
+        reference = ReferenceGenome.get_path(),
         metadata  = rules.create_archive_metadata.output,
     output:
         cram      = protected("{archive_dir}/run-{{run}}/{results_dir}/ped{{gen}}-merged.cram".format(

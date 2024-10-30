@@ -1,9 +1,36 @@
-def get_generations():
-    n = config['ped-sim']['replicates']
-    return [f"ped{i}" for i in range(1, n+1)]
+from requests.packages import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+configfile: "config/config.yml"
+configfile: "config/netrules.yml"
+
+class ReferenceGenome:
+    _name = config["reference-genome"].lower()
+    _dict = config["netrules"]["reference-genomes"]
+    @staticmethod
+    def get_name():
+        return config["reference-genome"].lower()
+
+    @classmethod
+    def get_url(cls):
+        return cls._dict[ReferenceGenome.get_name()]["url"]
+
+    @classmethod
+    def get_path(cls):
+        return cls._dict[ReferenceGenome.get_name()]["path"]
+
+    @classmethod
+    def list_available_references(cls):
+        for key in cls._dict.keys():
+            print(f" - {key}")
+
 
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- Generic / Utility rules and functions.
+
+def get_generations():
+    n = config['ped-sim']['replicates']
+    return [f"ped{i}" for i in range(1, n+1)]
 
 def get_samples_ids(wildcards):
     """

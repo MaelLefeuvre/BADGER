@@ -1,7 +1,6 @@
 configfile: "./config/config.yml"
-
-include: "rules/00-qc.smk"
 include: "rules/common.smk"
+include: "rules/00-qc.smk"
 include: "rules/00-preprocess-reference.smk"
 include: "rules/00-preprocess-1000g-phase3.smk"
 include: "rules/01-pedigree-sims.smk"

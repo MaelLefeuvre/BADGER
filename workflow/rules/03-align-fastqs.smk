@@ -145,7 +145,7 @@ rule bwa_aln:
     """
     input:
         trimmed       = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.{extension}.gz",
-        reference     = config["reference"],
+        reference     = ReferenceGenome.get_path(),
         bwt           = rules.index_reference_genome.output.bwt
     output:
         sai           = temp(pipe("results/02-preprocess/02-align/{sample}/{sample}.bwaaln.{extension}.sai"))
@@ -196,7 +196,7 @@ rule bwa_samse:
     input:
         trimmed   = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.{extension}.gz",
         sai       = rules.bwa_aln.output.sai,
-        reference = config["reference"]
+        reference = ReferenceGenome.get_path()
     output:
         sam       = temp(pipe("results/02-preprocess/02-align/{sample}/{sample}.bwaaln.{extension}.sam"))
     params:
@@ -232,7 +232,7 @@ rule bwa_sampe:
         pair2     = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.pair2.truncated.gz",
         sai1      = "results/02-preprocess/02-align/{sample}/{sample}.bwaaln.pair1.truncated.sai",
         sai2      = "results/02-preprocess/02-align/{sample}/{sample}.bwaaln.pair2.truncated.sai",
-        reference = config["reference"]
+        reference = ReferenceGenome.get_path()
     output:
         sam       = temp(pipe("results/02-preprocess/02-align/{sample}/{sample}.bwaaln.paired.sam"))
     params:
@@ -313,7 +313,7 @@ rule bwa_mem_se:
     """
     input:
         trimmed   = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.{extension}.gz",
-        reference = config["reference"],
+        reference = ReferenceGenome.get_path(),
         bwt       = rules.index_reference_genome.output.bwt
     output:
         sam       = temp(pipe("results/02-preprocess/02-align/{sample}/{sample}.bwamem.{extension}.sam"))
@@ -340,7 +340,7 @@ rule bwa_mem_pe:
     input:
         pair1     = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.pair1.truncated.gz",
         pair2     = "results/02-preprocess/01-adapter_removal/{sample}/{sample}.pair2.truncated.gz",
-        reference = config["reference"],
+        reference = ReferenceGenome.get_path(),
         bwt       = rules.index_reference_genome.output.bwt
     output:
         sam       = temp(pipe("results/02-preprocess/02-align/{sample}/{sample}.bwamem.paired.sam"))

@@ -1,5 +1,10 @@
 from os.path import dirname
 
+include: "common.smk"
+
+configfile: "config/netrules.yml"
+configfile: "config/netrules.yml"
+
 # ---- remote provider definition
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
@@ -75,12 +80,12 @@ rule download_reference_genome:
     human_g1k_v37 is malformed... see: https://github.com/hammerlab/biokepi/issues/117
     """
     input:
-        refgen = FTP.remote("ftp.ensembl.org/pub/grch37/release-113/fasta/homo_sapiens/dna/{reference}.fa.gz")
+        refgen = FTP.remote(ReferenceGenome.get_url())
     output:
-        refgen = "data/refgen/GRCh37/{reference}.fa.gz"
+        refgen = ReferenceGenome.get_path() + ".gz"
     resources:
         cores=lambda w, threads: threads
-    log: "logs/00-netrules/download_reference_genome/{reference}.log"
+    log: f"logs/00-netrules/download_reference_genome/{ReferenceGenome.get_path()}.log"
     threads: 1
     shell: """
         mv {input.refgen} {output.refgen}

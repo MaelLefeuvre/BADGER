@@ -9,13 +9,13 @@ rule samtools_faidx:
     Generate a `.fai` fasta index using samtools faidx
     """
     input:
-        fasta = "{directory}/{fasta}.fa"
+        fasta = ReferenceGenome.get_path()
     output:
-        fai   = "{directory}/{fasta}.fa.fai"
+        fai   = ReferenceGenome.get_path() + ".fai"
     resources:
         cores = lambda w, threads: threads
-    log:       "logs/generics/{directory}/samtools_faidx-{fasta}.log"
-    benchmark: "benchmarks/generics/{directory}/samtools_faidx-{fasta}.tsv"
+    log:       f"logs/00-preprocess-reference/samtools_faidx/{ReferenceGenome.get_path()}.log"
+    benchmark: f"benchmarks/00-preprocess-reference/samtools_faidx/{ReferenceGenome.get_path()}.tsv"
     conda:     "../envs/samtools-1.15.yml"
     threads:   1
     shell: """
@@ -42,14 +42,13 @@ rule decompress_reference_genome:
     Decrompress a reference file from .fa.gz -> .fa 
     """
     input:
-        # refgen = rules.download_reference_genome.output.refgen
-        refgen = "data/refgen/GRCh37/{reference}.fa.gz"
+        refgen = ReferenceGenome.get_path() + ".gz"
     output:
-        refgen = protected("data/refgen/GRCh37/{reference}.fa")
+        refgen = ReferenceGenome.get_path()
     resources:
         cores = lambda w, threads: threads
-    log:       "logs/00-preprocess-reference/decompress_reference_genome/{reference}.log"
-    benchmark: "benchmarks/00-preprocess-reference/decompress_reference_genome/{reference}.tsv"
+    log:       f"logs/00-preprocess-reference/decompress_reference_genome/{ReferenceGenome.get_name()}.log"
+    benchmark: f"benchmarks/00-preprocess-reference/decompress_reference_genome/{ReferenceGenome.get_name()}.tsv"
     conda:     "../envs/coreutils-9.1.yml"
     threads:   1
     shell: """
@@ -65,17 +64,17 @@ rule index_reference_genome:
     Generate the Burrows-Wheeler transform on the reference genome.
     """
     input:
-        refgen = config["reference"]
+        refgen = ReferenceGenome.get_path()
     output:
-        amb = config["reference"] + ".amb",
-        ann = config["reference"] + ".ann",
-        bwt = config["reference"] + ".bwt",
-        pac = config["reference"] + ".pac",
-        sa  = config["reference"] + ".sa"
+        amb = ReferenceGenome.get_path() + ".amb",
+        ann = ReferenceGenome.get_path() + ".ann",
+        bwt = ReferenceGenome.get_path() + ".bwt",
+        pac = ReferenceGenome.get_path() + ".pac",
+        sa  = ReferenceGenome.get_path() + ".sa"
     resources:
         cores = lambda w, threads: threads
-    log:       "logs/00-preprocess-reference/index_reference_genome.log"
-    benchmark: "benchmarks/00-preprocess-reference/index_reference_genome.tsv"
+    log:       f"logs/00-preprocess-reference/index_reference_genome-{ReferenceGenome.get_name()}.log"
+    benchmark: f"benchmarks/00-preprocess-reference/index_reference_genome-{ReferenceGenome.get_name()}.tsv"
     conda:     "../envs/bwa-0.7.17.yml"
     threads:   1
     shell: """
@@ -90,13 +89,13 @@ rule split_reference_genome:
     Split the reference genome according to chromosome.
     """
     input:
-        refgen   = config["reference"]
+        refgen   = ReferenceGenome.get_path()
     output:
-        splitted = expand("data/refgen/GRCh37/splitted/{chr}.fasta", chr=range(1,23))
+        splitted  = expand(f"{os.path.dirname(ReferenceGenome.get_path())}/splitted/{{chr}}.fasta", chr=range(1, 23))
     resources:
         cores = lambda w, threads: threads
-    log:       "logs/00-preprocess-reference/split_reference_genome.log"
-    benchmark: "benchmarks/00-preprocess-reference/split_reference_genome.tsv"
+    log:       f"logs/00-preprocess-reference/split_reference_genome-{ReferenceGenome.get_name()}.log"
+    benchmark: f"benchmarks/00-preprocess-reference/split_reference_genome-{ReferenceGenome.get_name()}.tsv"
     conda:     "../envs/coreutils-9.1.yml"
     threads:   1
     shell: """

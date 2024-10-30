@@ -3,8 +3,7 @@ FTP:
   refgen:                    "ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/dna/"
   1000g :                    "ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
   1240K :                    "https://reichdata.hms.harvard.edu/pub/datasets/amh_repo/curated_releases/V52/V52.2/SHARE/public.dir/v52.2_1240K_public.tar"
-
-reference:                   "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary_assembly.fa"
+reference-genome:            "hs37d5"    #["GRCh37" | "hs37d5" | "human_g1k_v37"]
 tempdir:                     "/tmp/mlefeuvre"
 make-qc:                     True
 archive:

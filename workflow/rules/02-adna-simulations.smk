@@ -85,7 +85,7 @@ rule create_human_contamination:
         tbi = lambda wildcards: expand(f"{rules.concat_1000_genomes.output.merged_vcf}.tbi",
             POP=config["gargammel"]["params"]["contam-pop"]
         ),
-        chr_ref = lambda wildcards: dirname(config["reference"]) + "/splitted/{chr}.fasta"
+        chr_ref = lambda wildcards: dirname(ReferenceGenome.get_path()) + "/splitted/{chr}.fasta"
     output:
         hap1 = temp("results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo1.fasta"),
         hap2 = temp("results/01-gargammel/contaminants/{cont}/{chr}/{cont}_chr{chr}_haplo2.fasta")
@@ -152,9 +152,7 @@ rule get_consensus:
     input:
         vcf     = expand(rules.merge_ped_sim.output.vcf, POP=config["ped-sim"]["params"]["pop"]),
         tbi     = expand(rules.merge_ped_sim.output.vcf + ".tbi", POP=config["ped-sim"]["params"]["pop"]),
-        #vcf     = expand(rules.dopplegang_twins.output.merged_vcf, POP=config["ped-sim"]["params"]["pop"]),
-        #tbi     = expand(rules.dopplegang_twins.output.merged_vcf + ".tbi", POP=config["ped-sim"]["params"]["pop"]),
-        chr_ref = lambda wildcards: dirname(config["reference"]) + "/splitted/{chr}.fasta"
+        chr_ref = lambda wildcards: dirname(ReferenceGenome.get_path()) + "/splitted/{chr}.fasta"
     output:
         hap1 = temp("results/01-gargammel/{sample}/{chr}/endo/{sample}_chr{chr}_haplo1.fasta"),
         hap2 = temp("results/01-gargammel/{sample}/{chr}/endo/{sample}_chr{chr}_haplo2.fasta"),

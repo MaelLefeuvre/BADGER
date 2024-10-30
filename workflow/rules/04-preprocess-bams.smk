@@ -38,7 +38,7 @@ rule samtools_filter_unmapped:
     """
     input:
         sam        = assign_aligner_algorithm,
-        reference  = config["reference"],
+        reference  = ReferenceGenome.get_path(),
         bwt        = rules.index_reference_genome.output.bwt
     output:
         bam        = temp("results/02-preprocess/03-filter/{sample}/{sample}.bam")
@@ -82,7 +82,7 @@ rule samtools_sort:
     
     input:
         bam       = rules.samtools_filter_unmapped.output.bam,
-        reference = config["reference"]
+        reference = ReferenceGenome.get_path()
     output:
         bam       = temp("results/02-preprocess/04-sort/{sample}/{sample}.srt.bam")
     resources:
@@ -207,7 +207,7 @@ rule run_pmdtools:
     input:
         bam        = define_dedup_input_bam,
         bai        = lambda wildcards: define_dedup_input_bam(wildcards) + ".bai",
-        reference  = config['reference'],
+        reference  = ReferenceGenome.get_path(),
     output:
         bam        = "results/02-preprocess/06-pmdtools/{sample}/{sample}.srt.rmdup.filtercontam.bam"
     params:
@@ -268,7 +268,7 @@ rule run_mapdamage:
     input:
         bam       = define_dedup_input_bam,
         bai       = lambda wildcards: define_dedup_input_bam(wildcards) + ".bai",
-        reference = config["reference"],
+        reference = ReferenceGenome.get_path(),
         metadata  = "results/meta/pipeline-metadata.yml"
     output:
         bam              = [] if config['preprocess']['pmd-rescaling']['apply-masking'] else "results/02-preprocess/06-mapdamage/{sample}/{sample}.srt.rmdup.rescaled.bam",
@@ -350,7 +350,7 @@ rule run_pmd_mask:
     input:
         bam              = define_masking_input_bam,
         bai              = lambda wildcards: define_masking_input_bam(wildcards) + ".bai",
-        reference        = config["reference"],
+        reference        = ReferenceGenome.get_path(),
         misincorporation = rules.run_mapdamage.output.misincorporation
     output:
         bam     = "results/02-preprocess/06-pmd-mask/{sample}/{sample}.pmdmasked.bam",

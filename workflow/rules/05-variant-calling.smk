@@ -141,8 +141,8 @@ rule samtools_pileup:
             maf      = config['variant-calling']['maf'],
             superpop = config['variant-calling']['maf-superpop'],
         ),
-        reference = config["reference"],
-        fai       = config["reference"] + ".fai",
+        reference = ReferenceGenome.get_path(),
+        fai       = ReferenceGenome.get_path() + ".fai",
     output:
         pileup    = "results/03-variant-calling/01-pileup/{generation}/{generation}.pileup"
     params:
@@ -252,8 +252,8 @@ rule ANGSD_random_haploid:
     input:
         pileup    = rules.samtools_pileup.output.pileup,
         bamlist   = rules.generate_bam_list.output.bamlist,
-        reference = config['reference'],
-        fai       = config["reference"] + ".fai",
+        reference = ReferenceGenome.get_path(),
+        fai       = ReferenceGenome.get_path() + ".fai",
     output:
         haplos    = "results/03-variant-calling/02-ANGSD/{generation}/{generation}.haplo.gz"
     params:

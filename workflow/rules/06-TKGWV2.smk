@@ -127,7 +127,7 @@ rule run_TKGWV2:
     """
     input:
         bams          = define_TKGWV2_input,
-        reference     = config["reference"],
+        reference     = ReferenceGenome.get_path(),
         bed_targets   = "data/TKGWV2/genomeWideVariants_hg19/1000GP3_22M_noFixed_noChr.bed",
         plink_targets = multiext("data/TKGWV2/genomeWideVariants_hg19/DummyDataset_EUR_22M_noFixed", ".bed", ".bim", ".fam"),
         frequencies   = rules.intersect_freq_file.output.frequencies
