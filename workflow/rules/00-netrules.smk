@@ -8,7 +8,7 @@ configfile: "config/netrules.yml"
 # ---- remote provider definition
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
-FTP  = FTPRemoteProvider(retry=config['FTP']['retries']) # Anonymous 
+FTP  = FTPRemoteProvider(retry=config['netrules']['retries']) # Anonymous 
 HTTP = HTTPRemoteProvider() # Anonymous 
 
 # ------------------------------------------------------------------------------------------------ #
@@ -21,7 +21,7 @@ rule download_1000_genomes:
     """
     input:
         vcf = FTP.remote(expand("{url}/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
-            url=config["FTP"]["1000g"],
+            url=config["netrules"]["1000g-phase3-url"],
             chr = "{chr}"
         ))
     output:
@@ -58,7 +58,7 @@ rule download_reich_1240K:
     Download the 1240K dataset from Reich Lab's website.
     """
     input:
-        tarball    = HTTP.remote(config["FTP"]["1240K"])    # ---- Snakemake-7
+        tarball    = HTTP.remote(config["netrules"]["1240K-url"])    # ---- Snakemake-7
     output:
         eigenstrat = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".snp", ".ind", ".geno")
     params:
@@ -100,7 +100,7 @@ rule download_HapMapII_recombination_map:
     Download the 2011 HapMapII recombination map from ncbi.
     """
     input:
-        tarball = HTTP.remote("http://ftp.ncbi.nlm.nih.gov/hapmap/recombination/2011-01_phaseII_B37/genetic_map_HapMapII_GRCh37.tar.gz")
+        tarball = HTTP.remote(config['netrules']['hapmapII'])
     output:
         map     = expand("data/recombination-maps/HapMapII_GRCh37/genetic_map_GRCh37_chr{chr}.txt", chr=range(1, 23)),
         exclude = temp(expand("data/recombination-maps/HapMapII_GRCh37/genetic_map_GRCh37_chr{chr}.txt", chr=["X", "X_par1", "X_par2"])),
@@ -125,7 +125,7 @@ rule fetch_sex_specific_recombination_map:
      - https://github.com/cbherer/Bherer_etal_SexualDimorphismRecombination
     """
     input:
-        gen_map = HTTP.remote(config["ped-sim"]["input"]["refined-genetic-map-url"])
+        gen_map = HTTP.remote(config["netrules"]["ped-sim"]["refined-genetic-map-url"])
     output:
         map_dir  = directory("data/recombination-maps/Refined_genetic_map_b37"),
         gen_maps = expand("data/recombination-maps/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"])
@@ -148,9 +148,9 @@ rule fetch_interference_map:
      - https://github.com/williamslab/ped-sim/blob/master/interfere/nu_p_campbell.tsv
     """
     input:
-        intf_map = HTTP.remote(config["ped-sim"]["input"]["interference-map-url"])
+        intf_map = HTTP.remote(config["netrules"]["ped-sim"]["interference-map-url"])
     output:
-        intf_map = config['ped-sim']['data']['interference']
+        intf_map = "data/ped-sim/interference_maps/nu_p_campbell.tsv"
     resources:
         cores = lambda w, threads: threads
     log: "logs/00-netrules/fetch_sex_specific_gen_map.log"
@@ -168,7 +168,7 @@ rule download_TKGWV2_support_files:
     """
     output:
         support_files = expand("{directory}/{dataset}", 
-            directory = config['kinship']['TKGWV2']['support-files-dir'],
+            directory = config['netrules']['TKGWV2']['support-files-dir'],
             dataset = [
                 "1240K/1000GP3_EUR_1240K.frq",
                 "genomeWideVariants_hg19/1000GP3_22M_noFixed_noChr.bed",
@@ -178,8 +178,8 @@ rule download_TKGWV2_support_files:
             ]
         )
     params:
-        url        = config['kinship']['TKGWV2']['support-files-url'],
-        output_dir = config['kinship']['TKGWV2']['support-files-dir']
+        url        = config['netrules']['TKGWV2']['support-files-url'],
+        output_dir = config['netrules']['TKGWV2']['support-files-dir']
     resources:
         cores = lambda w, threads: threads
     log:     "logs/04-kinship/TKGWV2/TKGWV2_download_support_files.log"

@@ -7,11 +7,9 @@ from random import randint
 
 MAX_SEED = 4_294_967_295 # u32::MAX
 
-
 def bail(msg, error):
     print(f"[ERROR]: {msg}", file=sys.stderr)
     raise RuntimeError(error)
-
 
 def get_git_root(path):
     from git.exc import InvalidGitRepositoryError

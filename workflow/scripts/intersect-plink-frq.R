@@ -18,7 +18,6 @@ intersect_plink_frq <- function(freq = NULL, snp = NULL, bed = NULL) {
     by.y = c("chr", "end")
   )
   
-  #print(head(rsid_intersect))
   # Ensure the order remains the same by querying the original frq file.
   which(frq$SNP %in% rsid_intersect$SNP)
 }
