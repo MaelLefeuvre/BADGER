@@ -9,6 +9,7 @@ def KIN_output(wildcards):
     template = "results/04-kinship/KIN/{generation}/{generation}-KIN-results/KIN_results.csv"
     return expand(template, generation = get_generations())
 
+# ------------------------------------------------------------------------------------------------ #
 
 rule symlink_KINgaroo_input_bams:
     input:
@@ -26,6 +27,7 @@ rule symlink_KINgaroo_input_bams:
         basename -a {input.bamlist} | sed 's/.bam$//' > {output.bamlist}       2>> {log}
     """
 
+
 def parse_KINgaroo_optargs(wildcards):
     correct_contamination = False
     diversity_parameter = config['kinship']['KIN']['diversity-parameter']
@@ -37,7 +39,6 @@ def parse_KINgaroo_optargs(wildcards):
         optargs += f"--noisy_wins {noisy_windows} "
 
     return optargs
-
 
 rule run_KINgaroo:
     """
@@ -74,14 +75,14 @@ rule run_KINgaroo:
         threshold      = config['kinship']['KIN']['p0-threshold'],
         optargs        = parse_KINgaroo_optargs
     resources:
-        #runtime        = 60,
+        runtime        = 600,
         mem_mb         = 6000,
-    resources:
         cores          = lambda w, threads: threads
+    retries:   3
     log:       "logs/04-kinship/KIN/run_KINgaroo/{generation}.log"
     benchmark: "benchmarks/04-kinship/KIN/run_KINgaroo/{generation}.tsv"
-    conda:      "../envs/kin-3.1.3.yml"
-    threads:    16
+    conda:     "../envs/kin-3.1.3.yml"
+    threads:   8
     shell: """
         CWD=`pwd`
         cd {output.kingaroo_dir}
@@ -97,6 +98,7 @@ rule run_KINgaroo:
         > $CWD/{log} 2>&1
     """
 
+
 def parse_KIN_optargs(wildcards):
     optargs = ""
     roh_threshold       = config['kinship']['KIN']['roh-threshold']
@@ -107,8 +109,6 @@ def parse_KIN_optargs(wildcards):
         optargs += f"--diversity_parameter_p_0 {diversity_parameter} "
 
     return optargs
-
-
 
 rule run_KIN:
     """

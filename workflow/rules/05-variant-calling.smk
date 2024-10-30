@@ -46,15 +46,6 @@ rule plink_bfile_to_tped:
     """
 
 # ------------------------------------------------------------------------------------------------------------------- #
-# ---- 00. Download out variant callset.
-
-#module netrules:
-#    snakefile: "00-netrules.smk"
-#    config: config
-#
-#use rule download_reich_1240K from netrules
-
-# ------------------------------------------------------------------------------------------------------------------- #
 # ---- 01. Generate a list of input BAM list for cohort variant calling (one list per pedigree).
 
 
@@ -143,7 +134,6 @@ rule samtools_pileup:
     | 0.01X |           |         |
     | 0.05X | 0:00:42   | 404     |
     | 0.10X |           | 398     |
-
     """
     input:
         bamlist   = rules.generate_bam_list.output.bamlist,

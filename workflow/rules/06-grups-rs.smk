@@ -1,14 +1,5 @@
 import yaml
 
-#module netrules:
-#    snakefile: "00-netrules.smk"
-#    config: config
-#
-#use rule download_HapMapII_recombination_map from netrules
-#use rule download_1000_genomes from netrules
-
-
-
 # ---- Utility functions
 def GRUPS_output(wildcards):
     """
@@ -21,17 +12,30 @@ def GRUPS_output(wildcards):
     )
     return expand(template, generation = get_generations())
 
-# ------------------------------------------------------------------------------------------------------------------- #
+
+def format_seed(wildcards):
+    """
+    Return a user-defined seed from the config file if it was set. Else, fetch
+    the randomly generated backup seed from our metadata file.
+    """
+    seed = config['kinship']['GRUPS']['seed']
+    if seed is None:
+        with open(rules.meta.output.metadata) as f:
+            metadata = yaml.load(f, Loader=yaml.loader.SafeLoader)
+            seed     = metadata['seed']
+    
+    return {seed}
+
+# ------------------------------------------------------------------------------------------------ #
 
 rule GRUPS_generate_fst_set:
     """
     Generate a .fst and .fst.frq dataset from a set of VCF files. Allows for
     generally faster IO processing when performing multiple runs.
-    @ TODO: The download directive might be the reason why we have an FTP OS error   
+    # @TODO:
+    - Fetch sample panel might be the cause of our FTP error when fetching data (?)
     """
     input:
-        #data    = expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
-        #panel   = rules.fetch_samples_panel.output.panel
         data     = expand(
             "data/vcf/1000g-phase3/00-original/ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
             chr=range(1,23)
@@ -65,34 +69,25 @@ rule GRUPS_generate_fst_set:
         --verbose > {log} 2>&1
     """
 
-def format_seed(wildcards):
-    """
-    Return a user-defined seed from the config file if it was set. Else, fetch
-    the randomly generated backup seed from our metadata file.
-    """
-    seed = config['kinship']['GRUPS']['seed']
-    if seed is None:
-        with open(rules.meta.output.metadata) as f:
-            metadata = yaml.load(f, Loader=yaml.loader.SafeLoader)
-            seed     = metadata['seed']
-    
-    return {seed}
-
 
 rule run_GRUPS:
     """
     Run grups-rs on an entire pedigree generation to perform kinship estimation.
 
-    See: Martin MD, Jay F, Castellano S, Slatkin M. Determination of genetic relatedness from 
-         low-coverage human genome sequences using pedigree simulations. 
-         Mol Ecol. 2017;26(16):4145-4157. https://doi.org/10.1111/mec.14188
+    # See:
+    - Martin MD, Jay F, Castellano S, Slatkin M. Determination of genetic relatedness from 
+      low-coverage human genome sequences using pedigree simulations. 
+      Mol Ecol. 2017;26(16):4145-4157. https://doi.org/10.1111/mec.14188
+    - Lefeuvre M, Martin M, Jay F, Marsolier M, Bon C. GRUPS-rs, a high-performance ancient
+      DNA genetic relatedness estimation software relying on pedigree simulations.
+      Hum Popul Genet Genom 2024; 4(1):0001. https://doi.org/10.47248/hpgg2404010001
          
-    Repo: (py-grups) https://github.com/sameoldmike/grups/
-          (grups-rs) https://github.com/MaelLefeuvre/grups.git
+    # Github: 
+    - (py-grups) https://github.com/sameoldmike/grups/
+    - (grups-rs) https://github.com/MaelLefeuvre/grups-rs.git
 
-    # @ TODO: 
+    # @TODO: 
     - VCF mode is not yet implemented within the pipeline. A simple function should do the trick.
-    - Fetch sample panel might be the cause of our FTP error.
 
     # Benchmarks: 
     | depth | max h:m:s | max_rss |
@@ -105,8 +100,6 @@ rule run_GRUPS:
         samples_def  = rules.get_samples.output, 
         pileup       = rules.samtools_pileup.output.pileup,
         data         = rules.GRUPS_generate_fst_set.output.fst,
-        #panel        = rules.fetch_samples_panel.output.panel,
-        #recomb_map   = rules.download_HapMapII_recombination_map.output.map,
         recomb_map   = expand("data/recombination-maps/HapMapII_GRCh37/genetic_map_GRCh37_chr{chr}.txt", chr=range(1, 23)),
         targets      = config["kinship"]["targets"],
         metadata     = "results/meta/pipeline-metadata.yml"

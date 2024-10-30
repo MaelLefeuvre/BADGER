@@ -2,23 +2,7 @@ from os.path import splitext, basename
 from functools import partial
 localrules: merge_TKGWV2_results
 
-#module netrules:
-#    snakefile: "00-netrules.smk"
-#    config: config
-#
-#use rule download_TKGWV2_support_files from netrules
-
-
-# ---- Attempt to create plink file from panel intersect & pedigree vcf:
-# pop = config['kinship']['TKGWV2']['frq']['pop'] ### (== "EUR")
-# nchrobs=$(($(grep "{wildcards.pop}" data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.ALL.panel| wc -l) * 2));
-# bcftools view -H -v snps -m2 -M2 results/00-ped-sim/CEU-pedigrees-twins-merged.vcf.gz -R results/03-variant-calling/00-panel/variants-intersect-EUR_maf0.0.ucscbed \
-# | awk -v nchrobs="$nchrobs" 'BEGIN{FS="\t"; OFS=" "; print "CHR SNP A1 A2 MAF NCHROBS"}{match($8, /{wildcards.pop}_AF=[.0-9]+;/); split(substr($8,RSTART,RLENGTH),frq, "="); gsub(";$", "", frq[2]); print $1, $1"_"$2, $4, $5,frq[2], nchrobs}' \
-# | column -t -R 1,2,3,4,5,6 > test-frq.frq
-#
-# ...This may take a while... 
-# 9 minutes, to be exact
-
+# ---- Utility functions
 def TKGWV2_output(wildcards):
     """
     Returns the list of required generation_wise comparisons from TKGWV2
@@ -53,32 +37,7 @@ def get_TKGWV2_input_bams(wildcards, print_log = False, logfile = sys.stderr):
         ext        = ["bam", "bam.bai"]
     )
 
-
-#def get_TKGWV2_input_bams(wildcards):
-#    """
-#    Define the appropriate input bam files for TKGWV2, based on which PMD
-#    rescaler was requested by the user
-#    """
-#    rescaler = config['preprocess']['pmd-rescaling']['rescaler']
-#    match rescaler:
-#        case "mapdamage":
-#            print("NOTE: Using MapDamage rescaled bams for TKGWV2", file=sys.stderr)
-#            root = "results/02-preprocess/06-mapdamage/ped{gen}_{pairs}/ped{gen}_{pairs}.srt.rmdup.rescaled.{ext}"
-#        case "pmdtools":
-#            print("NOTE: Using PMDTools rescaled bams for TKGWV2", file=sys.stderr)
-#            root = "results/02-preprocess/06-pmdtools/ped{gen}_{pairs}/ped{gen}_{pairs}.srt.rmdup.filtercontam.{ext}"
-#        case None:
-#            print("WARNING: Skipping PMD rescaling for TKGWV2!", file=sys.stderr)
-#            root = expand(define_dedup_input_bam(wildcards), sample = "{gen}_{pairs}")
-#        case other:
-#            raise RuntimeError(f'Invalid rescaler value "{rescaler}')
-#
-#    return expand(root,
-#        gen   = "{gen}",
-#        pairs = ["{pairA}", "{pairB}"],
-#        ext   = ["bam", "bam.bai"] 
-#    )
-
+# ------------------------------------------------------------------------------------------------ #
 
 def TKGWV2_downsample_seed(wildcards):
     seed = config['kinship']['TKGWV2']['downsample-seed']
@@ -147,7 +106,6 @@ def define_TKGWV2_input(wildcards):
     else:
         return get_TKGWV2_input_bams(wildcards)
 
-
 rule run_TKGWV2:
     """
     Perform kinship estimation on a single pair of individuals, using TKGWV2.
@@ -165,18 +123,16 @@ rule run_TKGWV2:
     | 0.01X |           |         |
     | 0.05X | 0:05:33   | 3155    |
     | 0.10X | 0:04:37   | 7325    |
+    | 1.00X | 0:25:17   | 19402   |
     """
     input:
         bams          = define_TKGWV2_input,
         reference     = config["reference"],
         bed_targets   = "data/TKGWV2/genomeWideVariants_hg19/1000GP3_22M_noFixed_noChr.bed",
         plink_targets = multiext("data/TKGWV2/genomeWideVariants_hg19/DummyDataset_EUR_22M_noFixed", ".bed", ".bim", ".fam"),
-        #frequencies   = config['kinship']['TKGWV2']['target-frequencies']
         frequencies   = rules.intersect_freq_file.output.frequencies
     output:
         results = "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/TKGWV2_Results.txt",
-        #frq     = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/commped{gen}_{A}____ped{gen}_{B}.frq",
-        #tped    = "results/04-kinship/TKGWV2/ped{gen}/{pairA}_{pairB}/ped{gen}_{pairA}____ped{gen}_{pairB}.tped",
         peds    = temp([
             "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairA}.ped",
             "results/04-kinship/TKGWV2/{generation}/{pairA}_{pairB}/{generation}_{pairB}.ped"
@@ -197,7 +153,8 @@ rule run_TKGWV2:
         bam_ext    = lambda wildcards, input: basename(input.bams[0]).split(".",1)[1]
     resources:
         runtime    = 10,
-        mem_mb     = 4000,
+        #mem_mb     = 4000,
+        mem_mb     = lambda w: round(2600 + 16900 * float(config['gargammel']['coverage'])),
         cores      = lambda w, threads: threads
     log:       "logs/04-kinship/TKGWV2/run_TKGWV2/{generation}/{pairA}_{pairB}.log"
     benchmark: "benchmarks/04-kinship/TKGWV2/run_TKGWV2/{generation}/{pairA}_{pairB}.tsv"
@@ -227,7 +184,6 @@ rule run_TKGWV2:
     """
 
 
-
 def define_TKGWV2_requested_dyads(wildcards):
     """
     Returns the list of requested pairwise comjparisons for TKGWV2,
@@ -255,8 +211,6 @@ def define_TKGWV2_requested_dyads(wildcards):
         )
         return relevant_comparisons
 
-
-
 rule merge_TKGWV2_results:
     """
     Merge the pair-specific results of run_TKGWV2 into a single results file.
@@ -274,4 +228,3 @@ rule merge_TKGWV2_results:
     shell: """
         awk 'FNR>1 || NR==1' {input.results} > {output.result} 2> {log}
     """
-

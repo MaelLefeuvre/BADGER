@@ -25,19 +25,6 @@ use rule run_fastqc_bam as run_fastqc_fq with:
 use rule run_fastqc_bam as run_fastqc_sam with:
     input: "{directory}/{file}.sam"
 
-#rule multiqc:
-#    output:
-#        html = "{directory}/multiqc-report.html",
-#        data = directory("{directory}/multiqc-report_data")
-#    params:
-#        basedir  = lambda w, output: dirname(output.html),
-#        basename = lambda w, output: basename(splitext(output.html)[0]),
-#        extra = "--force --no-ansi"
-#    conda: "../envs/multiqc-1.21.yml"
-#    shell: """
-#        multiqc {params.basedir} --outdir {params.basedir} --filename {params.basename} {params.extra}
-#    """
-
 rule multiqc:
     output:
         html = "{file}.html",

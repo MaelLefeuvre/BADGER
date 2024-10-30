@@ -75,7 +75,8 @@ def count_comparisons(wildcards, include_self = True):
         n = len([line for line in f.readlines()])
         combinations = (n * (n-1)) / 2
     return combinations + n if include_self else combinations
-    
+
+# ------------------------------------------------------------------------------------------------ #
 
 rule run_READv2:
     """

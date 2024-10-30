@@ -9,6 +9,7 @@ def correctKin_output(wildcards):
     template = "results/04-kinship/correctKin/{generation}/{generation}-merge-{refpop}-subset.rels.tsv"
     return expand(template, generation = get_generations(), refpop = refpop)
 
+
 rule subset_reich_dataset:
     input:
         bfile = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".bed", ".bim", ".fam"),
@@ -125,7 +126,8 @@ rule run_pcangsd:
     log:       "logs/04-kinship/correctKin/run_pcangsd/{generation}-{refpop}.log"
     benchmark: "benchmarks/04-kinship/correctKin/run_pcangsd/{generation}-{refpop}.tsv"
     conda:     "../envs/pcangsd-0.99.yml"
-    threads: 4
+    priority:  75
+    threads:   8
     shell: """
         pcangsd -plink {params.input_basename} -o {params.output_basename} -inbreed 1 -kinship -threads {threads} > {log} 2>&1
     """

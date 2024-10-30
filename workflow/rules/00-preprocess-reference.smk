@@ -79,7 +79,7 @@ rule index_reference_genome:
     conda:     "../envs/bwa-0.7.17.yml"
     threads:   1
     shell: """
-        bwa index {input.refgen} >2 {log}
+        bwa index {input.refgen} > {log} 2>&1
     """
 
 # ------------------------------------------------------------------------------------------------------------------- #
