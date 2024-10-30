@@ -92,7 +92,7 @@ def uncram(cramfile: str, target_dir: str, cores: int = 1) -> None:
     # ---- Decompress and split .cram file
     logger.info(f"Decompressing samples from {cramfile}...") 
     try:
-        split_args = ['-@', str(cores), '-f', '%!.bam', '--output-fmt', 'BAM', cramfile]
+        split_args = ['-@', str(cores), '-f', '%!.bam', '--output-fmt', 'BAM', path.join(main_wd, cramfile)]
         logger.debug(f"Running 'samtools split {' '.join(split_args)}'")
         pysam.split(*split_args)
     except pysam.SamtoolsError as e:
@@ -106,7 +106,7 @@ def uncram(cramfile: str, target_dir: str, cores: int = 1) -> None:
         _try_mkdirs(bam_dir)
         try:
             logger.debug(f"Moving {bam} in {target_dir}/{bam_dir}")
-            os.chmod(bam, 0o444)
+            os.chmod(bam, 0o644)
             os.rename(bam, f"{bam_dir}/{bam_dir}.srt.rmdup.bam")
         except PermissionError as e:
             logger.error(f"Failed to move {bam} in its subdirectory (PermissionError)")
@@ -141,14 +141,15 @@ def copy_one_file(archive_dir: str, output_dir: str, pattern: str, force: bool =
 
     target_dir=path.dirname(_build_output_path(file, archive_dir, output_dir))
     _try_mkdirs(target_dir)
-    logger.info(f"Copying {file} in {output_dir}")
     output_file = path.join(target_dir, path.basename(file))
     try:
         if path.exists(output_file) and force: 
             logger.debug(f"{output_file} already exists, while overwrite was requested. Attempting to change file permissions.")
             os.chmod(output_file, 0o644)
+        logger.info(f"Copying {file} in {path.dirname(output_file)}")
         _output = shutil.copy2(file, output_file)
         shutil.copystat(file, output_file)
+        os.chmod(output_file, 0o644)
     except PermissionError as e :
         logger.error(f"Failed to write {file} in {target_dir} ({type(e).__name__})")
         if path.exists(output_file):
@@ -156,10 +157,10 @@ def copy_one_file(archive_dir: str, output_dir: str, pattern: str, force: bool =
               "Some output files appear to already exist in target directory. "
               "Use --force argument to force overwrite."
             )
+            sys.exit(1)
 
 def copy_files(archive_dir: str, output_dir: str, pattern: str, force: bool = False, **kwargs) -> None:
     for file in _file_search(archive_dir, pattern=pattern, recursive = True):
-        Logger().info(f"Copying {file} in {output_dir}")
         file_pattern=_build_output_path(file, archive_dir,"") + "$"
         copy_one_file(archive_dir, output_dir, file_pattern, force=force)
 
@@ -239,7 +240,6 @@ def run(args, **kwargs) -> None:
                   "metadata": r"meta/pipeline-metadata.yml$",
                   "contaminants": r"contaminants.tsv$"
                 }[request]
-                #copy_one_file(args.archive_dir, args.output_dir, pattern, args.force, logger)
                 copy_one_file(**vars(args), pattern=pattern)
 
             case "pedigree":
@@ -251,7 +251,6 @@ def run(args, **kwargs) -> None:
                 unpack_lzma(**vars(args), pattern=pattern)
 
             case "misincorporation" | "TKGWV2":
-                logger.info(f"Unpacking {request}")
                 pattern = {
                   "misincorporation": r"misincorporation.txt$",
                   "TKGWV2": r"ped[0-9]+-TKGWV2_Results.txt$"

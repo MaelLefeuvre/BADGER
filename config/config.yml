@@ -1,6 +1,6 @@
 reference-genome:            "GRCh37"    #["GRCh37" | "hs37d5" | "human_g1k_v37"]
 tempdir:                     "data/.tmp"
-make-qc:                     True
+make-qc:                     False
 archive:
   archive-dir:               "archive"
   compress-level: 9

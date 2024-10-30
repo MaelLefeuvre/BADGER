@@ -3,7 +3,7 @@ set -euo pipefail
 
 THIS_DIR="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))"
 
-BADGER_PLOTS_POSTDEPLOY_SCRIPT="$THIS_DIR/../../workflow/scripts/badger-plots/envs/badger-plots.post-deploy.sh"
+BADGER_PLOTS_POSTDEPLOY_SCRIPT="$THIS_DIR/../src/badger-plots/envs/badger-plots.post-deploy.sh"
 source $BADGER_PLOTS_POSTDEPLOY_SCRIPT
 
 # ---- rpy2 vs r-archive shenanigans...

@@ -191,7 +191,7 @@ plot_oci_performance <- function(
   axis_fontsize       = 14L,
   legend              = list(size = 10L, xpos = -0.1, ypos = -0.1),
   cm                  = list(
-    condense   = TRUE,
+    condense   = FALSE,
     ratio      = FALSE,
     colorscale = "Blues",
     ticklabels = NULL,

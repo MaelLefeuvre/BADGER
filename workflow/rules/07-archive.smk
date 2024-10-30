@@ -30,7 +30,7 @@ def define_run_number(wildcards, run_prefix="run-"):
             prompt = input((
                 "Last run appears to be incomplete "
                 f"({format_run(last_archive)}). "
-                "Do you wish to overrwite it? [Yes/no]: "
+                "Do you wish to overwrite it? [Yes/no]: "
             ))
             match prompt.lower():
                 case "yes":

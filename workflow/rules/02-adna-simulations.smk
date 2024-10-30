@@ -225,7 +225,7 @@ def find_contaminant(wildcards):
         raise RuntimeError("Failed to find {gen} pattern in {contamination_table}")
 
     out = "results/01-gargammel/contaminants/{cont}/{{chr}}/{cont}_chr{{chr}}_haplo{haplo}.fasta"
-    if config['gargammel']['comp_cont'] > 0.0:
+    if float(config['gargammel']['comp_cont']) > 0.0:
         return expand(out, cont=contaminant, chr=chromo, haplo=[1,2])
     else:
         return []

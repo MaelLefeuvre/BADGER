@@ -139,7 +139,7 @@ At this state, `badger.plots` generates two plots, both provided in the form of 
 
 ## Creating a `pedigree-codes.tsv` file
 
-`pedigree-codes.tsv` is a simple unheaded tab-separated file used within badger to specify which relationships should be tested within the simulated pedigrees of the run. In almost every occasion, `badger.plots` will simply require the same `pedigree-codes.tsv` file that was used during the BADGER run the user wishes to plot. Users and thus not expected to extensively modify this file.
+`pedigree-codes.tsv` is a simple unheaded tab-separated file used within badger to specify which relationships should be tested within the simulated pedigrees of the run. In almost every occasion, `badger.plots` will simply require the same `pedigree-codes.tsv` file that was used during the BADGER run the user wishes to plot. Users are thus not expected to extensively modify this file.
 
 Multiple example files may be found and reused as templates within the `resources` directory of BADGER here : [ped-definition](https://github.com/MaelLefeuvre/BADGER/tree/main/resources/ped-sim/ped-definition) 
 

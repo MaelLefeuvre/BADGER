@@ -9,3 +9,5 @@ plots
 workflow/scripts/grups/target
 workflow/scripts/dopplegang-samples/target
 report.html
+__pycache__
+.pytest_cache

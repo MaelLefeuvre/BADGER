@@ -2,8 +2,7 @@
 set -euo pipefail
 
 VERSION="0.4.0"
-
-CONDA=$(which conda)
+CONDA="${CONDA:-$(which conda)}"
 
 THIS_SCRIPT_DIR=$(dirname $(readlink -f "${BASH_SOURCE[0]}"))
 
@@ -87,6 +86,11 @@ _test(){
     && badger-plots > /dev/null 2>&1 \
     && log "  - badger-plots command line program found" \
     || abort "badger-plots command line program not found."
+
+    # ---- Run pytest tests
+    hr
+    log "Running pytest ..."
+    pytest ./badger --verbose || abort "Some integration tests failed (See above)."
 
     hr
     log "Done. All tests successful!"
