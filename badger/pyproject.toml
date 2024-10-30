@@ -1,0 +1,18 @@
+[build-system]
+requires = ['hatchling']
+build-backend = "hatchling.build"
+
+[project]
+name = "badger"
+version = "0.4.0"
+dependencies = [
+  "argparse",
+  "colorama",
+  "psutil",
+  "pysam ~= 0.19.1", #Wraps htslib/bcftools/samtools version 1.15.1
+  "shutils"
+]
+
+[project.scripts]
+badger = "badger.badger:main"
+

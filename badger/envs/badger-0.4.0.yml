@@ -1,0 +1,14 @@
+name: badger-0.4.0
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::snakemake=7.20.0
+  - conda-forge::python=3.11
+  - conda-forge::pip  
+  - pip: # badger.py dependencies
+    - argparse
+    - colorama
+    - psutil
+    - pysam~=0.19.1
+
