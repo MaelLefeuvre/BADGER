@@ -38,31 +38,6 @@ rule eigenstrat_to_binary_plink:
         convertf -p {input.parfile} > {log} 2>&1
     """
 
-rule plink_bfile_to_tped:
-    """
-    Convert a binarized PLINK fileset into a human readable transposed set.
-    """
-    input:
-        bfile    = multiext("{directory}/{file}", ".bed", ".bim", ".fam"),
-    output:
-        tplink   = multiext("{directory}/{file}", ".tped", ".tfam") 
-    params:
-        basename = "{directory}/{file}"
-    resources:
-        cores    = lambda w, threads: threads
-    log:       "logs/generics/{directory}/plink_bfile_to_tped-{file}.log"
-    benchmark: "benchmarks/generics/{directory}/plink_bfile_to_tped-{file}.log"
-    conda:     "../envs/plink-1.9.yml"
-    threads:   1
-    shell: """
-        plink \
-        --bfile {params.basename} \
-        --out {params.basename} \
-        --recode transpose tab \
-        --allow-no-sex \
-        --keep-allele-order > {log} 2>&1
-    """
-
 rule subset_reich_dataset:
     input:
         bfile = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".bed", ".bim", ".fam"),
