@@ -9,6 +9,59 @@ def correctKin_output(wildcards):
     template = "results/04-kinship/correctKin/{generation}/{generation}-merge-{refpop}-subset.rels.tsv"
     return expand(template, generation = get_generations(), refpop = refpop)
 
+# ------------------------------------------------------------------------------------------------ #
+
+rule format_convertf_parfile:
+    input:
+        template  = "resources/convertf/par.EIGENSTRAT.PED"
+    output:
+        parfile = "{directory}/{eigenstrat}.par.EIGENSTRAT.PED"
+    template_engine: "jinja2"
+
+         
+rule eigenstrat_to_binary_plink:
+    """
+    Convert an eigensoft' [.snp|.geno|.ind] fileset to a generic set of [.bed|.bim|.fam] fileset
+    """
+    input:
+        eigensoft = multiext("{directory}/{eigenstrat}", ".geno", ".snp", ".ind"),
+        parfile   = rules.format_convertf_parfile.output.parfile
+    output:
+        plink     = multiext("{directory}/{eigenstrat}", ".bed", ".bim", ".fam")
+    resources:
+        cores = lambda w, threads: threads
+    log:       "logs/generics/{directory}/eigenstrat_to_binary_plink-{eigenstrat}.log"
+    benchmark: "benchmarks/generics/{directory}/eigenstrat_to_binary_plink-{eigenstrat}.tsv"
+    conda:     "../envs/eigensoft-8.0.0.yml"
+    threads: 1
+    shell: """
+        convertf -p {input.parfile} > {log} 2>&1
+    """
+
+rule plink_bfile_to_tped:
+    """
+    Convert a binarized PLINK fileset into a human readable transposed set.
+    """
+    input:
+        bfile    = multiext("{directory}/{file}", ".bed", ".bim", ".fam"),
+    output:
+        tplink   = multiext("{directory}/{file}", ".tped", ".tfam") 
+    params:
+        basename = "{directory}/{file}"
+    resources:
+        cores    = lambda w, threads: threads
+    log:       "logs/generics/{directory}/plink_bfile_to_tped-{file}.log"
+    benchmark: "benchmarks/generics/{directory}/plink_bfile_to_tped-{file}.log"
+    conda:     "../envs/plink-1.9.yml"
+    threads:   1
+    shell: """
+        plink \
+        --bfile {params.basename} \
+        --out {params.basename} \
+        --recode transpose tab \
+        --allow-no-sex \
+        --keep-allele-order > {log} 2>&1
+    """
 
 rule subset_reich_dataset:
     input:

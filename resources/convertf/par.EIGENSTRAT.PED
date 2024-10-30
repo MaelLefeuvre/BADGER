@@ -1,0 +1,8 @@
+
+genotypename:           {{ wildcards.directory }}/{{ wildcards.eigenstrat }}.geno
+snpname:                {{ wildcards.directory }}/{{ wildcards.eigenstrat }}.snp
+indivname:              {{ wildcards.directory }}/{{ wildcards.eigenstrat }}.ind
+outputformat:           PACKEDPED
+genotypeoutname:        {{ wildcards.directory }}/{{ wildcards.eigenstrat }}.bed
+snpoutname:             {{ wildcards.directory }}/{{ wildcards.eigenstrat }}.bim
+indivoutname:           {{ wildcards.directory }}/{{ wildcards.eigenstrat }}.fam
