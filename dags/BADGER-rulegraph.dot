@@ -1,0 +1,170 @@
+digraph {
+     
+  rank = TD;
+  #concentrate=true
+  graph [pad="0.1", nodesep="0.2", ranksep="0.2" bgcolor="#FFFFFFFF"];
+  node[shape=box, style=rounded, fontname="Roboto Light", color="#000000" fontsize=18, penwidth=3, margin=0.1 width=2.5];
+  edge[penwidth=2, color="#404040"];
+
+  subgraph pedigree_sims {
+    node[color="#739d3f" width=3.5]
+    download_1000g[label="Download 1000g phase3" ]
+    
+    filter_indels[label="Indel Filtration", style="dashed, rounded"]
+    #filter_indels[shape=plain, label=<
+    #  <TABLE STYLE="ROUNDED DASHED" BORDER="3" CELLSPACING="-2">
+    #    <TR><TD STYLE="DASHED" BORDER="3" SIDES="B" ALIGN="CENTER">Indel Filtration</TD></TR>
+    #    <TR><TD STYLE="DASHED" BORDER="0" CELLPADDING="5" ALIGN="CENTER"><FONT FACE="Ubuntu Mono" POINT-SIZE="12">bcftools view -v snps         </FONT></TD></TR>
+    #  </TABLE>
+    #>]
+
+    #vcf_norm[label="VCF normalisation"]
+    filter_biallelic[label="Multi-allelic Filtration"]
+    #filter_biallelic[shape=plain label=<
+    #  <TABLE STYLE="ROUNDED" BORDER="3" CELLSPACING="-2">
+    #    <TR><TD BORDER="3" SIDES="B">Multi-allelic Filtration</TD></TR>
+    #    <TR><TD BORDER="0" SIDES="T" CELLPADDING="5" ALIGN="CENTER"><FONT FACE="Ubuntu Mono" POINT-SIZE="12">bcftools view --phased -m2 -M2          </FONT></TD></TR>
+    #  </TABLE>
+    #>]
+
+    pop_subset[label="Population Subsetting"];
+    #pop_subset[shape=plain label=<
+    #  <TABLE STYLE="ROUNDED" BORDER="3" CELLSPACING="-2">
+    #    <TR><TD BORDER="3" SIDES="B">Population Subsetting</TD></TR>
+    #    <TR><TD BORDER="0" SIDES="T" CELLPADDING="5" ALIGN="CENTER"><FONT FACE="Ubuntu Mono" POINT-SIZE="12">bcftools view --samples-file CEU-samples.list                </FONT></TD></TR>
+    #  </TABLE>
+    #>]
+    maf_filtration[label="MAF filtration", style="dashed, rounded"]
+    #maf_filtration[shape=plain label=<
+    #  <TABLE STYLE="ROUNDED" BORDER="3" CELLSPACING="-2">
+    #    <TR><TD BORDER="3" SIDES="B" ALIGN="CENTER">MAF Filtration</TD></TR>
+    #    <TR><TD BORDER="0" CELLPADING="5" SIDES="T" ALIGN="CENTER"><FONT FACE="Ubuntu Mono" POINT-SIZE="12">  bcftools view --min-af 0.05:minor             </FONT></TD></TR>
+    #  </TABLE>
+    #>]
+    run_ped_sim[label = "Pedigree Simulations"]
+    #run_ped_sim[shape=plain label=<
+    #  <TABLE STYLE="ROUNDED" BORDER="3" CELLSPACING="-2">
+    #    <TR><TD BORDER="0" CELLPADDING="5" ALIGN="CENTER">Pedigree simulations    <FONT POINT-SIZE="12" FACE="Ubuntu Mono">(ped-sim)  </FONT></TD></TR>
+    #  </TABLE>
+    #>]
+  }
+  
+  download_1000g -> filter_indels -> filter_biallelic -> pop_subset -> maf_filtration -> run_ped_sim
+
+
+  subgraph gargammel {
+    node[color="#a255a7"]
+      generate_haplotypes[label = "Generate founders haplotypes", width=3.5 group="z"]
+      generate_contamination[label = "Generate human contamination" width=3.5]
+      run_gargammel[label="aDNA simulation (Gargammel)" width=3.5 group="z"]
+  
+      run_ped_sim -> generate_haplotypes
+      generate_contamination, generate_haplotypes-> run_gargammel
+  }
+  
+  subgraph preprocessing {
+    node[color="#53c58f" width=3.5];
+    adapter_removal[label="AdapterRemoval" fontname="Ubuntu Mono" group="a"]
+
+    align[shape = plain
+      label = <<table STYLE="ROUNDED" BORDER="3" CELLPADDING="10" CELLMARGIN="10" CELLSPACING="-2" BGCOLOR="#DDDDFF" >
+      <TR><TD CELLPADDING="2" BGCOLOR="#FFFFFF" COLSPAN="2" BORDER="3" SIDES="B" ALIGN="CENTER"><FONT FACE="Roboto Light">                    Alignment                  </FONT></TD></TR>
+      <TR><TD CELLPADDING="3" BORDER="2" SIDES="TR" ><FONT FACE="Ubuntu Mono"><B>BWA aln</B></FONT></TD><TD CELLPADDING="3" BORDER="2" SIDES="TL" BGCOLOR="#FFFFFF"><FONT FACE="Ubuntu Mono" COLOR="#898989">BWA mem</FONT></TD></TR>
+      </table>>
+    ]
+
+    quality_filt[label="Quality Filtration"  group="a"]
+    samtools_sort[label="samtools sort"  fontname="Ubuntu Mono" group="a"]
+    
+    markdup[shape = plain label = <
+      <table STYLE="ROUNDED" BORDER="3" CELLPADDING="10" CELLSPACING="-2" BGCOLOR="#DDDDFF" COLUMNS="6">
+        <TR><TD CELLPADDING="2" BGCOLOR="#FFFFFF" COLSPAN="3" BORDER="3" SIDES="B" ALIGN="CENTER"><FONT FACE="Roboto Light">           Duplicate Removal           </FONT></TD></TR>
+        <TR><TD CELLPADDING="3" BORDER="2" SIDES="T" ><FONT FACE="Ubuntu Mono"><B>picard</B></FONT></TD><TD CELLPADDING="3" BORDER="2" SIDES="TL" BGCOLOR="#FFFFFF"><FONT FACE="Ubuntu Mono" COLOR="#898989">samtools</FONT></TD><TD CELLPADDING="3" BORDER="2" SIDES="TL" BGCOLOR="#FFFFFF"><FONT FACE="Ubuntu Mono" COLOR="#898989">dedup</FONT></TD></TR>
+      </table>
+    >]
+    
+    rescale[shape = plain label = <
+      <table STYLE="ROUNDED, DASHED" BORDER="5" CELLPADDING="10" CELLMARGIN="10" CELLSPACING="-2" BGCOLOR="#DDDDFF" >
+        <TR><TD CELLPADDING="2" BGCOLOR="#FFFFFF" COLSPAN="2" BORDER="3" SIDES="B" ALIGN="CENTER"><FONT FACE="Roboto Light">                PMD Rescaling            </FONT></TD></TR>
+        <TR><TD CELLPADDING="3" BORDER="2" SIDES="TR" ><FONT FACE="Ubuntu Mono"><B>MapDamage</B></FONT></TD><TD CELLPADDING="3" BORDER="2" SIDES="TL" BGCOLOR="#FFFFFF"><FONT FACE="Ubuntu Mono" COLOR="#898989">PMDTools</FONT></TD></TR>
+      </table>
+    >]
+
+    samtools_mpileup[label="samtools mpileup" fontname="Ubuntu Mono" group=g2 width=2.2]
+
+    random_haploid_calling[group=g1 shape = plain
+      label = <<table STYLE="ROUNDED" BORDER="3" CELLPADDING="10" CELLMARGIN="10" CELLSPACING="-2" BGCOLOR="#DDDDFF" >
+      <TR><TD CELLPADDING="2" BGCOLOR="#FFFFFF" COLSPAN="2" BORDER="3" SIDES="B" ALIGN="CENTER"><FONT FACE="Roboto Light">    Random Haploid Variant Calling   </FONT></TD></TR>
+      <TR><TD CELLPADDING="3" BORDER="2" SIDES="TR" ><FONT FACE="Ubuntu Mono"><B>PileupCaller</B></FONT></TD><TD CELLPADDING="3" BORDER="2" SIDES="TL" BGCOLOR="#FFFFFF"><FONT FACE="Ubuntu Mono" COLOR="#898989">ANGSD</FONT></TD></TR>
+      </table>>
+    ]
+
+    
+    run_gargammel -> adapter_removal
+
+    adapter_removal -> align;
+    align -> quality_filt -> samtools_sort;
+
+    samtools_sort -> markdup
+    markdup -> rescale;
+    rescale -> samtools_mpileup
+
+    samtools_mpileup -> random_haploid_calling
+
+    {rank="same"; samtools_mpileup, rescale, random_haploid_calling}
+  }
+  
+
+  subgraph TKGWV2 {
+    node[color="#bc496f"]
+
+    tk_downsample[label="BAM downsampling" style="dashed, rounded"];
+    run_tkgwv2[label="run TKGWV2"]
+    rescale -> tk_downsample
+    tk_downsample -> run_tkgwv2
+  }
+  
+  subgraph GRUPS {
+   node[color="#71cdeb"]
+
+    run_grups[label="run GRUPS-rs" width=1 group=g2]
+    
+    samtools_mpileup -> run_grups 
+  }
+  
+  subgraph correctKin {
+      node[color="#888093"]
+      merge_reich[label="Merge AADR (EUR)" group="d"]
+      run_pcangsd[label="Run PCANGSD"  group="d"]
+      run_correctkin[label="run correctKin" group="d"]
+      random_haploid_calling -> merge_reich
+      merge_reich -> run_pcangsd
+      run_pcangsd -> run_correctkin
+  }
+
+  subgraph READ {
+      node[color="#22A0A3"]
+
+      run_READ[label="run READ"  group="a" width=1.2]
+      run_READv2[label="run READv2" group="a", width=1.2]
+      random_haploid_calling -> run_READ
+      random_haploid_calling -> run_READv2
+  }
+
+
+
+  subgraph KIN {
+      node[color="#e3c297" width=1.8]
+      run_kingaroo[label="Run KINgaroo"]
+      run_kin[label ="run KIN"]
+      rescale -> run_kingaroo
+      run_kingaroo -> run_kin
+  }
+
+  {rank="same"; random_haploid_calling, samtools_mpileup}
+  {rank="same"; tk_downsample, run_kingaroo, run_pcangsd}
+  {rank="same"; } 
+  {rank="same"; run_READ, run_tkgwv2, run_grups, run_kin, run_READv2, run_correctkin}
+
+}
+
