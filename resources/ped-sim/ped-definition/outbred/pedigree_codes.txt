@@ -1,4 +1,4 @@
-Unrelated	g1-b1-i1	g1-b3-i1	0
+Unrelated	g1-b1-i1	g1-b3-i1	0	# Name - id1 - id2 - expected-r - comment
 Unrelated2	g2-b1-s1	g2-b2-i1	0
 Unrelated3	g2-b2-s1	g3-b1-i1	0
 Parent_Offspg	g1-b1-i1	g2-b1-i1	0.5

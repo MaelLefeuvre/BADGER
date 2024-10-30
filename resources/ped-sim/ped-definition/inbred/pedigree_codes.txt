@@ -1,13 +1,91 @@
-Unrelated	g1-b1-i1	g1-b3-i1	0
-Unrelated2	g2-b1-s1	g2-b2-i1	0
-Unrelated3	g2-b2-s1	g3-b1-i1	0
-Parent_Offspg	g1-b1-i1	g2-b1-i1	0.5
-Parent_Offspg2	g2-b1-i1	g3-b1-i1	0.5
-Siblings	g2-b1-i1	g2-b2-i1	0.5
-Avuncular	g3-b1-i1	g2-b2-i1	0.25
-Gdparent_Offspg	g3-b1-i1	g1-b1-i1	0.25
-Half_Siblings	g2-b1-i1	g2-b3-i1	0.25
-First cousins	g3-b1-i1	g3-b2-i1	0.125
-Half_Avuncular	g2-b3-i1	g3-b1-i1	0.125
-Half_Avuncular	g2-b3-i1	g3-b2-i1	0.125
-Self//Twins	g2-b1-s1	G2-B1-S1	1
+Unrelated1	g1-b1-i1	g1-b3-i1	0	# name - id1 - id2 - expected-r - comment
+Parental1	g1-b1-i1	g2-b1-i1	0.5
+Unrelated2	g1-b1-i1	g2-b1-s1	0
+Unrelated3	g1-b1-i1	G2-B1-S1	0
+Parental2	g1-b1-i1	g2-b2-i1	0.5
+Unrelated4	g1-b1-i1	g2-b2-s1	0
+Unrelated5	g1-b1-i1	g2-b3-i1	0
+Grandparental1	g1-b1-i1	g3-b1-i1	0.25
+Grandparental2	g1-b1-i1	g3-b2-i1	0.25
+<Inbred-2GP>	g1-b1-i1	g3-b3-i1	0.5	# Double Grandparental (r=0.25+0.25)
+Grandparental3	g1-b1-i1	g3-b4-i1	0.25	# Inbred involved
+<Inbred-2GGP>	g1-b1-i1	g4-b1-i1	0.25	# Double Great-grandparental (r=0.125+0.125)
+Unrelated6	g1-b2-i1	g1-b1-i1	0
+Unrelated7	g1-b2-i1	g1-b3-i1	0
+Parental3	g1-b2-i1	g2-b1-i1	0.5
+Unrelated8	g1-b2-i1	g2-b1-s1	0
+Unrelated9	g1-b2-i1	G2-B1-S1	0
+Parental4	g1-b2-i1	g2-b2-i1	0.5
+Unrelated10	g1-b2-i1	g2-b2-s1	0
+Parental5	g1-b2-i1	g2-b3-i1	0.5
+Grandparental4	g1-b2-i1	g3-b1-i1	0.25
+Grandparental5	g1-b2-i1	g3-b2-i1	0.25
+<Inbred-2GP>	g1-b2-i1	g3-b3-i1	0.5	# Double Grandparental (r=0.25+0.25)
+<Inbred-2GP>	g1-b2-i1	g3-b4-i1	0.5	# Double Grandparental (r=0.25+0.25)
+<Inbred-2GGP>	g1-b2-i1	g4-b1-i1	0.25	# Double Great-grandparental (r=0.125+0.125)
+Parental6	g1-b3-i1	g2-b3-i1	0.5
+Unrelated11	g1-b3-i1	g3-b3-i1	0
+Grandparental6	g1-b3-i1	g3-b4-i1	0.25	# Inbred involved
+Unrelated12	g1-b3-i1	g4-b1-i1	0
+Unrelated13	g2-b1-i1	g1-b3-i1	0
+Unrelated14	g2-b1-i1	g2-b1-s1	0
+Unrelated15	g2-b1-i1	G2-B1-S1	0
+Siblings1	g2-b1-i1	g2-b2-i1	0.5
+Unrelated16	g2-b1-i1	g2-b2-s1	0
+Half-Siblings	g2-b1-i1	g2-b3-i1	0.25
+Parent_Offspg7	g2-b1-i1	g3-b1-i1	0.5
+Avuncular	g2-b1-i1	g3-b2-i1	0.25
+<Inbred-PO_Av>	g2-b1-i1	g3-b3-i1	0.75	# Parental + Avuncular (r=0.5 + 0.25)
+<Inbred-PO_HAv>	g2-b1-i1	g3-b4-i1	0.625	# Parental + Half-avuncular (r=0.5+0.125)
+<Inbred-GP_GAv>	g2-b1-i1	g4-b1-i1	0.375	# Grandparental + Great-avuncular (r=0.25+0.125)
+Unrelated17	g2-b1-s1	g1-b3-i1	0
+Twin//Self	g2-b1-s1	G2-B1-S1	1
+Unrelated18	g2-b1-s1	g2-b2-s1	0
+Unrelated19	g2-b1-s1	g2-b3-i1	0
+Parental8	g2-b1-s1	g3-b1-i1	0.5
+Unrelated20	g2-b1-s1	g3-b2-i1	0
+Unrelated21	g2-b1-s1	g3-b3-i1	0
+Unrelated22	g2-b1-s1	g3-b4-i1	0
+Grandparental7	g2-b1-s1	g4-b1-i1	0.25	# Inbred involved
+Unrelated23	G2-B1-S1	g1-b3-i1	0
+Unrelated24	G2-B1-S1	g2-b2-s1	0
+Unrelated25	G2-B1-S1	g2-b3-i1	0
+Parental9	G2-B1-S1	g3-b1-i1	0.5
+Unrelated26	G2-B1-S1	g3-b2-i1	0
+Unrelated27	G2-B1-S1	g3-b3-i1	0
+Unrelated28	G2-B1-S1	g3-b4-i1	0
+Grandparental8	G2-B1-S1	g4-b1-i1	0.25	# Twin involved
+Unrelated29	g2-b2-i1	g1-b3-i1	0
+Unrelated30	g2-b2-i1	g2-b1-s1	0
+Unrelated31	g2-b2-i1	G2-B1-S1	0
+Unrelated32	g2-b2-i1	g2-b2-s1	0
+Half-Siblings	g2-b2-i1	g2-b3-i1	0.25
+Avuncular	g2-b2-i1	g3-b1-i1	0.25
+Parental10	g2-b2-i1	g3-b2-i1	0.5
+<Inbred-P0_Av>	g2-b2-i1	g3-b3-i1	0.75	# Parental + Avuncular (r=0.5+0.25)
+<Inbred-PO_HAv>	g2-b2-i1	g3-b4-i1	0.375	# Avuncular + Half-avuncular (r=0.25+0.125)
+<Inbred-GP_GAv>	g2-b2-i1	g4-b1-i1	0.375	# Grandparental + Great-avuncular (r=0.25+0.125)
+Unrelated33	g2-b2-s1	g1-b3-i1	0
+Unrelated34	g2-b2-s1	g2-b3-i1	0
+Parental11	g2-b2-s1	g3-b2-i1	0.5
+Unrelated35	g2-b2-s1	g3-b3-i1	0
+Unrelated36	g2-b2-s1	g3-b4-i1	0
+Grandparental9	g2-b2-s1	g4-b1-i1	0.25	# Inbred involved
+<Inbred-2HAv>	g2-b3-i1	g3-b3-i1	0.25	# Double Half-avuncular (r=0.125+0.125)
+<Inbred-PO_HAv>	g2-b3-i1	g3-b4-i1	0.625	# Parental + Half-avuncular (r=0.5+0.125)
+<Inbred-2HGAv>	g2-b3-i1	g4-b1-i1	0.125	# Double Half-Grand-avuncular (r=0.0625+0.0625)
+Unrelated37	g3-b1-i1	g1-b3-i1	0
+Unrelated38	g3-b1-i1	g2-b2-s1	0
+Half-Avuncular1	g3-b1-i1	g2-b3-i1	0.125 
+First-Cousins1	g3-b1-i1	g3-b2-i1	0.125
+<Inbred-HS_FC>	g3-b1-i1	g3-b3-i1	0.375	# Half-siblings + First-cousins (r=0.25+0.125)
+<Inbred-HS_HC>	g3-b1-i1	g3-b4-i1	0.3125	# Half-siblings + Half-cousins (r=0.25+0.0625)
+<Inbred-PO_COR>	g3-b1-i1	g4-b1-i1	0.5625	# Parental + First-cousins-once-removed (r=0.5+0.0625)
+Unrelated39	g3-b2-i1	g1-b3-i1	0
+Half-Avuncular2	g3-b2-i1	g2-b3-i1	0.125
+<Inbred-HS_FC>	g3-b2-i1	g3-b3-i1	0.375	# Half-siblings + First-cousins (r=0.25+0.125)
+<Inbred-FC_HC>	g3-b2-i1	g3-b4-i1	0.1875	# First-cousins + Half-cousins (r=0.125+0.0625)
+<Inbred-PO_COR>	g3-b2-i1	g4-b1-i1	0.5625	# Parental + First-cousins-once-removed (r=0.5+0.0625)
+<Inbred-PO_FC_2HFC>	g3-b3-i1	g3-b4-i1	0.5	# Half-siblings + First-cousins + Double-half-first-cousins (r=0.25+0.125+0.125)
+<Inbred-2HAv+2COR>	g3-b3-i1	g4-b1-i1	0.375	# Double-half-avuncular + Double-first-cousins-once-removed (r=0.25+0.125)
+<Inbred-HAv_COR_2HCOR>	g4-b1-i1	g3-b4-i1	0.25	# Half-Avuncular + First-cousins-once-removed + Double-half-first-cousins-once-removed (r=0.125+0.0625+0.0625)

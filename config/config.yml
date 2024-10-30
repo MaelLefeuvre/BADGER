@@ -5,15 +5,14 @@ FTP:
   1240K :                    "https://reichdata.hms.harvard.edu/pub/datasets/amh_repo/curated_releases/V52/V52.2/SHARE/public.dir/v52.2_1240K_public.tar"
 
 reference:                   "data/refgen/GRCh37/Homo_sapiens.GRCh37.dna.primary_assembly.fa"
-
 tempdir:                     "/tmp/mlefeuvre"
 make-qc:                     True
 archive:
-  archive-dir:               "/data/mlefeuvre/Projects/20230206-aDNA-kinship-simulations/archive"
+  archive-dir:               "archive"
   compress-level: 9
 
 ped-sim:
-  replicates:                2
+  replicates:                1
   filter-indels:             False
   filter-maf:                False
   filter-maf-threshold:      0.05
@@ -21,8 +20,8 @@ ped-sim:
     interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
     refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
   data:
-    codes:                   "resources/ped-sim/ped-definition/inbred/pedigree_codes.txt"
-    definition:              "resources/ped-sim/ped-definition/inbred/pedigree.def"
+    codes:                   "resources/ped-sim/ped-definition/outbred/pedigree_codes.txt"
+    definition:              "resources/ped-sim/ped-definition/outbred/pedigree.def"
     map:                     "data/ped-sim/recombination_maps/refined_mf.simmap"
     interference:            "data/ped-sim/interference_maps/nu_p_campbell.tsv"
   params:
@@ -35,13 +34,12 @@ ped-sim:
 simulator:                   "gargammel"         # "gargammel" | "dwgsim"
 gargammel:
   coverage:                  0.02
-  comp_endo:                 1.0
-  comp_cont:                 0.0
-  comp_bact:                 0.0
+  comp_endo:                 1.00
+  comp_cont:                 0.00
+  comp_bact:                 0.00
   pmd-model:                 "misincorporation"  # "misincorporation" | "briggs"
   misincorporation:
     file:                    "resources/gargammel/misincorporations/Chan_meso/misincorporation.txt"
-    #file:                  "resources/gargammel/misincorporations/NO-PMD-misincorporation.txt"
     protocol:               "double"
   briggs:
     nick-frequency:          0.03  # 0.03
@@ -51,9 +49,8 @@ gargammel:
   sizefreq:                  "resources/gargammel/sizefreqs/Chan_Meso-sizefreq.txt"
   qshift:                    0                 # 0. MAX:93 (Note: higher values DECREASES the error rate)
   params:
-    contam-pop:              "GBR"
+    contam-pop:              "AFR"
     contaminate-samples:     ~                # All samples if ~, specific samples may be specified using a file (see resources/gargammel/contaminate-samples-list.txt)
-    #contaminate-samples:     "resources/gargammel/contaminate-samples-list.txt"
 dwgsim:
   seed:                      ~                 # Random seed if empty
 
@@ -106,10 +103,7 @@ variant-calling:
 
 kinship:
   targets:                   "data/Reich-dataset/1240K/v52.2_1240K_public.snp"
-  exclude-samples:
-    - g3-b3-i1
-    - g3-b4-i1
-    - g4-b1-i1
+  exclude-samples:           []
   READ:
     window-size:             1000000
     norm-method:             "median"          # median || mean || max || value
@@ -119,9 +113,7 @@ kinship:
     window-size:             5000000           # Default: 5000000
     norm-method:             "median"          # Default: median
     norm-value:              ~                 # Default: None
-    2pow:                    False             # Default: False (alternative classification thresholds):
-                                               # - When False: [0.96875,0.90625,0.8125,0.625]
-                                               # - When True:  [1-1/(2**4.5),1-1/(2**3.5),1-1/(2**2.5),1-1/(2**1.5)]
+    2pow:                    False             # Default: False (alternative classification thresholds) (False: [0.96875,0.90625,0.8125,0.625] | True: [1-1/(2**4.5),1-1/(2**3.5),1-1/(2**2.5),1-1/(2**1.5)])
   GRUPS:
     pedigree:                "resources/grups-rs/pedigrees/siblings-pedigree.ped"
     pedigree-pop:            "EUR"
@@ -140,7 +132,6 @@ kinship:
     downsample-N:            57600000
     downsample-seed:         ~                 # Random seed if empty (~)
     target-frequencies:      "data/TKGWV2/1240K/1000GP3_EUR_1240K.frq"
-    #target-frequencies:      "data/TKGWV2/genomeWideVariants_hg19/1000GP3_EUR_22M_noFixed.frq"
     min-BQ:                  30
     min-MQ:                  20
     min-depth:               1
