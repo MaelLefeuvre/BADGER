@@ -1,0 +1,11 @@
+linters: linters_with_tags(
+    tags = c("default", "best_practices", "common_mistakes", "configurable",
+        "consistency", "correctness", "efficiency", "executing",
+        "package_development", "pkg_testthat", "readability", "robustness",
+        "style"
+    ),
+    indentation_linter(hanging_indent_style = "tidy"),
+    undesirable_function_linter = NULL,
+    extraction_operator_linter = NULL
+  )
+encoding: "UTF-8"

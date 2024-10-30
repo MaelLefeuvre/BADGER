@@ -1,0 +1,33 @@
+name: badger-plots-0.1.0
+channels:
+  - conda-forge
+  - plotly
+dependencies:
+  - conda-forge::libarchive
+  - conda-forge::plotly
+  - conda-forge::r-reticulate
+  - conda-forge::python-kaleido
+  - conda-forge::r-base>=4.1.2
+  - conda-forge::r-essentials
+  - conda-forge::r-plotly
+  - conda-forge::r-archive
+  - conda-forge::r-magrittr
+  - conda-forge::r-tibble
+  - conda-forge::r-tidyr
+  - conda-forge::r-purrr
+  - conda-forge::r-dplyr
+  - conda-forge::r-rlang
+  - conda-forge::r-yaml
+  - conda-forge::r-stringr
+  - conda-forge::r-scales
+  - conda-forge::r-rcolorbrewer
+  - conda-forge::r-viridis
+  - conda-forge::r-future
+  - conda-forge::r-future.apply
+  - conda-forge::r-progressr
+  - conda-forge::r-optparse
+  - conda-forge::r-htmlwidgets
+  - conda-forge::r-processx
+  - conda-forge::r-devtools
+  - conda-forge::r-curl
+  - conda-forge::r-data.table

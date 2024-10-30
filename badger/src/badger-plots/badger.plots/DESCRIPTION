@@ -1,0 +1,34 @@
+Package: badger.plots
+Title: A suite of visualization tools for BADGER
+Version: 0.4.0
+Authors@R: 
+    person("Maël", "Lefeuvre", , "mael.lefeuvre@mnhn.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3567-1088"))
+Description: This package contains a suite of plotly graph generating functions, and a command line interface to visualize the results of BADGER: a benchmarking pipeline for ancient DNA genetic relatedness estimation methods.
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    archive,
+    magrittr,
+    tidyr,
+    purrr,
+    plyr,
+    dplyr,
+    rlang,
+    yaml,
+    stringr,
+    scales,
+    plotly,
+    RColorBrewer,
+    viridis,
+    future,
+    future.apply,
+    progressr,
+    optparse,
+    htmlwidgets,
+    reticulate
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
