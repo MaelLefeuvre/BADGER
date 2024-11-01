@@ -16,11 +16,8 @@ jobs:
         auto-update-conda: true
         activate-environment: ""
     - name: Conda info
-      shell: bash -el {0}
       run: conda info
     - name: Install Badger
-      shell: bash -el {0}
       run: bash ./badger/install.sh
     - name: Run tests
-      shell: bash -el {0}
       run: bash ./badger/install.sh test
