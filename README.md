@@ -328,6 +328,7 @@ badger-archived-runs-ssdeamination-0.02X-TSI/
 ```
 
 </details>
+
 ---
 
 `badger-plots` will first require two input yaml files to summarize these simulation results:

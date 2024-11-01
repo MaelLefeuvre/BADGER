@@ -1,0 +1,26 @@
+name: Ubuntu
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  install:
+    name: "Install"
+    runs-on: "ubuntu-latest"
+    steps:
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-activate-base: true
+        auto-update-conda: true
+        activate-environment: ""
+    - name: Conda info
+      shell: bash -el {0}
+      run: conda info
+    - name: Install Badger
+      shell: bash -el {0}
+      run: bash ./badger/install.sh
+    - name: Run tests
+      shell: bash -el {0}
+      run: bash ./badger/install.sh test
