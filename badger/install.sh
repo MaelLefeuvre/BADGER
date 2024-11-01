@@ -3,6 +3,7 @@ set -euo pipefail
 
 VERSION="0.4.0"
 CONDA="${CONDA:-$(which conda)}"
+TERM="${TERM:-dumb}"
 
 THIS_SCRIPT_DIR=$(dirname $(readlink -f "${BASH_SOURCE[0]}"))
 
