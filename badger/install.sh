@@ -95,7 +95,7 @@ _test(){
     # ---- Run pytest tests
     hr
     log "Running pytest ..."
-    pytest ./badger --verbose || abort "Some integration tests failed (See above)."
+    pytest ./badger --verbose ${@:2} || abort "Some integration tests failed (See above)."
 
     hr
     log "Done. All tests successful!"
@@ -120,7 +120,7 @@ main(){
             _post_deploy ${BADGER_PLOT_YAML}
             ;;
         test)
-            _test "badger-${VERSION}"
+            _test "badger-${VERSION}" ${@:2}
             ;;
     esac
     log "Done"
@@ -129,6 +129,6 @@ main(){
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     [[ $# -eq 0 ]] && what="badger" || what="${1}"
-    main "${what}"
+    main "${what}" ${@:2}
 fi
 

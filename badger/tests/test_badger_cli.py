@@ -14,7 +14,7 @@ def _run_badger_main(command: str = ""):
     return badger.main([sys.argv[0]] + shlex.split(command))
 
 
-@pytest.fixture(scope = 'session')
+@pytest.fixture(scope = 'module')
 def setup_env(tmp_path_factory):
     cwd    = os.getcwd()
     tmpdir =  tmp_path_factory.mktemp("test-badger")
@@ -24,6 +24,7 @@ def setup_env(tmp_path_factory):
         Path(symlink_path).symlink_to(symlink_target)
     os.chdir(tmpdir)
     yield tmpdir
+    os.chdir(cwd)
 
 def test_dry_run_setup(setup_env):
     _run_badger_main("setup -- --forcerun fetch_data --dry-run")
