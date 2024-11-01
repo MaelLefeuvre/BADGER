@@ -35,10 +35,14 @@ _conda_optargs(){
     echo "${optargs}"
 }
 
+
 _install_badger(){
     log "Installing ${1}"
     hr
-    $CONDA env create $(_conda_optargs $@) --force -f "${BADGER_YAML}"
+    # ---- --force is marked for deprecation starting 23.7.0
+    version="$($CONDA --version | cut -d' ' -f2)"
+    printf '%s\n%s\n' "$version" "23.7.0" | sort -V --check=quiet && force="--force" || force="--yes"
+    $CONDA env create $(_conda_optargs $@) ${force} -f "${BADGER_YAML}"
 }
 
 _install_badger_plots(){
