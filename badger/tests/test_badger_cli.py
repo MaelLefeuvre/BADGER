@@ -6,6 +6,7 @@ from badger import badger
 TEST_CONFIG_ARGS="--config gargammel=\"{'coverage': '0.005', 'comp_endo': '0.99', 'comp_cont': '0.01', 'compt_bact': '0.00'}\""
 SMK_SYMLINK_DIRS=["config", "resources", "workflow"]
 MIN_REQUIRED_CORES="18"
+MIN_REQUIRED_MEM="32000"
 
 def _run_badger_main(command: str = ""):
     print(f"Running badger.main with the following arguments: {command}")
@@ -31,13 +32,13 @@ def test_dry_run_setup(setup_env):
     _run_badger_main("setup -- --forcerun fetch_data --dry-run")
 
 def test_dry_run_all(setup_env):
-    _run_badger_main(f"run --cores {MIN_REQUIRED_CORES} -- --forcerun fetch_data --dry-run")
+    _run_badger_main(f"run --cores {MIN_REQUIRED_CORES} --mem-mb {MIN_REQUIRED_MEM} -- --forcerun fetch_data --dry-run")
 
 def test_dry_run_archive(setup_env):
     _run_badger_main("archive -- --forcerun fetch_data --dry-run")
 
 def test_dry_run_loop_pipeline(setup_env):
-    _run_badger_main(f"loop-pipeline --cores {MIN_REQUIRED_CORES} -i 3 -- --forcerun fetch_data --dry-run")
+    _run_badger_main(f"loop-pipeline --cores {MIN_REQUIRED_CORES} --mem-mb {MIN_REQUIRED_MEM} -i 3 -- --forcerun fetch_data --dry-run")
 
 @pytest.mark.dependency(name="create-conda-envs")
 @pytest.mark.extensive
