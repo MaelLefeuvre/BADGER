@@ -1,5 +1,5 @@
 import shlex, sys, tarfile, subprocess, pytest
-from os import path, chdir, mkdir
+from os import path, chdir, mkdir, getcwd
 
 TEST_TARBALL="test-data/test-archives.tar.xz"
 
@@ -7,8 +7,9 @@ def _shell_cmd(command: str = "", stdout = subprocess.PIPE, stderr = subprocess.
     print(f"\nRunning command {command}")
     return subprocess.run(shlex.split(command), stdout=stdout, stderr=stderr)
 
-@pytest.fixture(scope = 'session')
+@pytest.fixture(scope = 'module')
 def setup_plot_testdata(tmp_path_factory):
+    cwd          = getcwd()
     tmpdir       = tmp_path_factory.mktemp("test-badger-plots")
     test_tarball = path.join(path.dirname(__file__), TEST_TARBALL)
     tar = tarfile.open(test_tarball, mode='r')
@@ -16,6 +17,7 @@ def setup_plot_testdata(tmp_path_factory):
     chdir(tmpdir)
     mkdir("plots")
     yield tmpdir
+    chdir(cwd)
 
 @pytest.mark.dependency(name="make-input", depends=[])
 def test_badger_plots_make_input(setup_plot_testdata):

@@ -1,5 +1,6 @@
 # BADGER: Benchmark Ancient DNA GEnetic Relatedness
 
+[![Ubuntu](https://github.com/MaelLefeuvre/BADGER/actions/workflows/Ubuntu-latest.yml/badge.svg)](https://github.com/MaelLefeuvre/BADGER/actions/workflows/Ubuntu-latest.yml)
 ## Introduction
 
 `BADGER` (***B***enchmark ***A***ncient ***D***NA ***GE***netic ***R***elatedness) is an automated [`snakemake`](https://snakemake.github.io/) pipeline designed to jointly benchmark the classification performance and accuracy of several previously published ancient DNA genetic relatensess estimation methods. To generate its input test data, `BADGER` leverages both high-definition pedigree simulations, followed by the simulation of raw ancient DNA `.fastq` sequences, through an extensive use of the softwares [ped-sim](https://github.com/williamslab/ped-sim.git) and [gargammel](https://grenaud.github.io/gargammel/), respectively.
@@ -328,6 +329,7 @@ badger-archived-runs-ssdeamination-0.02X-TSI/
 ```
 
 </details>
+
 ---
 
 `badger-plots` will first require two input yaml files to summarize these simulation results:

@@ -11,7 +11,7 @@ if Version(snakemake.__version__) >= Version("8.0.0"):
 
 DEFAULT_SMK_ARGS = [
     "--use-conda",
-    "--conda-frontend", "mamba",
+    "--conda-frontend", "conda",
     "--rerun-incomplete",
 ]
 

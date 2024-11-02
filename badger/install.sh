@@ -2,7 +2,8 @@
 set -euo pipefail
 
 VERSION="0.4.0"
-CONDA="${CONDA:-$(which conda)}"
+CONDA="${CONDA_EXE:-$(which conda)}"
+TERM="${TERM:-dumb}"
 
 THIS_SCRIPT_DIR=$(dirname $(readlink -f "${BASH_SOURCE[0]}"))
 
@@ -34,10 +35,14 @@ _conda_optargs(){
     echo "${optargs}"
 }
 
+
 _install_badger(){
     log "Installing ${1}"
     hr
-    $CONDA env create $(_conda_optargs $@) --force -f "${BADGER_YAML}"
+    # ---- --force is marked for deprecation starting 23.7.0
+    version="$($CONDA --version | cut -d' ' -f2)"
+    printf '%s\n%s\n' "$version" "23.7.0" | sort -V --check=quiet && force="--force" || force="--yes"
+    $CONDA env create $(_conda_optargs $@) ${force} -f "${BADGER_YAML}"
 }
 
 _install_badger_plots(){
@@ -90,7 +95,7 @@ _test(){
     # ---- Run pytest tests
     hr
     log "Running pytest ..."
-    pytest ./badger --verbose || abort "Some integration tests failed (See above)."
+    pytest ./badger --verbose ${@:2} || abort "Some integration tests failed (See above)."
 
     hr
     log "Done. All tests successful!"
@@ -115,7 +120,7 @@ main(){
             _post_deploy ${BADGER_PLOT_YAML}
             ;;
         test)
-            _test "badger-${VERSION}"
+            _test "badger-${VERSION}" ${@:2}
             ;;
     esac
     log "Done"
@@ -124,6 +129,6 @@ main(){
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     [[ $# -eq 0 ]] && what="badger" || what="${1}"
-    main "${what}"
+    main "${what}" ${@:2}
 fi
 

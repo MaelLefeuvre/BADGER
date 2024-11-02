@@ -1,0 +1,29 @@
+name: Ubuntu
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+env:
+  FORCE_COLOR: 1
+  TERM: xterm-256color 
+jobs:
+  install:
+    name: "Install"
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-activate-base: true
+        auto-update-conda: true
+        activate-environment: ""
+    - name: Conda info
+      run: conda info
+    - name: Install Badger
+      run: bash ./badger/install.sh
+    - name: Run tests
+      run: bash ./badger/install.sh test
