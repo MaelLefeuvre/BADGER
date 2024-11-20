@@ -38,7 +38,7 @@ Will generate the following template pedigree within BADGER's simulations
 </p>
 
 
-## Pedigree codes files.
+## Pedigree codes files
 
 pedigree_codes.txt are provided through the `ped-sim['data']['codes']`keyword, within BADGER's main yaml configuration's file.
 
