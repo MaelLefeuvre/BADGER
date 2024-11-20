@@ -101,7 +101,7 @@ rule run_GRUPS:
         pileup       = rules.samtools_pileup.output.pileup,
         data         = rules.GRUPS_generate_fst_set.output.fst,
         recomb_map   = expand("data/recombination-maps/HapMapII_GRCh37/genetic_map_GRCh37_chr{chr}.txt", chr=range(1, 23)),
-        targets      = config["kinship"]["targets"],
+        targets      = get_snp_targets(ext=".snp"),
         metadata     = "results/meta/pipeline-metadata.yml"
     output:
         results      = multiext("results/04-kinship/GRUPS/{generation}/{generation}", ".pwd", ".result", ".probs")

@@ -1,9 +1,9 @@
-reference-genome:            "GRCh37"    #["GRCh37" | "hs37d5" | "human_g1k_v37"]
+reference-genome:            "GRCh37"            # "GRCh37" | "hs37d5" | "human_g1k_v37"
 tempdir:                     "data/.tmp"
 make-qc:                     False
 archive:
   archive-dir:               "archive"
-  compress-level: 9
+  compress-level:            9
 
 ped-sim:
   replicates:                1
@@ -13,8 +13,8 @@ ped-sim:
   data:
     codes:                   "resources/ped-sim/ped-definition/test/test-pedigree_codes.txt"
     definition:              "resources/ped-sim/ped-definition/test/test-pedigree.def"
-    map:                     "data/ped-sim/recombination_maps/refined_mf.simmap"
-    interference:            "data/ped-sim/interference_maps/nu_p_campbell.tsv"
+    map:                     ~
+    interference:            ~
   params:
     error_rate:              0
     missingness:             0
@@ -31,80 +31,79 @@ gargammel:
   pmd-model:                 "misincorporation"  # "misincorporation" | "briggs"
   misincorporation:
     file:                    "resources/gargammel/misincorporations/Chan_meso/misincorporation.txt"
-    protocol:               "double"
-  briggs:
-    nick-frequency:          0.03  # 0.03
-    overhang-length:         0.4   # 0.4
-    ds-deaminations:         0.01  # 0.01
-    ss-deaminations:         0.3   # 0.3
+    protocol:                "double"
+  briggs:                                      
+    nick-frequency:          0.03                # (v): 0.03
+    overhang-length:         0.4                 # (l): 0.4
+    ds-deaminations:         0.01                # (d): 0.01
+    ss-deaminations:         0.3                 # (s): 0.3
   sizefreq:                  "resources/gargammel/sizefreqs/Chan_Meso-sizefreq.txt"
-  qshift:                    0                 # 0. MAX:93 (Note: higher values DECREASES the error rate)
+  qshift:                    0                   # 0. MAX:93 (Note: higher values will *decrease* the error rate)
   params:
     contam-pop:              "AFR"
-    contaminate-samples:     ~                # All samples if ~, specific samples may be specified using a file (see resources/gargammel/contaminate-samples-list.txt)
+    contaminate-samples:     ~                   # All samples if ~, specific samples may be specified using a file (see resources/gargammel/contaminate-samples-list.txt)
 dwgsim:
-  seed:                      ~                 # Random seed if empty
-
+  seed:                      ~                   # Random seed if empty
 preprocess:
   trimming:
-    min-overlap:             1                 # 1   Minimum allowed read-mate overlap.
-    min-length:              17                # 30  Minimum allowed read length
-    min-quality:             20                # 20  Minimum allowed base quality
-    qualitymax:              41                # 41  set to 93 if you intend to increase gargammel -qs | -qs2 parameters
-    seed:                    ~                 # Random seed if empty (~)
+    min-overlap:             1                   # 1   Minimum allowed read-mate overlap.
+    min-length:              17                  # 30  Minimum allowed read length
+    min-quality:             20                  # 20  Minimum allowed base quality
+    qualitymax:              41                  # 41  set to 93 if you intend to increase gargammel -qs | -qs2 parameters
+    seed:                    ~                   # Random seed if empty (~)
   bwa:
-    aligner:                 "aln"             # 'mem' || 'aln'
+    aligner:                 "aln"               # 'mem' || 'aln'
     collapsed-only:          False
     bwa-aln:
-      seed-length:           1024              # 1024 (Oliva et al. 2021)
-      max-open-gap:          2                 # 2    (Oliva et al. 2021)
-      max-seed-diff:         2                 # 2
-      max-miss-prob:         0.01              # 0.01 (Oliva et al. 2021)  
+      seed-length:           1024                # 1024 (Oliva et al. 2021)
+      max-open-gap:          2                   # 2    (Oliva et al. 2021)
+      max-seed-diff:         2                   # 2
+      max-miss-prob:         0.01                # 0.01 (Oliva et al. 2021)  
   filter:
     min-MQ:                  20
     min-length:              30
   dedup:
-    method: picard                             # "samtools" | "picard" | "dedup"
+    method:                  picard              # "samtools" | "picard" | "dedup"
   pmd-rescaling:
-    rescaler:                ~                 # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
+    rescaler:                ~                   # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
     apply-masking:           True
     map-damage:
       rescale:               False
-      downsample:            ~                 # No downsampling if empty (0 < downsample < 1)
-      downsample-seed:       ~                 # Random seed if empty (~)
+      downsample:            ~                   # No downsampling if empty (0 < downsample < 1)
+      downsample-seed:       ~                   # Random seed if empty (~)
     pmdtools:
-      threshold:             -19999            # in LOD. Recommended: 3 | set to -19999 to disable
-      mask-terminal-deams:   0                 # in bases. Default 0 
+      threshold:             -19999              # in LOD. Recommended: 3 | set to -19999 to disable
+      mask-terminal-deams:   0                   # in bases. Default 0 
     pmd-mask:
       threshold:             0.01
 
 variant-calling:
-  caller:                    "pileupCaller"    # ANGSD || pileupCaller
+  caller:                    "pileupCaller"      # ANGSD || pileupCaller
   maf:                       0.00
-  maf-superpop:              "EUR"             # AFR | AMR | EAS | EUR | SAS
+  maf-superpop:              "EUR"               # AFR | AMR | EAS | EUR | SAS
   pileup:
-    disable-BAQ:             True              # True || False
+    disable-BAQ:             True                # True || False
     min-BQ:                  20
     min-MQ:                  20
   pileupCaller:
-    skip-transitions:        False             # True || False
-    mode:                    "randomHaploid"   # "randomHaploid" || "majorityCall"
+    skip-transitions:        False               # True || False
+    mode:                    "randomHaploid"     # "randomHaploid" || "majorityCall"
     min-depth:               1
-    seed:                    ~                 # Random seed if empty
+    seed:                    ~                   # Random seed if empty
 
 kinship:
-  targets:                   "data/Reich-dataset/1240K/v52.2_1240K_public.snp"
+  targets:                   ~
   exclude-samples:           []
   READ:
     window-size:             1000000
-    norm-method:             "median"          # median || mean || max || value
-    norm-value:              ~                 # (Float). Ignored if norm-method != "value"
+    norm-method:             "median"            # median || mean || max || value
+    norm-value:              ~                   # (Float). Ignored if norm-method != "value"
   READv2:
-    window-est:              False             # Default: False
-    window-size:             5000000           # Default: 5000000
-    norm-method:             "median"          # Default: median
-    norm-value:              ~                 # Default: None
-    2pow:                    False             # Default: False (alternative classification thresholds) (False: [0.96875,0.90625,0.8125,0.625] | True: [1-1/(2**4.5),1-1/(2**3.5),1-1/(2**2.5),1-1/(2**1.5)])
+    window-est:              False               # Default: False
+    window-size:             5000000             # Default: 5000000
+    norm-method:             "median"            # Default: median
+    norm-value:              ~                   # Default: None
+    2pow:                    False               # Default: False (alternative classification thresholds) (False: [0.96875,0.90625,0.8125,0.625] | True: [1-1/(2**4.5),1-1/(2**3.5),1-1/(2**2.5),1-1/(2**1.5)])
   GRUPS:
     pedigree:                "resources/grups-rs/pedigrees/siblings-pedigree.ped"
     pedigree-pop:            "EUR"
@@ -114,22 +113,22 @@ kinship:
     reps:                    1000
     maf:                     0.0
     min-qual:                30
-    seq-error-rate:          0.0               # Uses pileup quality scores if empty (~)
-    seed:                    ~                 # Random seed if empty (~)
+    seq-error-rate:          0.0                 # Uses pileup quality scores if empty (~)
+    seed:                    ~                   # Random seed if empty (~)
   TKGWV2:
-    downsample:              False              # True || False
+    downsample:              False               # True || False
     downsample-N:            57600000
-    downsample-seed:         ~                 # Random seed if empty (~)
-    target-frequencies:      "data/TKGWV2/1240K/1000GP3_EUR_1240K.frq"
+    downsample-seed:         ~                   # Random seed if empty (~)
+    target-frequencies:      ~
     min-BQ:                  30
     min-MQ:                  20
     min-depth:               1
   KIN:
     interval:                10000000
     p0-threshold:            10
-    roh-threshold:           ~                # (ignored if None)
-    diversity-parameter:     ~                # (ignored if None)
-    noisy-windows:           ~                # (ignored if None)
+    roh-threshold:           ~                   # (ignored if None)
+    diversity-parameter:     ~                   # (ignored if None)
+    noisy-windows:           ~                   # (ignored if None)
   correctKin:
     deplete-indivs:          False
     reference-pop:           "EUR"

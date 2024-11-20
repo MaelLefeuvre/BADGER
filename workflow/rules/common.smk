@@ -1,3 +1,4 @@
+from os import path
 from requests.packages import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -24,6 +25,13 @@ class ReferenceGenome:
         for key in cls._dict.keys():
             print(f" - {key}")
 
+# ------------------------------------------------------------------------------------------------------------------- #
+# ----- Default files when not supplied by the user
+
+def get_snp_targets(ext=".snp"):
+    user_defined = config["kinship"]["targets"]
+    default      = config["netrules"]["aadr-1240k"]["default-targets"]
+    return path.splitext(user_defined or default)[0] + ext
 
 # ------------------------------------------------------------------------------------------------------------------- #
 # ---- Generic / Utility rules and functions.
@@ -50,6 +58,7 @@ def get_all_samples_ids(wildcards):
     return expand(get_samples_ids(wildcards), generation=[f'ped{i}' for i in range(1, n+1)])
 
 
+"""Simple decorator to exclude ped-sim user-selected samples from the workflow"""
 def exclude_samples(function):
     def _decorated(wildcards):
         excluded_samples = config['kinship']['exclude-samples']
