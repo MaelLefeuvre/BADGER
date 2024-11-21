@@ -2,17 +2,18 @@
 
 This page lists and describes all the graphical parameters that can be configured via the `badger-plots template` module, and the [YAML](https://yaml.org/spec/) file it produces.
 
-Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\color{reset}]}$' tag
+> [!IMPORTANT]
+> Required parameters are flagged by a '$\mathsf{[\color{red}Required\color{reset}]}$' tag  
 
 --- 
 
-- ## $\mathsf{[\color{red}Required\color{reset}]}$ input
-  > **Description**:  Path to a user-generated `badger-plots` input definition file. This file can be generated using the `badger-plots input` module. See the dedicated section in the main README here : [Generating an input definition file for `badger-plots`](/README.md#01-generating-an-input-definition-file-for-badger-plots).
+- ## input
+  > **Description**: $[\mathsf{\color{red}Required\color{reset}]}$  Path to a user-generated `badger-plots` input definition file. This file can be generated using the `badger-plots input` module. See the dedicated section in the main README here : [Generating an input definition file for `badger-plots`](/README.md#01-generating-an-input-definition-file-for-badger-plots).
 
   > **Allowed Values**: (String) Any path linking to an existing and valid `badger-plots` input definition file (in [YAML format](https://yaml.org/spec/)).
 
-- ## $[\mathsf{\color{red}Required}]$ pedigree-codes
-  > **Description**: Path pointing to a `badger` `pedigree-codes` input definition file. The  provided file should be the the same as the one used during ***all*** of the archived simulations results pointed through [input](#input). i.e. The provided file should be identical to the one specified in your `config.yml` file when running `badger` (See the corresponding parameter: [codes](/doc/README.badger-config.md#codes)).
+- ## pedigree-codes
+  > **Description**:  $[\mathsf{\color{red}Required}]$ Path pointing to a `badger` `pedigree-codes` input definition file. The  provided file should be the the same as the one used during ***all*** of the archived simulations results pointed through [input](#input). i.e. The provided file should be identical to the one specified in your `config.yml` file when running `badger` (See the corresponding parameter: [codes](/doc/README.badger-config.md#codes)).
 
   > **Allowed Values**: (String) Any path linking to an existing and valid `badger`. `pedigree-codes` definition file. Detailled specifications on the format and purpose of pedigree-codes definition files can be found here: [pedigree-codes-files](README.ped-sim-config.md#pedigree-codes-files).
 
@@ -103,12 +104,14 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
     > **Default**: `14`
 
-  - ### legend:
+  - ### legend
     Categorizes plotting parameters related to the figure legend of the OCI-performance-plot.
-    - #### size: 10
+    - #### size
       > **Description**: Specify the font size of the legend labels (in px.)
 
       > **Allowed Values**: (integer) Any non negative integer in the range $[1, +\infty]$, representing a pixel size.
+
+      > **Default**: `10`
 
     - #### xpos
       > **Description**: Specify the horizontal position of the figure legend.
@@ -124,7 +127,7 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
       > **Default**: `-0.1`
 
-  - ### cm:
+  - ### cm
       Categorizes plotting parameters related to the display of every individual confusion matrix found within the main OCI performance plot.
     - #### condense
       > **Description**: Hide columns containing no observations within the confusion matrix. i.e. hide prediction classes where no predictions were ever made by the method.
@@ -133,7 +136,7 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
       > **Default**: `no`
 
-    - #### ratio:
+    - #### ratio
       > **Description**: Specify whether the amount of observations within each class of the confusion matrix should be displayed as a within-class ratio.
 
       > **Allowed Values**: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
@@ -180,16 +183,16 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
       > **Default**: `10`
 
-    - #### show_xaxis: no
+    - #### show_xaxis
       > **Description**: Unilaterally choose to display or not the horizontal axes of the confusion matrices.
 
       > **Allowed Values**: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
 
       > **Default**: `no`
 
-  - ### scatter:
+  - ### scatter
       Categorizes plotting parameters related to the display of the summary scatterplot of OCI performance values.
-    - #### dash: solid
+    - #### dash
       > **Description**: Specify A list of drawing style for every line found within the scatterplot. Note that values of the list will be recycled, if the number of lines to plot is greater than the number of elements within the list. 
 
       > **Allowed Values**: (List[strings]) A list of plotly-compatible line dash styles. (i.e.: *`"solid"`*, *`"dot"`*, *`"dash"`*, *`"longdash"`*, *`"dashdot"`*, or *`"longdashdot"`*). For an extensive description of allowed values, see the corresponding plotly reference entry: [scatter line dash](https://plotly.com/r/reference/scatter/#scatter-line-dash)
@@ -208,10 +211,10 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
       > **Default**: *`"lines+markers"`*
 
-    - #### yaxis:
+    - #### yaxis
       Categorizes plotting parameters related to the display of the summary scatterplot's y-axis.
 
-      - ##### range:
+      - ##### range
         > **Description**: Specify the display range of the y axis.
 
         > **Allowed Values**: (List[float]) A list of two floating point values, representing the minimum and maximum displayed value of the yaxis, respectively.
@@ -258,7 +261,7 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
     > **Default**: `1080`
 
-- ## accuracy-plot:
+- ## accuracy-plot
   - ### filename
     > **Description**: Base name of the output plot. The specified filename should be provided *without* any file extension. The corresponding files will be created within the directory specified through [output-dir](#output-dir).
 
@@ -289,16 +292,16 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
     > **Default**: `""`
 
-  - ### rmsd:
+  - ### rmsd
     Categorizes plotting parameters shared across every `nRMSD` subplots
-    - #### title: nRMSD
+    - #### title
       > **Description**: Specify a subtitle for the `nRMSD` subplots
 
       > **Allowed Values**: (String) Any string representing a main subtitle for the `nRMSD` subplots.
 
       > **Default**: `nRMSD`
 
-    - #### dtick: 0.2
+    - #### dtick
         > **Description**: Specify the interval between every displayed tick labels on the yaxis.
 
         > **Allowed Values**: (float) Any floating point value in the range $[0, 1]$, representing a y-axis value.
@@ -312,7 +315,7 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
       > **Default**: `0`
 
-  - ### mbe:
+  - ### mbe
     Categorizes plotting parameters shared across every `nMBE` subplots
 
     - #### title
@@ -350,7 +353,7 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
 
     > **Default**: `0.3`
 
-  - ### ticksize:
+  - ### ticksize
     Categorizes plotting parameters related to the display size of tick labels within the accuracy plot
     - #### xaxis
       > **Description**: Specify the fontsize of every label found on the x-axis (in px.).
@@ -396,7 +399,7 @@ Note that Required parameters are flagged by a '$\mathsf{[\color{red}Required\co
       > `colors: ["#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"]`  
       > `colors: ["#00204DFF]`  
 
-    - #### patterns:
+    - #### patterns
       Categorizes arguments related to the fill pattern of bars within the plot. See the corresponding entry in plotly's reference: [bar marker pattern](https://plotly.com/r/reference/bar/#bar-marker-pattern)
       - ##### shape
         > **Description**: Specify the shape(s) of the hatching-pattern fill of every grouped.  Note that values of the list will be recycled, if the number of grouped bars is greater than the number of elements within the list.
