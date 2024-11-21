@@ -38,7 +38,7 @@ gargammel:
     ds-deaminations:         0.01                # (d): 0.01
     ss-deaminations:         0.3                 # (s): 0.3
   sizefreq:                  "resources/gargammel/sizefreqs/Chan_Meso-sizefreq.txt"
-  qshift:                    0                   # 0. MAX:93 (Note: higher values will *decrease* the error rate)
+  qshift:                    0                   # Default: 0 ; Max: 93 (Note: higher values will *decrease* the error rate)
   params:
     contam-pop:              "AFR"
     contaminate-samples:     ~                   # All samples if ~, specific samples may be specified using a file (see resources/gargammel/contaminate-samples-list.txt)
@@ -52,7 +52,7 @@ preprocess:
     qualitymax:              41                  # 41  set to 93 if you intend to increase gargammel -qs | -qs2 parameters
     seed:                    ~                   # Random seed if empty (~)
   bwa:
-    aligner:                 "aln"               # 'mem' || 'aln'
+    aligner:                 "aln"               # 'mem' | 'aln'
     collapsed-only:          False
     bwa-aln:
       seed-length:           1024                # 1024 (Oliva et al. 2021)
@@ -78,7 +78,7 @@ preprocess:
       threshold:             0.01
 
 variant-calling:
-  caller:                    "pileupCaller"      # ANGSD || pileupCaller
+  caller:                    "pileupCaller"      # ANGSD | pileupCaller
   maf:                       0.00
   maf-superpop:              "EUR"               # AFR | AMR | EAS | EUR | SAS
   pileup:
@@ -86,8 +86,8 @@ variant-calling:
     min-BQ:                  20
     min-MQ:                  20
   pileupCaller:
-    skip-transitions:        False               # True || False
-    mode:                    "randomHaploid"     # "randomHaploid" || "majorityCall"
+    skip-transitions:        False               # True | False
+    mode:                    "randomHaploid"     # "randomHaploid" | "majorityCall"
     min-depth:               1
     seed:                    ~                   # Random seed if empty
 
@@ -96,14 +96,14 @@ kinship:
   exclude-samples:           []
   READ:
     window-size:             1000000
-    norm-method:             "median"            # median || mean || max || value
+    norm-method:             "median"            # median | mean | max | value
     norm-value:              ~                   # (Float). Ignored if norm-method != "value"
   READv2:
     window-est:              False               # Default: False
     window-size:             5000000             # Default: 5000000
     norm-method:             "median"            # Default: median
     norm-value:              ~                   # Default: None
-    2pow:                    False               # Default: False (alternative classification thresholds) (False: [0.96875,0.90625,0.8125,0.625] | True: [1-1/(2**4.5),1-1/(2**3.5),1-1/(2**2.5),1-1/(2**1.5)])
+    2pow:                    False               # Default: False
   GRUPS:
     pedigree:                "resources/grups-rs/pedigrees/siblings-pedigree.ped"
     pedigree-pop:            "EUR"
