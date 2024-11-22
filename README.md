@@ -5,6 +5,14 @@
 
 `BADGER` (<ins>***B***</ins>enchmark <ins>***A***</ins>ncient <ins>***D***</ins>NA <ins>***GE***</ins>netic <ins>***R***</ins>elatedness) is an automated [`snakemake`](https://snakemake.github.io/) pipeline designed to jointly benchmark the classification performance and accuracy of several previously published ancient DNA genetic relatensess estimation methods. To generate its input test data, `BADGER` leverages both high-definition pedigree simulations, followed by the simulation of raw ancient DNA `.fastq` sequences, through an extensive use of the softwares [ped-sim](https://github.com/williamslab/ped-sim.git) and [gargammel](https://grenaud.github.io/gargammel/), respectively.
 
+<p align="center">
+
+  | ![BADGER-workflow-summary](/doc/assets/badger-workflow-summary.png) |
+  |:---:|
+  | ***Figure 1***: A summarized diagram view of the `BADGER` workflow |
+
+</p>
+
 ## Installing BADGER
 
 ### Software requirements
@@ -100,7 +108,7 @@ This module will:
 The simulation parameters, and general behaviour of BADGER can be configured by modifying the [`config/config.yml`](config/config.yml) configuration file. Note that this file generally follows the [YAML format specifications](https://yaml.org/spec/) and is provided *as-is* to snakemake when running the pipeline.
 
 > [!IMPORTANT]
-> An extensive explanation of every keyword may be found here: [config parameters reference](doc/README.badger-config.md).
+> An extensive explanation of every keyword may be found here: [config parameters reference](doc/README.badger-config.md). <br><br>
 > Note that sensible defaults for all parameters are provided in this file, and BADGER is expected to run smoothly without modifying this file. However, we recommend that users should at least modify the parameters of `gargammel` and `ped-sim` in order to tailor BADGER's benchmarking results to their own use-cases:
 
 **Example gargammel configuration**: 
@@ -176,6 +184,7 @@ config:
    - A second yaml file is in charge of providing with plotting parameters. A preconfigured template for this parameter file can be obtained by querying the `badger-plots template` module.
    - Plotting can then be achieved using `badger-plots plot`, once in posession of these two yaml files.
 
+---
 
 ### Quick start
 
@@ -394,7 +403,9 @@ badger-plots template --input plots/input.yml --pedigree-codes resources/ped-sim
 The resulting `plots/params.yml` file is a simple yaml configuration file containing default plotting parameters. These default values can of course be modified at leisure.
 
 > [!IMPORTANT]
-> A Detailled summary of every parameter can be found here: [`badger-plot` plotting parameters reference](doc/README.badger-plots.md)
+> A Detailled summary of every parameter can be found here: [`badger-plot` plotting parameters reference](doc/README.badger-plots.md) <br><br>
+> Note that almost all of the provided parameters are provided with sensible defaults. Thus, `input` and `pedigree-codes` are the only two parameters that need to be explicitly set by users.
+
 
 ### 03. Plotting summary statistics 
 
