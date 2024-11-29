@@ -11,6 +11,7 @@ import os
 
 # ---- Set config variables
 configfile: "./config/config.yml"
+configfile: "./config/netrules.yml"
 
 localrules: get_samples, format_sex_specific_gen_map
 
@@ -47,7 +48,7 @@ rule format_sex_specific_gen_map:
         #gen_map = rules.fetch_sex_specific_recombination_map.output.gen_maps
         gen_map = expand("data/recombination-maps/Refined_genetic_map_b37/{sex}_chr{chrom}.txt", chrom=range(1,23), sex=["female", "male", "sexavg"])
     output:
-        sim_map = config["ped-sim"]['data']["map"]
+        sim_map = config["netrules"]["ped-sim"]['data']["default-map"]
     params:
         #map_dir = rules.fetch_sex_specific_recombination_map.output.map_dir
         map_dir = directory("data/recombination-maps/Refined_genetic_map_b37")
@@ -106,6 +107,15 @@ rule format_pedigree_definition:
     threads: 1
     template_engine: "jinja2"
 
+def get_ped_sim_map_file(wildcards):
+    user_defined = config['ped-sim']['data']['map']
+    default      = config['netrules']['ped-sim']['data']['default-map']
+    return user_defined or default
+
+def get_ped_sim_interference_file(wildcards):
+    user_defined = config['ped-sim']['data']['interference'] 
+    default      = config['netrules']['ped-sim']['data']['default-interference']
+    return user_defined or default
 
 rule run_ped_sim:
     """
@@ -115,9 +125,8 @@ rule run_ped_sim:
     input:
         vcf          = rules.concat_1000_genomes.output.merged_vcf,
         definition   = rules.format_pedigree_definition.output.definition,
-        map          = config['ped-sim']['data']['map'],
-        #interference = rules.fetch_interference_map.output.intf_map,
-        interference = "data/ped-sim/interference_maps/nu_p_campbell.tsv",
+        map          = get_ped_sim_map_file,
+        interference = get_ped_sim_interference_file,
         metadata     = "results/meta/pipeline-metadata.yml",
     output:
         fam  = temp("results/00-ped-sim/splitted/{rep}/{POP}-pedigrees-everyone.fam"),

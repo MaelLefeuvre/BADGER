@@ -79,16 +79,22 @@ rule TKGWV2_downsample_bam:
         find . -maxdepth 1 -type l -delete      >> $root_dir/{log}       # delete symlinks.
     """
 
+
+def get_target_frequencies():
+    user_defined = config["kinship"]["TKGWV2"]["target-frequencies"]
+    default      = config["netrules"]["TKGWV2"]["default-target-frequencies"]
+    return user_defined or default
+
 rule intersect_freq_file:
     input:
-        frequencies   = config['kinship']['TKGWV2']['target-frequencies'],
-        targets       = os.path.splitext(config["kinship"]["targets"])[0] + ".snp",
+        frequencies   = get_target_frequencies(),
+        targets       = get_snp_targets(ext=".snp"),
         intersect     = expand(rules.get_target_panel_intersect.output.targets, 
             maf      = config['variant-calling']['maf'],
             superpop = config['variant-calling']['maf-superpop'],
         ),
     output:
-        frequencies   = "results/04-kinship/TKGWV2/{file}.frq".format(file = basename(splitext(config['kinship']['TKGWV2']['target-frequencies'])[0]))
+        frequencies   = "results/04-kinship/TKGWV2/{file}.frq".format(file = basename(splitext(get_target_frequencies())[0]))
     params:
     conda: "../envs/TKGWV2.yml"
     shell: """

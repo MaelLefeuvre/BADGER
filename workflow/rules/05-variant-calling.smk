@@ -104,8 +104,7 @@ rule get_target_panel_intersect:
     """
     input:
         ped_vcf = multiext(rules.merge_ped_sim.output.vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
-        #ped_vcf = multiext(rules.dopplegang_twins.output.merged_vcf.format(POP=config['ped-sim']['params']['pop']), "", ".tbi"),
-        targets = os.path.splitext(config["kinship"]["targets"])[0] + ".ucscbed",
+        targets = get_snp_targets(ext = ".ucscbed"),
     output:
         targets = "results/03-variant-calling/00-panel/variants-intersect-{superpop}_maf{maf}.ucscbed"
     params:
@@ -211,7 +210,7 @@ rule pileup_caller:
         samples_def       = rules.get_samples.output, 
         pileup            = rules.samtools_pileup.output.pileup,
         bamlist           = rules.generate_bam_list.output.bamlist,
-        targets           = os.path.splitext(config["kinship"]["targets"])[0] + ".snp",
+        targets           = get_snp_targets(ext=".snp"),
         metadata          = "results/meta/pipeline-metadata.yml"
     output:
         plink             = multiext("results/03-variant-calling/02-pileupCaller/{generation}/{generation}", ".bed", ".bim", ".fam"),

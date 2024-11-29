@@ -3,17 +3,29 @@
 [![Ubuntu](https://github.com/MaelLefeuvre/BADGER/actions/workflows/Ubuntu-latest.yml/badge.svg)](https://github.com/MaelLefeuvre/BADGER/actions/workflows/Ubuntu-latest.yml)
 ## Introduction
 
-`BADGER` (***B***enchmark ***A***ncient ***D***NA ***GE***netic ***R***elatedness) is an automated [`snakemake`](https://snakemake.github.io/) pipeline designed to jointly benchmark the classification performance and accuracy of several previously published ancient DNA genetic relatensess estimation methods. To generate its input test data, `BADGER` leverages both high-definition pedigree simulations, followed by the simulation of raw ancient DNA `.fastq` sequences, through an extensive use of the softwares [ped-sim](https://github.com/williamslab/ped-sim.git) and [gargammel](https://grenaud.github.io/gargammel/), respectively.
+`BADGER` (<ins>***B***</ins>enchmark <ins>***A***</ins>ncient <ins>***D***</ins>NA <ins>***GE***</ins>netic <ins>***R***</ins>elatedness) is an automated [`snakemake`](https://snakemake.github.io/) pipeline designed to jointly benchmark the classification performance and accuracy of several previously published ancient DNA genetic relatedness estimation methods. To generate its input test data, `BADGER` leverages both high-definition pedigree simulations, followed by the simulation of raw ancient DNA `.fastq` sequences, through an extensive use of the softwares [ped-sim](https://github.com/williamslab/ped-sim.git) and [gargammel](https://grenaud.github.io/gargammel/), respectively.
+
+<p align="center">
+
+  | ![BADGER-workflow-summary](/doc/assets/badger-workflow-summary.png) |
+  |:-------------------------------------------------------------------:|
+  | ***Figure 1***: A summarized diagram view of the `BADGER` workflow  |
+
+</p>
 
 ## Installing BADGER
 
+### Minimum system requirements
+
+BADGER is generally designed to operate in high-performance computing environments, and will benefit from as many CPU cores, memory and disk space as possible.  The following specifications are the ***minimum*** system requirements for running BADGER:
+
+- **<ins>Processor</ins>**: 24 CPU-cores
+- **<ins>Memory</ins>**: 32GB of RAM
+- **<ins>Storage</ins>**: 128GB of available disk space
+
 ### Software requirements
 
-BADGER is written using the [`snakemake`](https://snakemake.github.io/) workflow management system
-and relies extensively on [`conda`](https://docs.conda.io/projects/conda/en/latest/index.html)
-environment manager to ensure both interoperability and reprocubility. Hence, a requirement of using
-BADGER is that users first install `conda` within their system, since `badger` in itself is designed
-with the intent being embedded within a conda environment...
+BADGER is written using the [`snakemake`](https://snakemake.github.io/) workflow management system and relies extensively on the [`conda`](https://docs.conda.io/projects/conda/en/latest/index.html) environment manager to ensure both interoperability and reproducibility. Hence, a requirement of using BADGER is that users first install `conda` within their system, since the `badger` command line interface in itself is designed to be embedded within a conda environment...
 
 To install [conda](https://docs.conda.io/en/latest/), check the documentation of 
 [miniconda3](https://docs.conda.io/en/latest/miniconda.html) and review the detailled 
@@ -28,10 +40,12 @@ wget $MINICONDA_URL && bash $(basename $MINICONDA_URL)
 
 ### 01. Clone this repository 
 ```bash
-user@desktop:~$ git clone --recursive https://github.com/MaelLefeuvre/BADGER.git
+git clone --recursive https://github.com/MaelLefeuvre/BADGER.git
 cd ./BADGER
 ```
-Note that all subsequent commands are executed from the root directory of this repository.
+
+> [!IMPORTANT]
+> Note that all subsequent commands described in this README are executed from the root directory of this repository.
 
 ### 02. Install `BADGER` within a dedicated conda environment
 #### Simple installation
@@ -52,13 +66,15 @@ This environment should contain the following programs and dependencies:
 
 ### 03. Test the installation
 
-A very basic test suite can be run using the following command, to ensure every program and dependency can be found within the path, as well as running basic tests.
+A very basic test suite can be run using the following command, to ensure every program and dependency can be found within the path, as well as running several integration tests.
 ```bash
 ./badger/install.sh test
 ```
 
 #### Manual installation
-For users wishing to manually install `BADGER` within a custom environments, a detailled step-by-step procedure may be found here: [manual installation](doc/README.installation.md)
+
+> [!TIP]
+> For users wishing to manually install `BADGER` within a custom environment, a detailled step-by-step procedure may be found here: [manual installation](doc/README.installation.md)
 
 ## Configuring BADGER
 
@@ -74,25 +90,30 @@ Badger will require several datasets in order to run properly, mainly:
 
 #### Automated download of datasets
 
-Here, `BADGER` is bundled with a workflow specifically tailored to download these datasets and place them in their correct location for future runs:
+Here, BADGER is bundled with a workflow specifically tailored to download these datasets and place them in their correct locations for future runs:
 ```bash
 badger setup
 ```
 This module will:
 1. Download and place all the datasets required for future runs in a `./data` directory.
-2. Pre-create all the required conda environments for future runs. (Note that these environments are only local to the this specific workflow and will be located under the hidden folder `.snakemake/conda`)
+2. Pre-create all the required conda environments for future runs. (Note that these environments are only local to this specific workflow and will be located under the hidden folder `.snakemake/conda`)
 
-By default, BADGER will run snakemake using half of the available cores and memory. This behaviour can be modified by providing with values for the  `--cores` and `--mem_mb` arguments.
+> [!WARNING]
+> By default, `badger` will run snakemake using half of the available cores and memory. This behaviour can be modified using the `--cores` and `--mem_mb` arguments.
 
 #### Manual download
-If you wish to instead manually download some or all of the listed datasets required to run BADGER, detailled download instructions may be found here: [Manual download instructions](doc/README.datasets.md)
+
+> [!TIP]
+> If you wish to instead manually download some or all of the listed datasets required to run BADGER, detailled download instructions may be found here: [Manual download instructions](doc/README.datasets.md)
 
 
 ### Review and modify BADGER's main config file
 
 The simulation parameters, and general behaviour of BADGER can be configured by modifying the [`config/config.yml`](config/config.yml) configuration file. Note that this file generally follows the [YAML format specifications](https://yaml.org/spec/) and is provided *as-is* to snakemake when running the pipeline.
 
-An extensive explanation of every keyword may be found here: [config parameters reference](doc/README.badger-config.md). Note that sensible defaults for all parameters are provided in this file, and BADGER is expected to run smoothly without modifying this file. However, we recommend that users should at least modify the parameters of `gargammel` and `ped-sim` in order to tailor BADGER's benchmarking results to their own use-cases:
+> [!IMPORTANT]
+> An extensive explanation of every keyword may be found here: [config parameters reference](doc/README.badger-config.md). <br><br>
+> Note that sensible defaults for all parameters are provided in this file, and BADGER is expected to run smoothly without modifying this file. However, we recommend that users should at least modify the parameters of `gargammel` and `ped-sim` in order to tailor BADGER's benchmarking results to their own use-cases:
 
 **Example gargammel configuration**: 
 ```yaml
@@ -122,11 +143,11 @@ ped-sim:
     pop:         "TSI" # 1000g-phase3 (super-)population code
 ```
 
-Here, the files provided in `data['codes']` and `data['definition']` should provide with a good starting point to start benchmarking the available kinship estimation methods up to the third degree. Advanced configurations of BADGER for specific use-cases might however require to design custom files. When such is the case, detailled explanations on the format and purpose of these files may be found by following the link here: [advanced-ped-sim-configuration](doc/README.ped-sim-config.md)
+Here, the files provided in `data['codes']` and `data['definition']` should provide with a good starting point to start benchmarking the available kinship estimation methods up to the third degree. Advanced configurations of BADGER for specific use-cases might however require to design custom files. When such is the case, detailled explanations on the format and purpose of these files may be found by following the link here:i [advanced-ped-sim-configuration](doc/README.ped-sim-config.md)
 
 ## Running BADGER
 ### Basic workflow
-The basic workflow of BADGER is divided into several steps, each with their dedicated command line programs and module:
+The basic workflow of BADGER is divided into several steps, each with their dedicated command line program and module:
 
 
 
@@ -161,39 +182,41 @@ config:
 1. Run and archive multiple benchmark replicates using the `badger` helper command line program
    - Running a benchmark replicate is mainly done by the `badger run` module
    - As the uncompressed output of BADGER may use up a lot of disk space, the `badger archive` module should be applied to efficiently store results in a dedicated directory.
-   - As running hundreds of benchmark replicates in parallel using whole genome sequences can be computationally intensive, we recommend the use of `badger loop-pipeline`, to run subdivide the replicates into more manageable chunks. These chunks can act as data checkpoints and will be  automatically archived by the software.
+   - As running hundreds of benchmark replicates in parallel using whole genome sequences can be computationally intensive, we recommend the use of `badger loop-pipeline`, to subdivide the replicates into more manageable chunks. These chunks can act as data checkpoints and will be  automatically archived by the software.
 2. Plot and summarize the benchmarking results using `badger-plots`. Plotting these results will require the use of two yaml files:
    - A first yaml is in charge of detailling which archived results should be used for plotting. This file can be easily generated using the `badger-plots make-input` module.
    - A second yaml file is in charge of providing with plotting parameters. A preconfigured template for this parameter file can be obtained by querying the `badger-plots template` module.
-   - Plotting can then be achieved using `badger-plots plot`, once in posession of these two yaml files.
+   - Plotting can then be achieved using `badger-plots plot`, once in possession of these two yaml files.
 
+---
 
 ### Quick start
 
-This quick start example assumes you have correctly installed and setup BADGER, and that its corresponding conda environment has been activated. See the dedicated corresponding sections [Installing BADGER](#installing-badger) and [Configuring BADGER](#configuring-badger) if you have not already done so.
+> [!NOTE]
+> This quick start example assumes you have correctly installed and setup BADGER, and that its corresponding conda environment has been activated. See the dedicated corresponding sections [Installing BADGER](#installing-badger) and [Configuring BADGER](#configuring-badger) if you have not already done so.
 
 
 #### 01. Starting a single BADGER run of simulations.
 
-Once properly configured, running a single run of badger can be applied using the following command
+Once properly configured, running a single run of BADGER can be executed using the following command
 
 ```bash
 badger run --cores 32 --mem-mb 64000 --verbose
 ```
 
-This example will start the snakemake pipeline, with sensible defaults, while requesting 32 cores and 64000 as computational resources, and using the parameters specified in `config/config.yml`.
+This example will start the snakemake pipeline, with sensible defaults, while requesting 32 cores and 64 gigabytes of memory as computational resources, and using the parameters specified in `config/config.yml`.
 
-Once completed, all of the generated results should be contained within a `./results` directory at the root of BADGER's repository.
+Once completed, all generated results should be contained within a `./results` directory at the root of BADGER's repository.
 
 
 
 #### 02. Archiving a single simulation run of BADGER
 
-Once an iteration of `badger run` has completed, the simulation results may be stored and archived in a compressed form, in a separate directory. The directory may be specified by specifying a valid path in the `config/config.yml` file
+Once an iteration of `badger run` has been completed, the simulation results may be stored and archived in a compressed form, in a separate directory. The directory may be specified by providing a valid path in the `config/config.yml` file
 
 ```txt
 archive:
-  archive-dir: "/path/to/a/directory"
+  archive-dir: "/path/to/an/archive/folder"
   compress-level: 9
 ```
 
@@ -234,18 +257,18 @@ archive/
 </details>
 
 --- 
-Note that some of these files (most notably those located under `run-<runid>/results/02-preprocess`) are not needed to estimate classification performance, but may serve as a useful checkpoint to re-apply badger from already processed bam files. 
+Note that some of these files (most notably those located under `run-<runid>/results/02-preprocess`) are not needed to estimate classification performance, but may serve as a useful checkpoint to re-apply BADGER from already processed bam files. 
 
 #### 03. Running BADGER in a loop.
 
-As the process of running and archiving hundred of pedigree simulation replicates in parallel may grow the number of snakemake jobs to unmaneable levels for the available computational resources, the `badger loop-pipeline` can here be used to sequentially run and archive several rounds of BADGER simulations. Hence, the following command...
+As the process of running and archiving hundreds of pedigree simulation replicates in parallel may grow the number of snakemake jobs to unmanageable levels for the available computational resources, the `badger loop-pipeline` can here be used to sequentially run and archive several rounds of BADGER simulations. Hence, the following command...
 ```bash
 badger loop-pipeline --iterations 10 -c 32 -m 48000
 ```
 
-Is expected to sequentially run the `badger run` and `badger archive` modules for a total of ten loops, by leveragin a total of 32 cores and 48GB of memory during every run, and using the same `config/config.yml` configuration file.
+Is expected to sequentially run the `badger run` and `badger archive` modules for a total of ten loops, by leveraging a total of 32 cores and 48GB of memory during every run, and using the same `config/config.yml` configuration file.
 
-Following this example, and upon the completion of the command, users should thus expect a total of ***10*** archived run in their specified archive directory:
+Following this example, and upon the completion of the command, users should thus expect a total of ***10*** archived runs in their specified archive directory:
 <details><summary>Click here for a detailled view of the expected directory structure after running the previous command:</summary>
 
 ```text
@@ -270,7 +293,7 @@ archive/
 
 ### Unpacking archived runs
 
-The `badger unpack` module provides with a set of utilities for users wishin to review previously archived results in a decompressed form. Hence, the following command:
+The `badger unpack` module provides with a set of utilities for users wishing to review previously archived results in a decompressed form. Hence, the following command:
 
 ```bash
 badger unpack all --archive-dir ./path/to/archive/dir --output-dir ./path/to/output/dir
@@ -298,11 +321,12 @@ Will sequentially run `badger unpack`, `badger run` and `badger archive` on the 
 
 ## Plotting the output of BADGER
 
-Summarizing the output of multiple BADGER runs through statistical analysis and plotting is handled by the `badger-plots` command line program. Using `badger-plots` will generally assume that you have applied BADGER in multiple replicates on several parameter set, each representing a given biological (e.g. applying BADGER on several simulated average sequencing depths, by modifying the value of `gargammel['comp_endo']` in the usual `config/config.yml` file). 
+Summarizing the output of multiple BADGER runs through statistical analysis and plotting is handled by the `badger-plots` command line program. Using `badger-plots` will generally imply that you have applied BADGER in multiple replicates on several parameter sets, each representing a given biological condition (e.g. applying BADGER on several simulated average sequencing depths, by modifying the value of `gargammel['comp_endo']` in the usual `config/config.yml` file). 
 
-Note that each simulated biological condition is expected to be stored in a separate archive directory for `badger-plots` to work, as the program generally relies on the assumption that the data was compressed and structured using `badger archive`.
+> [!IMPORTANT]
+> Note that each simulated biological condition is expected to be stored in a separate archive directory for `badger-plots` to work, as the program generally relies on the assumption that the data was compressed and structured using `badger archive`.
 
-Here, throughout this section, we'll assume that a user had previously generated multiple replicates of badger to estimate the impact of single-strand deaminations (range: [0, 30]%), at a set sequencing depth of 0.02X
+Here, throughout this section, we'll assume that a user had previously generated multiple replicates of BADGER to estimate the impact of single-strand deaminations (range: [0, 30]%), at a set sequencing depth of 0.02X
 
 Here, the user has collected every corresponding set of archives into a single directory, and now wishes to evaluate the classification performance of READv2 and KIN on this parameter space.
 
@@ -347,7 +371,7 @@ mkdir plots
 badger-plots make-input --archive-dir badger-archived-runs-ssdeamination-0.02X-TSI/ --subdirs 0percent,10percent,20percent,30percent --methods READv2,KIN > plots/input.yml
 ```
 
-- `--archive-dir` shoud specify a main directory, where all of the desired BADGER archive directories should be located
+- `--archive-dir` should specify a main directory, where all of the desired BADGER archive directories should be located
 - `--subdirs` is used to provide with a comma-separated list of biological conditions, each corresponding to a subdirectory found within `--archive-dir`. (Note that this argument can also accept [PCRE](https://www.pcre.org/) regular expressions for pattern matching)
 - `--methods` is used to provide with a comma-separated list of kinship estimation methods to test.
 
@@ -380,11 +404,16 @@ A template `params.yml` file containing default values for plotting can be gener
 badger-plots template --input plots/input.yml --pedigree-codes resources/ped-sim/ped-definition/outbred/pedigree_codes.txt --output-dir plots > plots/params.yml
 ```
 
-The resulting `plots/params.yml` file is a simple yaml configuration file containing default plotting parameters. These default values can of course be modified at leisure. A Detailled summary of every parameter can be found here: [`badger-plot` plotting parameters reference](doc/README.badger-plots.md)
+The resulting `plots/params.yml` file is a simple yaml configuration file containing default plotting parameters. These default values can of course be modified at leisure.
+
+> [!IMPORTANT]
+> A detailled summary of every parameter can be found here: [`badger-plot` plotting parameters reference](doc/README.badger-plots.md) <br><br>
+> Note that almost all of the provided parameters are provided with sensible defaults. Thus, `input` and `pedigree-codes` are the only two parameters that need to be explicitly set by users.
+
 
 ### 03. Plotting summary statistics 
 
-Once in posession of an `input.yml` and a properly configured `params.yml` file, plotting is simply achieved using the `plot` module:
+Once in possession of an `input.yml` and a properly configured `params.yml` file, plotting is simply achieved using the `plot` module:
 
 ```bash
 badger-plots plot --yaml plots/params.yml --threads 32

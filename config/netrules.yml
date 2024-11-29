@@ -1,7 +1,6 @@
 netrules:
   retries:          20
   1000g-phase3-url: "ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
-  1240K-url:        "https://reichdata.hms.harvard.edu/pub/datasets/amh_repo/curated_releases/V52/V52.2/SHARE/public.dir/v52.2_1240K_public.tar"
   hapmapII:         "http://ftp.ncbi.nlm.nih.gov/hapmap/recombination/2011-01_phaseII_B37/genetic_map_HapMapII_GRCh37.tar.gz"
   reference-genomes:
     grch37:
@@ -16,7 +15,14 @@ netrules:
   ped-sim:
     interference-map-url:    "raw.githubusercontent.com/williamslab/ped-sim/master/interfere/nu_p_campbell.tsv"
     refined-genetic-map-url: "github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/master/Refined_genetic_map_b37.tar.gz"
+    data:
+      default-map:  "data/ped-sim/recombination_maps/refined_mf.simmap"
+      default-interference: "data/ped-sim/interference_maps/nu_p_campbell.tsv"
+  aadr-1240k:
+    url:             "https://reichdata.hms.harvard.edu/pub/datasets/amh_repo/curated_releases/V52/V52.2/SHARE/public.dir/v52.2_1240K_public.tar"
+    default-targets: "data/Reich-dataset/1240K/v52.2_1240K_public.snp"
   TKGWV2:
-    support-files-url: "https://drive.google.com/drive/folders/1Aw-0v_7CUorHJOLpCJ0QVCwEdH43HlO4"
-    support-files-dir: "data/TKGWV2"
+    support-files-url:          "https://drive.google.com/drive/folders/1Aw-0v_7CUorHJOLpCJ0QVCwEdH43HlO4"
+    support-files-dir:          "data/TKGWV2"
+    default-target-frequencies: "data/TKGWV2/1240K/1000GP3_EUR_1240K.frq"
   

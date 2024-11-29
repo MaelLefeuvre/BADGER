@@ -58,9 +58,9 @@ rule download_reich_1240K:
     Download the 1240K dataset from Reich Lab's website.
     """
     input:
-        tarball    = HTTP.remote(config["netrules"]["1240K-url"])    # ---- Snakemake-7
+        tarball    = HTTP.remote(config["netrules"]["aadr-1240k"]["url"])    # ---- Snakemake-7
     output:
-        eigenstrat = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".snp", ".ind", ".geno")
+        eigenstrat = multiext(get_snp_targets(ext=""), ".snp", ".ind", ".geno")
     params:
         output_dir = lambda wildcards, output: dirname(output.eigenstrat[0])
     resources:
