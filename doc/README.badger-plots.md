@@ -13,12 +13,12 @@ This page lists and describes all the graphical parameters that can be configure
 > <ins>**Allowed Values**</ins>: (String) Any path linking to an existing and valid `badger-plots` input definition file (in [YAML format](https://yaml.org/spec/)).
 
 ## <a name="pedigree-codes"></a>pedigree-codes
-> <ins><ins>**Description**</ins></ins>: $[\mathsf{\color{red}Required}]$ Path pointing to a `badger` `pedigree-codes` input definition file. The  provided file should be the the same as the one used during ***all*** of the archived simulations results pointed through [input](#input). i.e. The provided file should be identical to the one specified in your `config.yml` file when running `badger` (See the corresponding parameter: [codes](/doc/README.badger-config.md#codes)).
+> <ins><ins>**Description**</ins></ins>: $[\mathsf{\color{red}Required}]$ Path pointing to a `badger` `pedigree-codes` input definition file. The  provided file should be the same as the one used during ***all*** of the archived simulations results pointed through [input](#input). i.e. the provided file should be identical to the one specified in your `config.yml` file when running `badger` (See the corresponding parameter: [codes](/doc/README.badger-config.md#codes)).
 
 > <ins>**Allowed values**</ins>: (String) Any path linking to an existing and valid `badger`. `pedigree-codes` definition file. Detailled specifications on the format and purpose of pedigree-codes definition files can be found here: [pedigree-codes-files](README.ped-sim-config.md#pedigree-codes-files).
 
 ## <a name="output-dir"></a>output-dir
-> <ins>**Description**</ins>: Path pointing to a directory, where output plots and data should be stored. If this directory is non existent, `badger-plots` will attempt to create it for you, provided it has the correct filesystem permissions. 
+> <ins>**Description**</ins>: Path pointing to a directory, where output plots and data should be stored. If this directory is non-existent, `badger-plots` will attempt to create it for you, provided it has the correct filesystem permissions. 
 
 > <ins>**Allowed values**</ins>: (String) Any path pointing to a valid directory.
 
@@ -65,7 +65,7 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
   > <ins>**Default**</ins>: *`"OCI-performance-plot"`
 
 - ### <a name="transpose"></a>transpose
-  > <ins>**Description**</ins>: Transpose the plotting order of benchmarked methods and biological conditions. When the value is set to `no`, The grid of confusion matrices within the plot is ordered by arranging each kinship estimation method as a distinct row, and each biological condition as a distinct column. Setting this value to `yes` will instead arrange biological conditions on a distinct *row*, and methods on a distinct *column*.
+  > <ins>**Description**</ins>: Transpose the plotting order of benchmarked methods and biological conditions. When the value is set to `no`, the grid of confusion matrices within the plot is ordered by arranging each kinship estimation method as a distinct row, and each biological condition as a distinct column. Setting this value to `yes` will instead arrange biological conditions on a distinct *row*, and methods on a distinct *column*.
 
   > <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
 
@@ -160,11 +160,10 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
     > <ins>**Examples**</ins>:  
     > `ticklabels: ~`  
     > `ticklabels: ["U", "3°", "2°", "1°", "S"]`  
-    > `ticklabels: ["U", "3°", "2°", "1°", "S"]`  
     > `ticklabels: ["Unr", "Third", "Second", "First", "Self"]`  
 
   - #### <a name="tickfont"></a>tickfont
-    > <ins>**Description**</ins>: Specify the fontsize of every confusion matrix' ticklabels. (in px.)
+    > <ins>**Description**</ins>: Specify the font size of every confusion matrix' ticklabels. (in px.)
 
     > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, representing a pixel size.
 
@@ -194,7 +193,7 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
 - ### <a name="scatter"></a>scatter
   Categorizes plotting parameters related to the display of the summary scatterplot of OCI performance values.
   - #### <a name="dash"></a>dash
-    > <ins>**Description**</ins>: Specify A list of drawing style for every line found within the scatterplot. Note that values of the list will be recycled, if the number of lines to plot is greater than the number of elements within the list. 
+    > <ins>**Description**</ins>: Specify a list of drawing style for every line found within the scatterplot. Note that values of the list will be recycled, if the number of lines to plot is greater than the number of elements within the list. 
 
     > <ins>**Allowed values**</ins>: (List[strings]) A list of plotly-compatible line dash styles. (i.e.: *`"solid"`*, *`"dot"`*, *`"dash"`*, *`"longdash"`*, *`"dashdot"`*, or *`"longdashdot"`*). For an extensive description of allowed values, see the corresponding plotly reference entry: [scatter line dash](https://plotly.com/r/reference/scatter/#scatter-line-dash)
 
@@ -203,7 +202,7 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
     > <ins>**Examples**</ins>:  
     > `dash: "solid"`  
     > `dash: ["solid", "dash"]`  
-    > `dash: ["solit", "dash", "dashdot", "dot"]`
+    > `dash: ["solid", "dash", "dashdot", "dot"]`
 
   - #### <a name="mode"></a>mode
     > <ins>**Description**</ins>: Specify the general drawing mode of the scatterplot. 
@@ -223,14 +222,14 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
       > <ins>**Default**</ins>: `[0.38, 1.02]`
 
     - ##### <a name="tickfont-1"></a>tickfont
-      > <ins>**Description**</ins>: Specify the fontsize of the yaxis tick labels. (in px.)
+      > <ins>**Description**</ins>: Specify the font size of the yaxis tick labels. (in px.)
 
       > <ins>**Allowed values**</ins>: (integer) Any non negative integer value in the range $[1, +\infty]$, representing a pixel size.
 
       > <ins>**Default**</ins>: `10`
 
     - ##### <a name="dtick"></a>dtick
-      > <ins>**Description**</ins>: Specify the interval between every displayed tick labels on the yaxis.
+      > <ins>**Description**</ins>: Specify the interval between displayed tick labels on the yaxis.
 
       > <ins>**Allowed values**</ins>: (float) Any floating point value in the range $[0, 1]$, representing a y-axis value.
 
@@ -246,19 +245,19 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
     > <ins>**Examples**</ins>:  
     > `colors: ~`  
     > `colors: ["#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"]`  
-    > `colors: ["#00204DFF]`  
+    > `colors: ["#00204D"]`  
 
 - ### <a name="width"></a>width
   > <ins>**Description**</ins>: Specify the default width of the output plot (in px.)
 
-  > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, represending a displayed width (in pixels).
+  > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, representing a displayed width (in pixels).
 
   > <ins>**Default**</ins>: `1920`
 
 - ### <a name="height"></a>height
   > <ins>**Description**</ins>: Specify the default height of the output plot (in px.)
 
-  > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, represending a displayed width (in pixels).
+  > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, representing a displayed height (in pixels).
 
   > <ins>**Default**</ins>: `1080`
 
@@ -274,7 +273,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
 - ### <a name="transpose-1"></a>transpose
 
-  > <ins>**Description**</ins>: Transpose the plotting order of benchmarked methods and biological conditions. When the value is set to `no`, Every tested biological condition is plotted within a separate plot, while individual bars will correspond to a given kinship estimation method. Setting this value to `yes` will instead split the results of every kinship estimation method in a separate subplot, while individual bars will correspond to a given biological condition.
+  > <ins>**Description**</ins>: Transpose the plotting order of benchmarked methods and biological conditions. When the value is set to `no`, every tested biological condition is plotted within a separate plot, while individual bars will correspond to a given kinship estimation method. Setting this value to `yes` will instead split the results of every kinship estimation method in a separate subplot, while individual bars will correspond to a given biological condition.
 
   > <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
 
@@ -295,7 +294,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
   > <ins>**Default**</ins>: `""`
 
 - ### <a name="rmsd"></a>rmsd
-  Categorizes plotting parameters shared across every `nRMSD` subplots
+  Categorizes plotting parameters shared across all `nRMSD` subplots
   - #### <a name="title-1"></a>title
     > <ins>**Description**</ins>: Specify a subtitle for the `nRMSD` subplots
 
@@ -304,7 +303,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
     > <ins>**Default**</ins>: `nRMSD`
 
   - #### <a name="dtick-1"></a>dtick
-    > <ins>**Description**</ins>: Specify the interval between every displayed tick labels on the yaxis.
+    > <ins>**Description**</ins>: Specify the interval between displayed tick labels on the yaxis.
 
     > <ins>**Allowed values**</ins>: (float) Any floating point value in the range $[0, 1]$, representing a y-axis value.
 
@@ -318,7 +317,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
     > <ins>**Default**</ins>: `0`
 
 - ### <a name="mbe"></a>mbe
-  Categorizes plotting parameters shared across every `nMBE` subplots
+  Categorizes plotting parameters shared across all `nMBE` subplots
 
   - #### <a name="title-2"></a>title
     > <ins>**Description**</ins>: Specify a subtitle for the `nMBE` subplots
@@ -328,7 +327,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
     > **Default:** `nMBE`
   
   - #### <a name="dtick-2"></a>dtick
-    > <ins>**Description**</ins>: Specify the interval between every displayed tick labels on the yaxis.
+    > <ins>**Description**</ins>: Specify the interval between displayed tick labels on the yaxis.
 
     > <ins>**Allowed values**</ins>: (float) Any floating point value in the range $[0, 1]$, representing a y-axis value.
 
@@ -351,32 +350,32 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 - ### <a name="mbe_plot_ratio"></a>mbe_plot_ratio
   > <ins>**Description**</ins>: Specify the display ratio between the column of `nMBE` subplots and the column of `nRMSD` subplots. Note that increasing this value will have the effect of increasing the display width of every `nMBE` subplot.
 
-  > <ins>**Allowed values**</ins>: (float) Any floating point value in the range $[0, 1]$, reprenting a display width ratio. 
+  > <ins>**Allowed values**</ins>: (float) Any floating point value in the range $[0, 1]$, representing a display width ratio. 
 
   > <ins>**Default**</ins>: `0.3`
 
 - ### <a name="ticksize"></a>ticksize
   Categorizes plotting parameters related to the display size of tick labels within the accuracy plot
   - #### <a name="xaxis"></a>xaxis
-    > <ins>**Description**</ins>: Specify the fontsize of every label found on the x-axis (in px.).
+    > <ins>**Description**</ins>: Specify the font size of every label found on the x-axis (in px.).
 
-    > <ins>**Allowed values**</ins>: (integer) Any non negative integer value in the range $[1, +\infty]$, reprenting a pixel size.
+    > <ins>**Allowed values**</ins>: (integer) Any non negative integer value in the range $[1, +\infty]$, representing a pixel size.
 
     > <ins>**Default**</ins>: `16`
 
   - #### <a name="yaxis-1"></a>yaxis
-    > <ins>**Description**</ins>: Specify the fontsize of every label found on the y-axis (in px.).
+    > <ins>**Description**</ins>: Specify the font size of every label found on the y-axis (in px.).
 
-    > <ins>**Allowed values**</ins>: (integer) Any non negative integer value in the range $[1, +\infty]$, reprenting a pixel size.
+    > <ins>**Allowed values**</ins>: (integer) Any non negative integer value in the range $[1, +\infty]$, representing a pixel size.
 
     > **Default:** `12`
 
 - ### <a name="legend-1"></a>legend
   Categorizes plotting parameters related to the display of the legend within the main accuracy plot.
   - #### <a name="size-1"></a>size
-    > <ins>**Description**</ins>: Specify the fontsize of every figure legend key. (in px.)
+    > <ins>**Description**</ins>: Specify the font size of every figure legend key. (in px.)
 
-    > <ins>**Allowed values**</ins>: (integer) Any non negative integer value in the range $[1, +\infty]$, reprenting a pixel size.
+    > <ins>**Allowed values**</ins>: (integer) Any non negative integer value in the range $[1, +\infty]$, representing a pixel size.
 
     > <ins>**Default**</ins>: `12`
 
@@ -399,12 +398,12 @@ Categorizes plotting parameters arguments for the normalized root mean square de
     > <ins>**Examples**</ins>:  
     > `colors: ~`  
     > `colors: ["#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"]`  
-    > `colors: ["#00204DFF]`  
+    > `colors: ["#00204D"]`  
 
   - #### <a name="patterns"></a>patterns
     Categorizes arguments related to the fill pattern of bars within the plot. See the corresponding entry in plotly's reference: [bar marker pattern](https://plotly.com/r/reference/bar/#bar-marker-pattern)
     - ##### <a name="shape"></a>shape
-      > <ins>**Description**</ins>: Specify the shape(s) of the hatching-pattern fill of every grouped.  Note that values of the list will be recycled, if the number of grouped bars is greater than the number of elements within the list.
+      > <ins>**Description**</ins>: Specify the shape(s) of the hatching-pattern fill of every grouped bar.  Note that values of the list will be recycled, if the number of grouped bars is greater than the number of elements within the list.
 
       > <ins>**Allowed values**</ins>: (List[strings]) A list of plotly-compatible fill pattern labels (i.e.: *`""`*, *`"/"`*, *`"\"`*, *`"x"`*, *`"-"`*, *`"|"`*, *`"+"`*, *`"."`*), where each symbol corresponds to a different hatch-pattern. For an extensive description of allowed values, see the corresponding plotly reference entry: [pattern shape](https://plotly.com/r/reference/bar/#bar-marker-pattern-shape)
 
@@ -418,7 +417,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
     - ##### <a name="solidity"></a>solidity
       > <ins>**Description**</ins>: Specify the fraction of the area filled by the provided patterns. Increasing this value will *increase* the filled area of the hatching pattern.
 
-      > <ins>**Allowed values**</ins>: (float) Any floating point value in the range $[0, 1]$, reprenting a fraction of filled area.
+      > <ins>**Allowed values**</ins>: (float) Any floating point value in the range $[0, 1]$, representing a fraction of filled area.
 
       > <ins>**Default**</ins>: `0.5`
 
@@ -432,13 +431,13 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 - ### <a name="width-1"></a>width
   > <ins>**Description**</ins>: Specify the default width of the output plot (in px.)
 
-  > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, represending a displayed width (in pixels).
+  > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, representing a displayed width (in pixels).
 
   > <ins>**Default**</ins>: `1120`
 
 - ### <a name="height-1"></a>height
   > <ins>**Description**</ins>: Specify the default height of the output plot (in px.)
 
-  > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, represending a displayed width (in pixels).
+  > <ins>**Allowed values**</ins>: (integer) Any non negative value in the range $[1, +\infty]$, represending a displayed height (in pixels).
 
   > <ins>**Default**</ins>: `1190`

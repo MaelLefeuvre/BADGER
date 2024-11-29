@@ -18,7 +18,7 @@ Here, a detailled list of URLs as well as instructions to download each dataset 
 BADGER currently expects that these datasets adhere to the following directory structure, 
 inside of a `./data` directory, located at the root of this repository. 
 
-Using a mix of symbolic and/or hard links should, however be of no problem at all,
+Using a mix of symbolic and/or hard links should, however, be of no problem at all,
 in cases where the user already has these files at hand on their workstation.
 
 ```diff

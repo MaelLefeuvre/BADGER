@@ -23,13 +23,13 @@ Categorizes arguments related to the `badger archive` module.
   > <ins>**Allowed values**</ins>: (String) Any valid path to a directory.
 
 - ### <a name="compress-level"></a>compress-level
-  > <ins>**Description**</ins>: Specify a custom compression level for the [`xz`](https://linux.die.net/man/1/xz) compression algorithm. higher values will request for a higher compression rate impying a longer runtime, but a lighter disk-usage footprint.
+  > <ins>**Description**</ins>: Specify a custom compression level for the [`xz`](https://linux.die.net/man/1/xz) compression algorithm. Higher values will require a higher compression rate implying a longer runtime, but a lighter disk-usage footprint.
 
   > <ins>**Allowed values**</ins>: (Integer) An integer in the range $[0, 9]$
 ## <a name="ped-sim"></a>ped-sim
 Categorizes arguments related to pedigree simulations, and the `ped-sim` software
 - ### <a name="replicates"></a>replicates
-  > <ins>**Description**</ins>: Number of pedigree replicates for this given badger run. Increasing this value will optimize the overall runtime of BADGER. but will also linearly increase the number of required snakemake jobs. This behavior will be of little consequence on HPC and computer-cluster environments, but may become unmannageable on single-server environments. Values in the range $[1, 10]$, combined with the use of `loop-pipeline` are thus highly recommended if you plan to run BADGER on a desktop computer.
+  > <ins>**Description**</ins>: Number of pedigree replicates for this given badger run. Increasing this value will optimize the overall runtime of BADGER, but will also linearly increase the number of required snakemake jobs. This behavior will be of little consequence on HPC and computer-cluster environments, but may become unmanageable on single-server environments. Values in the range $[1, 10]$, combined with the use of `loop-pipeline` are thus highly recommended if you plan to run BADGER on a desktop computer.
 
   > <ins>**Allowed values**</ins>: (Integer) An integer in the range $[1, +\infty[$
 
@@ -74,7 +74,7 @@ Categorizes arguments related to pedigree simulations, and the `ped-sim` softwar
   Categorizes optional parameters and flags for the `ped-sim` program. These optional parameters are described in a dedicated section within ped-sim's documentation: [Other optional arguments](https://github.com/williamslab/ped-sim/tree/v1.4.2?tab=readme-ov-file#other-optional-arguments). Note that this section does not currently map every optional arguments of `ped-sim` exhaustively.
 
   - #### <a name="error_rate"></a>error_rate
-    > <ins>**Description**</ins>: Sets `ped-sim`'s internl genotyping error rate (`--err_rate` parameter)
+    > <ins>**Description**</ins>: Sets `ped-sim`'s internal genotyping error rate (`--err_rate` parameter)
 
     > <ins>**Allowed values**</ins>: (float) Any valid floating point value found in the range $[0, 1]$
 
@@ -87,7 +87,7 @@ Categorizes arguments related to pedigree simulations, and the `ped-sim` softwar
 
     > <ins>**Allowed values**</ins>: (Integer) a valid integer number, specifying the number of additional samples to include. Negative values (e.g.: `-1`) will have the impact of printing all of the available input samples.
   - #### <a name="pop"></a>pop
-    > <ins>**Description**</ins>: Select which 1000g-project' population should be used as a source for founder individuals within `ped-sim`'s pedigree simulations. A detailled list of the available population codes can be seen in IGSR's FAQ section here: [What do the population codes mean ?](https://www.internationalgenome.org/faq/what-do-the-population-codes-mean/)
+    > <ins>**Description**</ins>: Select which 1000g-project population should be used as a source for founder individuals within `ped-sim`'s pedigree simulations. A detailled list of the available population codes can be seen in IGSR's FAQ section here: [What do the population codes mean ?](https://www.internationalgenome.org/faq/what-do-the-population-codes-mean/)
 
     > <ins>**Allowed values**</ins>: (String) Any valid 1000 genome population, or super-population label.
 
@@ -124,24 +124,24 @@ This sub-section categorizes all parameters related to the `gargammel` aDNA frag
   > <ins>**Allowed values**</ins>: (float) Any valid floating point value in the range $[0, 1]$
 - ### <a name="pmd-model"></a>pmd-model
   > <ins>**Description**</ins>: Select which post-mortem damage simulation model to use with `gargammel`.
-  > - *`"misincorporation"`: provide the software with a table of misincorporation occurences. Usually obtained by applying [`MapDamage`](https://ginolhac.github.io/mapDamage/) on a template sample (`misincorporation.txt` output file).
+  > - *`"misincorporation"`: Provide the software with a table of misincorporation occurrences. Usually obtained by applying [`MapDamage`](https://ginolhac.github.io/mapDamage/) on a template sample (`misincorporation.txt` output file).
   > - *`"briggs"`: Simulate post-mortem deamination using the Briggs model *[(Briggs et al 2007)](https://doi.org/10.1073/pnas.0704665104)*.
 
   > <ins>**Allowed values**</ins>: (String) *`"briggs"`* or *`"misincorporation"`*
 - ### <a name="misincorporation"></a>misincorporation
-  Categorizes arguments and inputs required to use of the `"misincorporation"` post-mortem damage model of gargammel. These arguments are ignored unless [`pmd-model`](#pmd-model) is set to *`"misincorporation"`*
+  Categorizes arguments and inputs required to use the `"misincorporation"` post-mortem damage model of gargammel. These arguments are ignored unless [`pmd-model`](#pmd-model) is set to *`"misincorporation"`*
   - #### <a name="file"></a>file
     > <ins>**Description**</ins>: Path to a user-generated *`misincorporation.txt`* file. Note that these files can be generated by applying [`MapDamage`](https://ginolhac.github.io/mapDamage/) on a template sample.
 
     > <ins>**Allowed values**</ins>: (String) Any valid path pointing to a valid *"`misincorporation.txt`"* file. Usable examples of such files can be found in the [`resources/gargammel/misincorporations/`](resources/gargammel/misincorporations/) directory of this repository.
 
   - #### <a name="protocol"></a>protocol
-    > <ins>**Description**</ins>: Specify whether the misincorporation.txt file was gnerated from a double-strand or single-strand library.
+    > <ins>**Description**</ins>: Specify whether the misincorporation.txt file was generated from a double-strand or single-strand library.
 
     > <ins>**Allowed values**</ins>: (String) *`"single"`* or *`"double"`*
 
 - ### <a name="briggs"></a>briggs
-  Categorizes arguments and inputs required to use of the `"briggs"` post-mortem damage model of gargammel. These arguments are ignored unless [`pmd-model`](#pmd-model) is set to *`"briggs"`*
+  Categorizes arguments and inputs required to use the `"briggs"` post-mortem damage model of gargammel. These arguments are ignored unless [`pmd-model`](#pmd-model) is set to *`"briggs"`*
   - #### <a name="nick-frequency"></a>nick-frequency
     > <ins>**Description**</ins>: Per-base nick-frequency rate ($\nu$ parameter.)
 
@@ -162,12 +162,12 @@ This sub-section categorizes all parameters related to the `gargammel` aDNA frag
 - ### <a name="sizefreq"></a>sizefreq
   > <ins>**Description**</ins>: Path to a user-generated fragment size frequency table. Usable exemples of such files may be found in the [`resources/gargammel/sizefreqs/`](resources/gargammel/sizefreqs/) directory of this repository. This file should be unheaded, and contain two columns
   >  - `<n>`: length of the fragment
-  >  - `<prob>`: probability density of the given fragment length from occuring.
+  >  - `<prob>`: probability density of occurence, for the given fragment length.
 
   > <ins>**Allowed values**</ins>: (String) Any valid path pointing to an existing size-frequency distribution table. 
 
 - ### <a name="qshift"></a>qshift
-  > <ins>**Description**</ins>: Shift the error rate of reads by a factor of `Increase error rate for forward reads by a factor of ${1}/{(10^{{<factor>}\over{10}})}$. Notice that higher values will carry the effect of ***decreasing*** the error rate on both forward and reverse strands.
+  > <ins>**Description**</ins>: Shift the error rate of reads by a factor of ${1}/{(10^{{qshift}\over{10}})}$. Notice that higher values will carry the effect of ***decreasing*** the error rate on both forward and reverse strands.
 
   > <ins>**Allowed values**</ins>: (Integer) Any valid integer value in the range $[0, 93]$
 
@@ -235,14 +235,14 @@ Categorises parameters related to the alignment of reads and pre-processing of a
     Categorises parameters for the `aln` module of `bwa`. These parameters are ignored unless the [aligner](#aligner) parameter value is set to *`"aln"`*. For a good starting set of recommendations regarding these parameters, see *[(Oliva et al. 2021)](https://doi.org/10.1093/bib/bbab076)*
 
   - ##### <a name="seed-length"></a>seed-length
-    > <ins>**Description**</ins>: Minimum seed length (this parameter is mapped to the `-l` argument of `bwa aln`). The provided integer value will require `bwa` to use subsequence of the corresponsing length as seed. However, If the provided value is ***larger*** than the query sequence, then seeding will be disabled altogether. This latter behavior is usually recommended in most use-cases when aligning aDNA whole-genome shotgun sequencing data.
+    > <ins>**Description**</ins>: Minimum seed length (this parameter is mapped to the `-l` argument of `bwa aln`). The provided integer value will require `bwa` to use subsequence of the corresponding length as seed. However, if the provided value is ***larger*** than the query sequence, then seeding will be disabled altogether. This latter behavior is usually recommended in most use-cases when aligning aDNA whole-genome shotgun sequencing data.
 
     > <ins>**Allowed values**</ins>: (integer) Any positive non-zero integer, representing a seed length (in bases).
 
   - ##### <a name="max-open-gap"></a>max-open-gap
-    > <ins>**Description**</ins>: Maximum number of gap opens when aligning a fragment (i.e. a continuous indel sequence found along the fragment). This parameter is mapped to the `-o` argument of `bwa aln`. 
+    > <ins>**Description**</ins>: Maximum number of gap openings when aligning a fragment (i.e. a continuous indel sequence found along the fragment). This parameter is mapped to the `-o` argument of `bwa aln`. 
 
-    > <ins>**Allowed values**</ins>: (integer) Any positive non-zero integer, representing a maximum allowed number of occurences.
+    > <ins>**Allowed values**</ins>: (integer) Any positive non-zero integer, representing a maximum allowed number of occurrences.
 
   - ##### <a name="max-seed-diff"></a>max-seed-diff
     > <ins>**Description**</ins>: Maximum within-seed edit distance. This parameter is mapped to the `-k` argument of `bwa aln`.
@@ -250,19 +250,19 @@ Categorises parameters related to the alignment of reads and pre-processing of a
     > <ins>**Allowed values**</ins>: Any positive non-zero integer, representing a maximum number of allowed substitutions
 
   - ##### <a name="max-miss-prob"></a>max-miss-prob
-    > <ins>**Description**</ins>: This parameter is mapped to the `-n` argument of `bwa aln`, which can can either control the maximum wthin-fragment edit distance, if the provided value is an integer, or the maximum fraction of missing alignments if the provided value is a floating point number. In the latter case, the maximum allowed edit distance is chosen dynamically, according the length of the fragment.
+    > <ins>**Description**</ins>: This parameter is mapped to the `-n` argument of `bwa aln`, which can either control the maximum within-fragment edit distance, if the provided value is an integer, or the maximum fraction of missing alignments if the provided value is a floating point number. In the latter case, the maximum allowed edit distance is chosen dynamically, according to the length of the fragment.
 
     > <ins>**Allowed values**</ins>: Either a floating point value in the range $[0, 1]$, representing a fraction of missing alignments, or an integer value in the range $[0, +\infty]$, representing the maximum allowed Levenstein distance. 
 
 - ### <a name="filter"></a>filter
   Categorises post-alignment quality filtration parameters.
   - #### <a name="min-mq"></a>min-MQ
-    > <ins>**Description**</ins>: Filter-out any fragment carrying a mapping quality that is lower than the provided threshold
+    > <ins>**Description**</ins>: Filter out any fragment carrying a mapping quality that is lower than the provided threshold
 
     > <ins>**Allowed values**</ins>: (integer) Any positive non-zero integer in the range $[0, 33]$, representing a PHRED33 mapping quality score
 
   - #### <a name="min-length-1"></a>min-length
-    > <ins>**Description**</ins>: Filter-out any fragment with a length lower than the provided threshold
+    > <ins>**Description**</ins>: Filter out any fragment with a length lower than the provided threshold
   
     > <ins>**Allowed values**</ins>: (integer) Any positive non-zero integer in the range $[0, +\infty]$, representing a fragment length.
 - ### <a name="dedup"></a>dedup
@@ -277,9 +277,9 @@ Categorises parameters related to the alignment of reads and pre-processing of a
 - ### <a name="pmd-rescaling"></a>pmd-rescaling
   Categorises arguments related to post-mortem damage estimation and rescaling softwares
   - #### <a name="rescaler"></a>rescaler
-    > <ins>**Description**</ins>:  Select the main pmd-rescaling software to use. This pre-processing step is optional and may be replaced by a null value (*`~`*), to skip pmd-rescaling alltogether.
+    > <ins>**Description**</ins>:  Select the main pmd-rescaling software to use. This pre-processing step is optional and may be replaced by a null value (*`~`*), to skip pmd-rescaling altogether.
     > - *`"mapdamage"`*: Estimate and rescale post-mortem deaminations using `mapDamagev2` *[(Jо́nsson et al. 2013)](https://doi.org/10.1093/bioinformatics/btt193)*. See the corresponding documentation here: [mapDamagev2](https://ginolhac.github.io/mapDamage/).
-    > - *`"pmdtools"`*: Estimate and rescale post-mortem edaminations using `PMDtools` *[(Skoglund et al. 2014)](https://doi.org/10.1073/pnas.1318934111)* . See the corresponding documentation here: [PMDtools](https://github.com/pontussk/PMDtools/blob/master/README.md).
+    > - *`"pmdtools"`*: Estimate and rescale post-mortem deaminations using `PMDtools` *[(Skoglund et al. 2014)](https://doi.org/10.1073/pnas.1318934111)* . See the corresponding documentation here: [PMDtools](https://github.com/pontussk/PMDtools/blob/master/README.md).
     > <ins>**Allowed values**</ins>: (string)(optional) either *`"mapdamage"`*, *`"pmdtools"`*, or *`None`* (*`~`* character).
 
   - #### <a name="apply-masking"></a>apply-masking
@@ -299,16 +299,16 @@ Categorises parameters related to the alignment of reads and pre-processing of a
       > <ins>**Allowed values**</ins>: (float) A floating point value in the range $[0, 1]$, representing a fraction of the number of reads within a given file, or a non-negative integer value in the range $[0, +\infty]$, representing a set number of reads.
 
     - ##### <a name="downsample-seed"></a>downsample-seed
-      > <ins>**Description**</ins>: Provide `MapDamagev2` with a fixed RNG seed for donwsampling. If set to None (`~`), BADGER will pick a random seed for you, and store it within `results/meta/pipeline-metadata.yml`.
+      > <ins>**Description**</ins>: Provide `MapDamagev2` with a fixed RNG seed for downsampling. If set to None (`~`), BADGER will pick a random seed for you, and store it within `results/meta/pipeline-metadata.yml`.
 
-      > <ins>**Allowed values**</ins>: (integer) Any non negative 32bit integer value.
+      > <ins>**Allowed values**</ins>: (integer) Any non-negative 32bit integer value.
 
   - #### <a name="pmdtools"></a>pmdtools
     Categorises arguments related to the `PMDtools` software. These parameters are ignored unless [rescaler](#rescaler) is set to *`"pmdtools"`*
     - ##### <a name="threshold"></a>threshold
-      > <ins>**Description**</ins>: Filter-out reads carrying a PMD-score that is lower than the provided threshold. This parameter may be useful to filter-out reads originating from modern human contamination. Note that setting this parameter to a value that is less than or equal to *`-19999`* will disable PMD-score filtering alltogether.
+      > <ins>**Description**</ins>: Filter out reads carrying a PMD-score that is lower than the provided threshold. This parameter may be useful to filter out reads originating from modern human contamination. Note that higher PMD-score values indicate a higher likelihood of a fragment having been subject do post-mortem damage. Setting this parameter to a value that is less than or equal to *`-19999`* will disable PMD-score filtering altogether.
 
-      > <ins>**Allowed values**</ins>: (integer) Any integer value in the range $[-\infty, +\infty]$, representing a LOD score for the presence of PMD contamination.
+      > <ins>**Allowed values**</ins>: (integer) Any integer value in the range $[-\infty,  +\infty]$, representing a Log-likelihood for the presence of PMD contamination.
 
     - ##### <a name="mask-terminal-deams"></a>mask-terminal-deams
       > <ins>**Description**</ins>: Mask a set number of putatively deaminated nucleotides along fragments.
@@ -332,9 +332,9 @@ Categorises parameters related to random pseudo-haploid variant calling.
   > **Allowed values:** (String) Either *`"pileupCaller"`* or *`"ANGSD"`*
 
 - ### <a name="maf"></a>maf
-  > **Description:** Pre-filter the provided SNP callset by removing variants that are below the provided minor-allele-frequency threshold, when looking at the 1000g-phase3 dataset.
+  > **Description:** Pre-filter the provided SNP callset by removing variants that are below the provided minor allele-frequency threshold, when looking at the 1000g-phase3 dataset.
 
-  > **Allowed values:** Any non negative floating point value in the range $[0, 1]$, representing a minor allele frequency threshold.
+  > **Allowed values:** Any non-negative floating point value in the range $[0, 1]$, representing a minor allele frequency threshold.
 
 - ### <a name="maf-superpop"></a>maf-superpop
   > **Description:** Specify which super-population is used when evaluating allele frequencies, during pre-filtration step. (See [variant-calling:maf](#maf-1))
@@ -351,12 +351,12 @@ Categorises parameters related to random pseudo-haploid variant calling.
   - #### <a name="min-bq"></a>min-BQ
     > **Description:**  Skip nucleotides carrying a base quality that is lower than the provided threshold
 
-    > **Allowed values:** (integer) a non negative integer in the range $[0, 40]$, representing a PHRED quality score.
+    > **Allowed values:** (integer) a non-negative integer in the range $[0, 40]$, representing a PHRED quality score.
 
   - #### <a name="min-mq-1"></a>min-MQ
     > **Description:** Skip alignments carrying a mapping quality that is lower than the provided threshold
 
-    > **Allowed values:** (integer) a non negative integer in the range $[0, 40]$, representing a PHRED quality score.
+    > **Allowed values:** (integer) a non-negative integer in the range $[0, 40]$, representing a PHRED quality score.
 
 - ### <a name="pileupcaller"></a>pileupCaller
   Categorises arguments related to the `pileupCaller` random pseudo-haploid variant calling software. These parameters are ignored unless [caller](#caller) is set to *`"pileupCaller"`*
@@ -373,14 +373,14 @@ Categorises parameters related to random pseudo-haploid variant calling.
     > **Allowed values:** *`"randomHaploid"`* or *`"majorityCall"`*
 
   - #### <a name="min-depth"></a>min-depth
-    > **Description:** Filter-out positions where the local sequencing depth is lower than the provided threshold.
+    > **Description:** Filter out positions where the local sequencing depth is lower than the provided threshold.
 
-    > **Allowed values:** (integer) Any non negative number in the range $[1, +\infty]$, representing a sequencing depth.
+    > **Allowed values:** (integer) Any non-negative number in the range $[1, +\infty]$, representing a sequencing depth.
 
   - #### <a name="seed-3"></a>seed
     > **Description:**  Provide `pileupCaller` with a fixed RNG seed when applying random sampling. If set to None (`~`), BADGER will pick a random seed for you, and store it within `results/meta/pipeline-metadata.yml`.
 
-    > **Allowed values:** (integer) Any non negative 32bit integer value.
+    > **Allowed values:** (integer) Any non-negative 32bit integer value.
 
 ## <a name="kinship"></a>kinship
 Categorises arguments related to all of the benchmarked kinship estimation methods
@@ -442,7 +442,7 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
     > **Allowed values:** (integer) Any integer value in the range $[1, +\infty]$.
 
   - #### <a name="maf-1"></a>maf
-    > **Description:** Apply minor allele filtration of overlapping positions, allele frequencies from the 1000g phase3 project. Setting this value to 0 will disable maf filtration alltogether.
+    > **Description:** Apply minor allele filtration of overlapping positions, allele frequencies from the 1000g phase3 project. Setting this value to 0 will disable maf filtration altogether.
 
     > **Allowed values:** (float) Any floating point value in the range $[0, 1]$
 
@@ -459,7 +459,7 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
   - #### <a name="seed-4"></a>seed
     > **Description:** Provide `GRUPS-rs` with a fixed RNG seed during pedigree simulations. If set to None (`~`), BADGER will pick a random seed for you, and store it within `results/meta/pipeline-metadata.yml`.
 
-    > **Allowed values:** (integer) Any non negative 32bit integer value. 
+    > **Allowed values:** (integer) Any non-negative 32bit integer value. 
 
 - ### <a name="kin"></a>KIN
   Categorises arguments related to the `KIN` kinship estimation software *[(Popli et al. 2023)](https://doi.org/10.1186/s13059-023-02847-7)*
@@ -469,7 +469,7 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
     > **Allowed values:** (integer) Any integer in the range $[1, +\infty]$, representing a genomic length.
 
   - #### <a name="p0-threshold"></a>p0-threshold
-    > **Description:** Minimum number of distinct  non-zero genomic windows for a sample to be included when estimating $P_{0}$ (i.e. the median number of pairwise differences when comparing all samples). This asrgument is passed on to the `KINgaroo` module of the software. (Default recommended value is `10`)
+    > **Description:** Minimum number of distinct  non-zero genomic windows for a sample to be included when estimating $P_{0}$ (i.e. the median number of pairwise differences when comparing all samples). This argument is passed on to the `KINgaroo` module of the software. (Default recommended value is `10`)
 
     > **Allowed values:** (integer) Any value in the range $[1, +\infty]$, representing a number of non-zero genomic windows.
 
@@ -567,7 +567,7 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
   - #### <a name="downsample-seed-1"></a>downsample-seed
     > **Description:** Provide `TKGWV2` with a fixed RNG seed during downsampling. If set to None (`~`), BADGER will pick a random seed for you, and store it within `results/meta/pipeline-metadata.yml`. 
 
-    > **Allowed values:** (integer) Any non negative 32bit integer value. 
+    > **Allowed values:** (integer) Any non-negative 32bit integer value. 
 
   - #### <a name="target-frequencies"></a>target-frequencies
     > <ins>**Description**</ins>: Path pointing to a user-provided file containing allele frequencies, in PLINK `.freq` format (See the specifications of this file format here: [.frq file format](https://www.cog-genomics.org/plink/1.9/formats#frq)). If set to `None`, BADGER will attempt to download and use the example dataset provided by the authors of `TKGWV2`, which contains allele frequencies of the 1000g-phase3 `EUR` population, along bi-allelic positions of the *AADR-1240K* dataset.. More information regarding this default dataset may be found here: [Support files](https://github.com/danimfernandes/tkgwv2/blob/175b0d6674b7b19c5833b66b8a801ea9a2716b51/README.md#description-and-generation-of-support-files).
@@ -577,11 +577,11 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
   - #### <a name="min-bq-1"></a>min-BQ
     > **Description:**  Skip nucleotides carrying a base quality that is lower than the provided threshold. Note that `TKGWV2` internally calls samtools and passes this argument directly to it. The default recommended value of the software is 30
 
-    > **Allowed values:** (integer) a non negative integer in the range $[0, 40]$, representing a PHRED quality score. 
+    > **Allowed values:** (integer) a non-negative integer in the range $[0, 40]$, representing a PHRED quality score. 
   - #### <a name="min-mq-2"></a>min-MQ
     > **Description:**  Skip aligned fragments carrying a mapping quality that is lower than the provided threshold. Note that `TKGWV2` internally calls samtools and passes this argument directly to it. The default recommended value of the software is 30
 
-    > **Allowed values:** (integer) a non negative integer in the range $[0, 40]$, representing a PHRED quality score. 
+    > **Allowed values:** (integer) a non-negative integer in the range $[0, 40]$, representing a PHRED quality score. 
   - #### <a name="min-depth-2"></a>min-depth
     > **Description:** Specify the minimum number of SNPs allowed to estimate relatedness. Default value is 1.
 

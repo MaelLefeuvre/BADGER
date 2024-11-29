@@ -6,7 +6,7 @@ Pedigree definition files are provided through the `ped-sim['data']['definition'
 
 These files generally adhere to the proprietary format specifications of `ped-sim-1.4.2`, and extensive documentation on how to design these files may be found in the original documentation of `ped-sim` here: [def files](https://github.com/williamslab/ped-sim/blob/v1.4.2/README.md#def-file).
 
-Here, BADGER currently comes wth an additional restriction, in that the first three fields of the definition file (i.e., the `def`, `[name]`, and `[#copies]` field described in `ped-sim's` documentation) should ***always*** be written as follows:
+Here, BADGER currently comes with an additional restriction, in that the first three fields of the definition file (i.e., the `def`, `[name]`, and `[#copies]` field described in `ped-sim's` documentation) should ***always*** be written as follows:
 
 ```text
 def ped {{ params.replicates }}
@@ -15,7 +15,7 @@ This current limitation resides in the facts that:
 1. Snakemake makes extensive use of pattern matching to resolve job dependencies, explaining the strict requirement on setting the `[name]` field as `ped`
 2. BADGER applies `jinja2` templating on these files to dynamically adjust the required number of pedigree replicates. Hence, the `{{ params.replicate }}` string for the `[#copies]` field.
 
-Appart from this single limitation, the rest of the file strictly adheres to the format specification described in the documentation of `ped-sim`. 
+Apart from this single limitation, the rest of the file strictly adheres to the format specification described in the documentation of `ped-sim`. 
 
 Hence, the following pedigree definition file
 
@@ -40,7 +40,7 @@ Will generate the following template pedigree within BADGER's simulations
 
 ## Pedigree codes files
 
-pedigree_codes.txt are provided through the `ped-sim['data']['codes']`keyword, within BADGER's main yaml configuration's file.
+pedigree_codes.txt are provided through the `ped-sim['data']['codes']`keyword, within BADGER's main yaml configuration file.
 
 The purpose of this file is simply to subset the number of investigated ties within the pedigree, and thus specifically target which relationships should be used by BADGER to apply its benchmark.
 This file is a simple, unheaded and tab-separated txt file, containing four fields:
@@ -74,7 +74,7 @@ Will request BADGER to target the following relationships when assessing classif
 
 BADGER currently provides with a simple way to generate monozygotic twins during the simulations. This can be useful to estimate the impact of such relationships on the accuracy and bias of kinship estimation methods.  
 
-This feature can be requested by simply specifying a self-comparison within the `pedigree-codes` file. To distinguish original samples from their "doppleganged" counterparts, the `ID2` field ***must*** however be capitalized. 
+This feature can be requested by simply specifying a self-comparison within the `pedigree-codes` file. To distinguish original samples from their "doppelganger" counterparts, the `ID2` field ***must*** however be capitalized. 
 
 Thus, providing BADGER with the following alternative `pedigree-codes.txt` file:
 
