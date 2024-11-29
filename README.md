@@ -36,7 +36,7 @@ Note that all subsequent commands are executed from the root directory of this r
 ### 02. Install `BADGER` within a dedicated conda environment
 #### Simple installation
 
-This command should seamlessly create a dedicated conda environment for badger, called `badger-0.4.0`.
+This command should seamlessly create a dedicated conda environment for BADGER, called `badger-0.4.1`.
 ```bash
 bash ./badger/install.sh
 ```
@@ -47,7 +47,7 @@ This environment should contain the following programs and dependencies:
 | `python`       | `3.11.0`  |
 | `R`            | `>=4.1.2` |
 | `snakemake`    | `7.20.0`  |
-| `badger`       | `>=0.4.0` |
+| `badger`       | `>=0.4.1` |
 | `badger-plots` | `>=0.4.0` |
 
 ### 03. Test the installation
