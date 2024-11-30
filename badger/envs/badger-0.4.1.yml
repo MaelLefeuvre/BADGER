@@ -1,10 +1,11 @@
-name: badger-0.4.0
+name: badger-0.4.1
 channels:
   - conda-forge
   - bioconda
 dependencies:
   - bioconda::snakemake=7.20.0
   - conda-forge::python=3.11
+  - conda-forge::pyopenssl>=24
   - conda-forge::pip  
   - pip: # badger.py dependencies
     - argparse
