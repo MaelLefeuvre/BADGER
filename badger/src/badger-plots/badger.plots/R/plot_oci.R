@@ -202,7 +202,7 @@ plot_oci_performance <- function(
   horizontal_margin   = 0.02,
   vertical_margin     = 0.02,
   axis_fontsize       = 14L,
-  legend              = list(size = 10L, xpos = -0.1, ypos = -0.1),
+  legend              = list(size = 10L, xpos = -0.1, ypos = -0.1, title = "Method"),
   cm                  = list(
     condense   = FALSE,
     ratio      = FALSE,
@@ -375,7 +375,7 @@ make_oci_scatter_plot <- function(
   yaxis = list(range = c(0.38, 1.02), dtick = 0.1, tickfont = 10L),
   axis_fontsize  = 16L,
   tickfont_size  = 14L,
-  legend = list(size = 10L, xpos = -0.1, ypos = -0.1)
+  legend = list(size = 10L, xpos = -0.1, ypos = -0.1, title = "Method")
 ) {
 
   oci_values <- list()
@@ -486,7 +486,8 @@ make_oci_scatter_plot <- function(
       xref        = "paper",
       yref        = "paper",
       orientation = "h",
-      font        = list(size = legend$size)
+      font        = list(size = legend$size),
+      title       = list(text = paste0("<b>",legend$title, "</b>"))      
     )
   ) %>%
     plotly::config(

@@ -127,6 +127,13 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
 
     > <ins>**Default**</ins>: `-0.1`
 
+  - #### <a name="title"></a>title
+    > <ins>**Description**</ins>: Specify a title categorizing every item within the legend
+
+    > <ins>**Allowed values**</ins>: (string) Any string representing a legend title.
+
+    > <ins>**Default**</ins>: `"Method"`
+
 - ### <a name="cm"></a>cm
   Categorizes plotting parameters related to the display of every individual confusion matrix found within the main OCI performance plot.
   - #### <a name="condense"></a>condense
@@ -293,7 +300,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
   > <ins>**Default**</ins>: `yes`
 
-- ### <a name="title"></a>title
+- ### <a name="title-1"></a>title
   > <ins>**Description**</ins>: Specify a main title for the plot.
 
   > <ins>**Allowed values**</ins>: (String) Any string representing a main title for the plot.
@@ -302,7 +309,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
 - ### <a name="rmsd"></a>rmsd
   Categorizes plotting parameters shared across all `nRMSD` subplots
-  - #### <a name="title-1"></a>title
+  - #### <a name="title-2"></a>title
     > <ins>**Description**</ins>: Specify a subtitle for the `nRMSD` subplots
 
     > <ins>**Allowed values**</ins>: (String) Any string representing a main subtitle for the `nRMSD` subplots.
@@ -326,7 +333,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 - ### <a name="mbe"></a>mbe
   Categorizes plotting parameters shared across all `nMBE` subplots
 
-  - #### <a name="title-2"></a>title
+  - #### <a name="title-3"></a>title
     > <ins>**Description**</ins>: Specify a subtitle for the `nMBE` subplots
 
     > <ins>**Allowed values**</ins>: (String) Any string representing a main subtitle for the `nMBE` subplots.
@@ -386,7 +393,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
     > <ins>**Default**</ins>: `12`
 
-  - #### <a name="title-3"></a>title
+  - #### <a name="title-4"></a>title
     > <ins>**Description**</ins>: Specify a title categorizing every item within the legend
 
     > <ins>**Allowed values**</ins>: (string) Any string representing a legend title.
