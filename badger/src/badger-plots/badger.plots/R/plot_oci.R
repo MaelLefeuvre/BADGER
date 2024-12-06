@@ -39,7 +39,8 @@ plot_confusion_matrix <- function(
   tickangle              = 0L,
   cm_font_size           = 10L,
   tickfont_size          = 10L,
-  axis_fontsize          = 14L
+  axis_fontsize          = 14L,
+  border                 = FALSE
 ) {
 
   axis_font <- list(size = axis_fontsize)
@@ -115,7 +116,17 @@ plot_confusion_matrix <- function(
     )
   }
 
+  if (border) {
+    border_shape <- list(
+      type="rect", xref="paper", yref="paper", x0=0, y0=0, x1=1, y1=1,
+      line=list(color="black", width=1)
+    )
+  } else {
+    border_shape <- list()
+  }
+
   fig <- fig %>% plotly::layout(
+    shapes      = border_shape,
     xaxis       = list(
       title     = list(
         text = ifelse(xaxis_title_visibility, xaxis_title, ""),
@@ -133,6 +144,8 @@ plot_confusion_matrix <- function(
     ),
     annotations = annotations
   )
+
+
 
   fig
 }
@@ -198,7 +211,8 @@ plot_oci_performance <- function(
     tickfont   = 10L,
     tickangle  = 0L,
     fontsize   = 10L,
-    show_xaxis = FALSE
+    show_xaxis = FALSE,
+    border     = FALSE
   ),
   scatter = list(
     dash  = c("solid"), # nolint: unnecessary_concatenation_linter.
@@ -265,7 +279,8 @@ plot_oci_performance <- function(
         cm_font_size           = cm$fontsize,
         ticklabels             = cm$ticklabels,
         tickfont_size          = cm$tickfont,
-        tickangle              = cm$tickangle
+        tickangle              = cm$tickangle,
+        border                 = cm$border
       )
     }
   }

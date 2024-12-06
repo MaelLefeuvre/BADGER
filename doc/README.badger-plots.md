@@ -190,6 +190,13 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
 
     > <ins>**Default**</ins>: `no`
 
+  - #### <a name="border"></a>border
+    > <ins>**Description**</ins>: Draw a border surrounding every confusion matrix. This can be useful to visually separate each matrix when plotting many methods and biological conditions at the same time.
+
+    > <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
+
+    > <ins>**Default**</ins>: `no`
+
 - ### <a name="scatter"></a>scatter
   Categorizes plotting parameters related to the display of the summary scatterplot of OCI performance values.
   - #### <a name="dash"></a>dash
