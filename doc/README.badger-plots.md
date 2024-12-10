@@ -293,12 +293,34 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
   > <ins>**Default**</ins>: `no`
 
+- ### <a name="flip"></a>flip
+
+  > <ins>**Description**</ins>: Transpose the plotting configuration between the individual `nRMSD` and `nMBE` plots. When set to `no`, `nRMSD` and `nMBE` plots each inhabit a separate *column*. When set to `yes`, the `nRMSD` plots and `nMBE` plots are instead organized into rows.
+
+  > <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
+
+  > <ins>**Default**</ins>: `no`
+
 - ### <a name="fixed_axis"></a>fixed_axis
   > <ins>**Description**</ins>: Specify whether every `nRMSD` and `nMBE` subplot should share the same y-axis range. When set to `no`, the y-axis range of every subplot is tailored to the given values. When set to `yes`, the program will instead search for the maximum and minimum value across every subplot, and use these as a shared plotting range across all subplots.
 
   > <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
 
   > <ins>**Default**</ins>: `yes`
+
+- ### <a name="horizontal_margin-1"></a>horizontal_margin
+  > <ins>**Description**</ins>: Specify the display margin separating each *row* of the plot. 
+
+  > <ins>**Allowed values**</ins>: (float) Any non negative floating point value in the range $[0, 1]$, representing a display ratio.
+
+  > <ins>**Default**</ins>: `0.02`
+
+- ### <a name="vertical_margin-1"></a>vertical_margin
+  > <ins>**Description**</ins>: Specify the display margin separating each *column* of the plot
+
+  > <ins>**Allowed values**</ins>: (float) Any non negative floating point value in the range $[0, 1]$, representing a display ratio.
+    
+  > <ins>**Default**</ins>: `0.02`
 
 - ### <a name="title-1"></a>title
   > <ins>**Description**</ins>: Specify a main title for the plot.

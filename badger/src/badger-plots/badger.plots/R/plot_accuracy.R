@@ -40,21 +40,25 @@
 #' @export
 plot_accuracy <- function(
   rmsd_dfs,
-  filename         = "nRMSD-accuracy-plot",
-  transpose        = FALSE,
-  fixed_axis       = TRUE,
-  title            = NULL,
-  rmsd             = list(title = "nRMSD", dtick = 0.2, tickangle = 0L),
-  mbe              = list(
+  filename          = "nRMSD-accuracy-plot",
+  transpose         = FALSE,
+  flip              = FALSE,
+  border            = FALSE,
+  fixed_axis        = TRUE,
+  title             = NULL,
+  horizontal_margin = 0.00,
+  vertical_margin   = 0.03,
+  rmsd              = list(title = "nRMSD", dtick = 0.2, tickangle = 0L),
+  mbe               = list(
     title  = "nMBE", dtick = 0.2, tickangle = 45L, scale_factor = 1L
   ),
-  mbe_plot_ratio   = 0.3,
-  ticksize         = list(xaxis = 16L, yaxis = 12L),
-  legend           = list(
+  mbe_plot_ratio    = 0.3,
+  ticksize          = list(xaxis = 16L, yaxis = 12L),
+  legend            = list(
     size  = 12L,
     title = "Method"
   ),
-  marker           = list(
+  marker            = list(
     colors   = NULL,
     patterns = list(shape = c(""), solidity = 0.5, size = 5L)
   ),
@@ -83,6 +87,16 @@ plot_accuracy <- function(
     } else {
       viridis::viridis(n = length(names(rmsd_dfs[[1L]])))
     }
+  }
+
+  # ---- Prepare border_shape if requested
+  if (border) {
+    border_shape <- list(
+      type="rect", xref="paper", yref="paper", x0=0, y0=0, x1=1, y1=1,
+      line=list(color="black", width=1)
+    )
+  } else {
+    border_shape <- list()
   }
 
   for (column in names(rmsd_dfs)) {
@@ -141,7 +155,7 @@ plot_accuracy <- function(
     }
 
     # --- Compute fixed rmsd and mbe y-axis if requested
-    show_ticks <- (i == length(names(rmsd_dfs)))
+    show_ticks <- (flip || i == length(names(rmsd_dfs)))
     if (fixed_axis) {
       rmsd_max <- 0.01 + max(
         sapply(X = rmsd_dfs, FUN = function(x) {
@@ -169,25 +183,50 @@ plot_accuracy <- function(
       nticks   <- 5L
     }
 
+    # ---- prepare xaxis and yaxis titles
+    # if (flip): xaxis == biological condition | yaxis == 'nRMSD'/'nMBE'
+    condition_title <- paste0("<b>", column, "</b>")
+    title_font      <- list(color = "#000000", size = 14L)
+    if (flip) {
+      mbe_xaxis_title  <- list(text = condition_title, font = title_font)
+      rmsd_xaxis_title <- NULL
+      if (i==1) {
+        rmsd_yaxis_title <- list(text = rmsd$title, font = title_font)
+        mbe_yaxis_title  <- list(text = mbe$title,  font = title_font)
+      } else {
+        rmsd_yaxis_title <- mbe_yaxis_title <- NULL
+      }
+    } else {
+      rmsd_yaxis_title <- list(text = condition_title, font = title_font)
+      mbe_yaxis_title  <- NULL
+      if (i==length(names(rmsd_dfs))) {
+        rmsd_xaxis_title <- list(text = rmsd$title, font = title_font)
+        mbe_xaxis_title  <- list(text = mbe$title,  font = title_font)
+      } else {
+        rmsd_xaxis_title <- mbe_xaxis_title <- NULL
+      }
+    }
 
     rmsd_plot <- rmsd_plot %>% plotly::layout(
       title = title,
+      shapes = border_shape,
       xaxis = list(
-        title          = "Tool",
+        title          = rmsd_xaxis_title,
         tickangle      = rmsd$tickangle,
-        titlefont      = font,
         tickfont       = list(size = ticksize$xaxis),
+        standoff       = ticksize$xaxis,
         showticklabels = show_ticks
       ),
       yaxis = list(
         tickmode = tickmode,
-        title     = rmsd$title,
-        titlefont = font,
+        title     = rmsd_yaxis_title,
+        showticklabels = (!flip || i==1),
         dtick     = rmsd$dtick,
         tick0     = 0L,
         nticks    = nticks,
         range     = rmsd_range,
-        tickfont  = list(size = ticksize$yaxis)
+        tickfont  = list(size = ticksize$yaxis),
+        standoff  = ticksize$yaxis
       ),
       legend = list(
         title = list(
@@ -197,73 +236,66 @@ plot_accuracy <- function(
         )
       ),
       shapes = rmsd_lines
-    ) %>%
-      plotly::add_annotations(
-        text      = paste0("<b>", column, "</b>"),
-        x         = 0.9,
-        y         = 1.0,
-        xref      = "paper",
-        yref      = "paper",
-        xanchor   = "middle",
-        yanchor   = "top",
-        showarrow = FALSE,
-        font      = list(size = 22L)
-      )
-
+    )
 
     mbe_plot <- mbe_plot %>% plotly::layout(
       legend = list(orientation = "h"),
+      shapes=border_shape,
       xaxis = list(
+        title          = mbe_xaxis_title,
         tickfont       = list(size = ticksize$xaxis),
+        standoff       = ticksize$xaxis,
         tickangle      = mbe$tickangle,
         showticklabels = show_ticks
       ),
       yaxis = list(
         tickmode = tickmode,
-        title     = "MBE (x10)", #@TODO: automate according to norm_factor,
+        title     = mbe_yaxis_title,
         dtick     = mbe$dtick,
         tick0     = 0L,
         nticks    = nticks,
         range     = mbe_range,
         tickfont  = list(size = ticksize$yaxis),
-        titlefont = font
+        standoff  = ticksize$yaxis,
+        showticklabels = (!flip || i==1)
       ),
       shapes = mbe_lines
     )
 
-    rmsd_barplots[[i]] <- plotly::subplot(
-      rmsd_plot, mbe_plot,
-      shareY = FALSE,
-      titleY = FALSE,
-      widths = c(1.0 - mbe_plot_ratio, mbe_plot_ratio),
-      margin = 0.03
-    )
-  }
+    heights = NULL
+    widths  = NULL
+    ratios  = c(1.0 - mbe_plot_ratio, mbe_plot_ratio)
+    if (flip) {
+      nrows = 2
+      heights <- ratios
+    } else {
+      nrows = 1
+      widths <- ratios
+    }
 
+
+    rmsd_barplots[[i]] <- plotly::subplot(
+      rmsd_plot, mbe_plot, 
+      nrows   = nrows,
+      shareY  = FALSE,
+      titleX  = TRUE,
+      titleY  = TRUE,
+      heights = heights,
+      widths  = widths,
+      margin  = if (flip) vertical_margin else horizontal_margin
+    ) 
+  }
+i
+  n <- length(rmsd_barplots)
   merged_rmsd_barplots <- plotly::subplot(
-    rmsd_barplots,
-    nrows  = length(rmsd_barplots),
-    shareX = FALSE,
-    titleY = TRUE
-  ) %>% plotly::layout(
-    annotations = list(
-      plotly_yaxis_subplot(
-        text    = rmsd$title,
-        x       = -0.02,
-        y       = 0.5,
-        font    = font,
-        xanchor = "right"
-      ),
-      plotly_yaxis_subplot(
-        text    = mbe$title,
-        x       = 0.68,
-        y       = 0.5,
-        font    = font,
-        xanchor = "left"
-      )
-    )
-  ) %>%
-    plotly::config(
+    rmsd_barplots, nrows = ifelse(flip, 1, n),
+    shareX  = FALSE,
+    titleX  = TRUE,
+    titleY  = TRUE,
+    widths  = if (flip) rep(1/n, n) else 1,
+    heights = if (flip) 1 else rep(1/n, n),
+    margin  = if (flip) horizontal_margin else vertical_margin
+  ) %>% plotly::config(
       editable             = FALSE,
       displaylogo          = FALSE,
       scrollZoom           = TRUE,
