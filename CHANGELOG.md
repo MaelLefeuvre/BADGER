@@ -8,6 +8,9 @@
 - [badger-plots] Add documentation entry for `border` parameter
 - [badger-plots] Add documentation entry for `split` parameter
 - [badger-plots] Add documentation entry for `ragged-input` parameter)
+# Fix
+- Fix pip conflicts by explicitly calling the binary found within badger's conda environment
+
 # CHANGELOG:
  - 2022-12-09: Added support for samtools markdup
  - 2022-10-05: Added ***Limited*** Support for dedup 
