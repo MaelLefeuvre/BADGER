@@ -9,7 +9,8 @@
 - [badger-plots] Add documentation entry for `split` parameter
 - [badger-plots] Add documentation entry for `ragged-input` parameter)
 # Fix
-- Fix pip conflicts by explicitly calling the binary found within badger's conda environment
+- [badger] Fix pip conflicts by explicitly calling the binary found within badger's conda environment
+- [badger-plots] Fix incorrect calculation of MBE confidence intervals (normalization value was previously not taken into account when calculating lower and upper bounds)
 
 # CHANGELOG:
  - 2022-12-09: Added support for samtools markdup

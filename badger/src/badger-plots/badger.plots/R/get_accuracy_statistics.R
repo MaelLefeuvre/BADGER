@@ -236,15 +236,14 @@ compute_mbe <- function(
 
   # ---- Compute mean bias estimation.
   mbe    <- sum(pred - true, na.rm = na.rm) / length(pred)
-  # ---- Optionally normalize by a user-defined value
-  mbe    <- mbe / norm_value
 
   # ---- Compute confidence intervals.
   n      <- length(pred)
   z      <- badger.plots::.critical_z_value(conf)
   mbe_ci <- (z * compute_population_sd(pred, na.rm = na.rm) / sqrt(n))
 
-  list(mbe = mbe, upper.ci = mbe_ci, lower.ci = mbe_ci)
+  # ---- Optionally normalize by a user-defined value
+  lapply(list(mbe = mbe, upper.ci = mbe_ci, lower.ci = mbe_ci), `/`, norm_value)
 }
 
 #' Population standard deviation
