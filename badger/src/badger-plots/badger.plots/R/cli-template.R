@@ -71,7 +71,9 @@ create_template_yaml <- function(
     "output-dir"     = output_dir,
     "reorder"        = vector("character"),
     "rename"         = vector("character"),
-    "exclude"        = vector("character")
+    "exclude"        = vector("character"),
+    "ragged-input"   = FALSE
+
   )
 
   yaml[["performance-plot"]]    <- c(

@@ -41,6 +41,7 @@
 plot_accuracy <- function(
   rmsd_dfs,
   filename          = "nRMSD-accuracy-plot",
+  plot              = c("rmsd", "mbe"),
   transpose         = FALSE,
   flip              = FALSE,
   border            = FALSE,
@@ -92,13 +93,14 @@ plot_accuracy <- function(
   # ---- Prepare border_shape if requested
   if (border) {
     border_shape <- list(
-      type="rect", xref="paper", yref="paper", x0=0, y0=0, x1=1, y1=1,
-      line=list(color="black", width=1)
+      type = "rect", xref = "paper", yref = "paper", x0 = 0, y0 = 0, x1 = 1, y1 = 1,
+      line = list(color = "black", width = 1)
     )
   } else {
     border_shape <- list()
   }
 
+  shown_in_legend <- c()
   for (column in names(rmsd_dfs)) {
     acc_df     <- list()
     rmsd_lines <- list()
@@ -113,14 +115,18 @@ plot_accuracy <- function(
     for (row in names(rmsd_dfs[[column]])) {
       i <- match(column, names(rmsd_dfs))
       j <- match(row, names(rmsd_dfs[[column]]))
-      show_legend <- (i == 1L)
 
+      show_legend <- !(row %in% shown_in_legend)
+      shown_in_legend <- unique(c(shown_in_legend, c(row)))
       # ---- extract the relevant data frame of RMSE and MBE values.
       acc_df[[j]] <- rmsd_dfs[[column]][[row]]
-
       # ---- rescale mbe by its scale factor
-      mbe_cols <- c("mbe", "mbe.upper.ci", "mbe.lower.ci")
-      acc_df[[j]][, mbe_cols] <- mbe$scale_factor * acc_df[[j]][, mbe_cols]
+      if (is.null(acc_df[j][[1]])) {
+        acc_df[[j]] <- data.frame()
+      } else {
+        mbe_cols <- c("mbe", "mbe.upper.ci", "mbe.lower.ci")
+        acc_df[[j]][, mbe_cols] <- mbe$scale_factor * acc_df[[j]][, mbe_cols]
+      }
 
       # ---- compute the overall average RMSD and MBE values.
       rmsd_plot <- .append_rmsd_bartrace(
@@ -143,6 +149,7 @@ plot_accuracy <- function(
         data_frame  = acc_df[[j]],
         fig         = if (j == 1L) plotly::plot_ly() else mbe_plot,
         offsetgroup = (j - 1L),
+        name        = row,
         marker      = list(
           color   = marker$colors[j],
           pattern = list(
@@ -150,7 +157,8 @@ plot_accuracy <- function(
             solidity = marker$patterns$solidity,
             size     = marker$patterns$size
           )
-        )
+        ),
+        showlegend = show_legend && !("rmsd" %in% plot)
       )
     }
 
@@ -160,18 +168,28 @@ plot_accuracy <- function(
       rmsd_max <- 0.01 + max(
         sapply(X = rmsd_dfs, FUN = function(x) {
           sapply(X = x, FUN = function(y) {
-            max(y$rmsd) + y$rmsd.upper.ci[which.max(y$rmsd)]
+            if(is.null(y)) {
+              return(NA)
+            } else {
+              max(y$rmsd) + y$rmsd.upper.ci[which.max(y$rmsd)]
+            }
           })
-        })
+        }),
+        na.rm = TRUE
       )
-
       mbe_max <- 0.01 + max(
         sapply(X = rmsd_dfs, FUN = function(x) {
           sapply(X = x, function(y) {
-            max(abs(y$mbe)) + y$mbe.upper.ci[which.max(abs(y$mbe))]
+            if (is.null(y)) {
+              return(NA)
+            } else {
+             max(abs(y$mbe)) + y$mbe.upper.ci[which.max(abs(y$mbe))]
+            }
           })
-        })
+        }),
+        na.rm = TRUE
       )
+
       rmsd_range <- c(0.0, rmsd_max)
       mbe_range  <- c(-mbe_max, mbe_max)
       tickmode <- "linear"
@@ -190,7 +208,7 @@ plot_accuracy <- function(
     if (flip) {
       mbe_xaxis_title  <- list(text = condition_title, font = title_font)
       rmsd_xaxis_title <- NULL
-      if (i==1) {
+      if (i == 1) {
         rmsd_yaxis_title <- list(text = rmsd$title, font = title_font)
         mbe_yaxis_title  <- list(text = mbe$title,  font = title_font)
       } else {
@@ -199,7 +217,7 @@ plot_accuracy <- function(
     } else {
       rmsd_yaxis_title <- list(text = condition_title, font = title_font)
       mbe_yaxis_title  <- NULL
-      if (i==length(names(rmsd_dfs))) {
+      if (i == length(names(rmsd_dfs))) {
         rmsd_xaxis_title <- list(text = rmsd$title, font = title_font)
         mbe_xaxis_title  <- list(text = mbe$title,  font = title_font)
       } else {
@@ -240,7 +258,7 @@ plot_accuracy <- function(
 
     mbe_plot <- mbe_plot %>% plotly::layout(
       legend = list(orientation = "h"),
-      shapes=border_shape,
+      shapes = border_shape,
       xaxis = list(
         title          = mbe_xaxis_title,
         tickfont       = list(size = ticksize$xaxis),
@@ -259,6 +277,13 @@ plot_accuracy <- function(
         standoff  = ticksize$yaxis,
         showticklabels = (!flip || i==1)
       ),
+      legend = list(
+        title = list(
+          text        = paste0("<b>", legend$title, "</b>"),
+          orientation = "h",
+          font = list(size = legend$size)
+        )
+      ),
       shapes = mbe_lines
     )
 
@@ -274,18 +299,24 @@ plot_accuracy <- function(
     }
 
 
-    rmsd_barplots[[i]] <- plotly::subplot(
-      rmsd_plot, mbe_plot, 
-      nrows   = nrows,
-      shareY  = FALSE,
-      titleX  = TRUE,
-      titleY  = TRUE,
-      heights = heights,
-      widths  = widths,
-      margin  = if (flip) vertical_margin else horizontal_margin
-    ) 
+    if (all(c("rmsd", "mbe") %in% plot)) {
+      rmsd_barplots[[i]] <- plotly::subplot(
+        rmsd_plot, mbe_plot, 
+        nrows   = nrows,
+        shareY  = FALSE,
+        titleX  = TRUE,
+        titleY  = TRUE,
+        heights = heights,
+        widths  = widths,
+        margin  = if (flip) vertical_margin else horizontal_margin
+      )
+    } else if ("rmsd" %in% plot) {
+      rmsd_barplots[[i]] <- rmsd_plot
+    } else if ("mbe" %in% plot) {
+      rmsd_barplots[[i]] <- mbe_plot
+    }
   }
-i
+
   n <- length(rmsd_barplots)
   merged_rmsd_barplots <- plotly::subplot(
     rmsd_barplots, nrows = ifelse(flip, 1, n),

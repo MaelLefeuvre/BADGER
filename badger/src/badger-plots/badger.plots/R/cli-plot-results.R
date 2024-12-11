@@ -369,25 +369,36 @@ save_plotly_svg <- function(
   }
 
   if (!is.null(optargs$rename) && length(optargs$rename) > 0L) {
+
     for (cov in names(results$data)) {
-      names(results$data[[cov]])        <- optargs$rename
-      names(results$performance[[cov]]) <- optargs$rename
-      names(results$statistics[[cov]])  <- optargs$rename
+      n <- length(names(results$data[[cov]]))
+      names(results$data[[cov]])[1L:n]        <- optargs$rename[1L:n]
+      names(results$performance[[cov]])[1L:n] <- optargs$rename[1L:n]
+      names(results$statistics[[cov]])[1L:n]  <- optargs$rename[1L:n]
     }
   }
 
+  allow_ragged <- optargs$`ragged-input`
+  if (!is.null(allow_ragged) && allow_ragged) {
+    keep <- unique(c(unlist(lapply(results$data, FUN=function(x) names(x)))))
+  } else {
+    keep <- names(results$data[[1L]])
+  }
 
-  keep <- names(results$data[[1L]])
+  # ---- Exclude requested entries
   keep <- keep[which(!(keep %in% optargs$exclude))]
 
+  oci_results <- lapply(results$performance, FUN = function(x) x[keep])
+  oci_results <- lapply(oci_results, FUN = function(x) x[!is.na(names(x))])
   # ---- Plot overall performance plot
+
   plotlist <- list()
   if (!is.null(optargs$`performance-plot`)) {
     message("Plotting overall performance plot...")
     oci_fig <- do.call(
       what = badger.plots::plot_oci_performance,
       args = c(
-        list(oci_results = lapply(results$performance, function(x) x[keep])),
+        list(oci_results = oci_results),
         optargs$`performance-plot`
       )
     )
@@ -400,12 +411,17 @@ save_plotly_svg <- function(
       save_plotly_svg(oci_fig, filename, output_dir, width, height)
     })
   }
+
   # ---- Plot overall accuracy plot
   if (!is.null(optargs$`accuracy-plot`)) {
     message("Plotting overall nRMSD plot...")
+
+    rmsd_dfs <- lapply(results$statistics, FUN = function(x) x[keep])
+    #rmsd_dfs <- lapply(rmsd_dfs, FUN = function(x) x[!is.na(names(x))])
+
     rmsd_fig <- do.call(what = badger.plots::plot_accuracy,
       args = c(
-        list(rmsd_dfs = lapply(results$statistics, function(x) x[keep])),
+        list(rmsd_dfs = rmsd_dfs),
         optargs$`accuracy-plot`
       )
     )
