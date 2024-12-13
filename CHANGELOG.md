@@ -1,5 +1,6 @@
 # v0.4.3
 ## Fixes
+- [badger][READv2] Fix erroneous setting of `--norm_method` when config value is set to `norm-method: "value"`
 - [badger-plots] Fix transposition bug which caused incorrect plotting when setting `transpose=TRUE` on performance plot
 # v0.4.2
 ## Features
