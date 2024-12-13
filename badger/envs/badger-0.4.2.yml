@@ -1,4 +1,4 @@
-name: badger-0.4.1
+name: badger-0.4.2
 channels:
   - conda-forge
   - bioconda
