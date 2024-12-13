@@ -1,3 +1,6 @@
+# v0.4.3
+## Fixes
+- [badger-plots] Fix transposition bug which caused incorrect plotting when setting `transpose=TRUE` on performance plot
 # v0.4.2
 ## Features
 - Allow plotting of jagged/ragged input data (see: `ragged-input` parameter)

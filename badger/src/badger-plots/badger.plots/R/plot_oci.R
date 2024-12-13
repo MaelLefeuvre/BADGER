@@ -239,11 +239,11 @@ plot_oci_performance <- function(
   oci_cms      <- list()
   tool_figures <- list()
 
-  toolnames <- unique(c(unlist(lapply(oci_results, FUN=function(x) names(x)))))
-
   if (transpose) {
     oci_results <- purrr::transpose(oci_results)
   }
+  
+  toolnames <- unique(c(unlist(lapply(oci_results, FUN=function(x) names(x)))))
 
   if (is.null(scatter$mode)) {
     scatter$mode <- ifelse(transpose, "markers", "lines+markers")
@@ -463,7 +463,7 @@ make_oci_scatter_plot <- function(
     marker_layout <- if (grepl("markers", mode, fixed = TRUE)) {
       list(
         color = colors[i], symbol = markers$symbols[i], size = markers$size,
-        line = list(color = "#000000FF", width = 1)
+        line = list(color = "#000000FF", width = 1L)
       )
     }
  
