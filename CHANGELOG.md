@@ -1,7 +1,3 @@
-# v0.4.3
-## Fixes
-- [badger][READv2] Fix erroneous setting of `--norm_method` when config value is set to `norm-method: "value"`
-- [badger-plots] Fix transposition bug which caused incorrect plotting when setting `transpose=TRUE` on performance plot
 # v0.4.2
 ## Features
 - Allow plotting of jagged/ragged input data (see: `ragged-input` parameter)
@@ -13,6 +9,8 @@
 - [badger-plots] Add documentation entry for `split` parameter
 - [badger-plots] Add documentation entry for `ragged-input` parameter)
 # Fix
+- [badger][READv2] Fix erroneous setting of `--norm_method` when config value is set to `norm-method: "value"`
+- [badger-plots] Fix transposition bug which caused incorrect plotting when setting `transpose=TRUE` on performance plot
 - [badger] Fix pip conflicts by explicitly calling the binary found within badger's conda environment
 - [badger-plots] Fix incorrect calculation of MBE confidence intervals (normalization value was previously not taken into account when calculating lower and upper bounds)
 
