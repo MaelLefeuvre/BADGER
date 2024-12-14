@@ -44,7 +44,7 @@ plot_confusion_matrix <- function(
 ) {
 
   if (is.null(confusion_matrix)) {
-    confusion_matrix <- matrix(nrow=0, ncol=0)
+    confusion_matrix <- matrix(nrow = 0, ncol = 0)
   }
 
   axis_font <- list(size = axis_fontsize)
@@ -74,10 +74,11 @@ plot_confusion_matrix <- function(
   )
 
   # Generate heatmap with plotly
+  z <- confusion_matrix / (rowSums(confusion_matrix) %>% replace(., . == 0L, 1L))
   fig <- plotly::plot_ly(
     x          = unlist(r_to_rel[colnames(confusion_matrix)]),
     y          = unlist(r_to_rel[row.names(confusion_matrix)]),
-    z          = confusion_matrix / rowSums(confusion_matrix),
+    z          = z,
     type       = "heatmap",
     colorscale = heatmap_colors,
     showscale  = FALSE
@@ -242,8 +243,8 @@ plot_oci_performance <- function(
   if (transpose) {
     oci_results <- purrr::transpose(oci_results)
   }
-  
-  toolnames <- unique(c(unlist(lapply(oci_results, FUN=function(x) names(x)))))
+
+  toolnames <- unique(c(unlist(lapply(oci_results, FUN = names))))
 
   if (is.null(scatter$mode)) {
     scatter$mode <- ifelse(transpose, "markers", "lines+markers")
@@ -311,7 +312,7 @@ plot_oci_performance <- function(
       }
     }
 
-    # ---- Aggregate confusion matrices into subplots. One subplot per tool / row
+    # ---- Aggregate confusion matrices into subplots. One subplot per tool/row
     for (tool in names(oci_cms)){
       tool_figures[[tool]] <- plotly::subplot(
         oci_cms[[tool]],
@@ -466,7 +467,7 @@ make_oci_scatter_plot <- function(
         line = list(color = "#000000FF", width = 1L)
       )
     }
- 
+
     if (i == 1L) {
       fig <- plotly::plot_ly(
         data   = oci_values,

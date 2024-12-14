@@ -9,6 +9,7 @@
 - [badger-plots] Add documentation entry for `split` parameter
 - [badger-plots] Add documentation entry for `ragged-input` parameter)
 # Fix
+- [badger-plots] Fix incorrect CM plotting when row sums equal zero. (which caused division by zero when computing colorscale values)
 - [badger][READv2] Fix erroneous setting of `--norm_method` when config value is set to `norm-method: "value"`
 - [badger-plots] Fix transposition bug which caused incorrect plotting when setting `transpose=TRUE` on performance plot
 - [badger] Fix pip conflicts by explicitly calling the binary found within badger's conda environment
