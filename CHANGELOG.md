@@ -1,7 +1,9 @@
 # v0.4.2
 ## Features
+- [badger-plots] Implement parsing parameters changes detection procedure
+- [badger-plots] Allow user-defined cm-levels during parsing
 - Allow plotting of jagged/ragged input data (see: `ragged-input` parameter)
-- Allo plotting of individual subcomponents of the plots (see: `plot` parameters)
+- Allow plotting of individual subcomponents of the plots (see: `plot` parameters)
 - [Performance plot]: Allow specification of marker symbols and size (see `markers`, `size` and `symbols` parameters)
 - [Accuracy plot]: Allow *visual* transposition of nMBE and nRMSD subplots (see: `flip` parameter)
 # Documentation

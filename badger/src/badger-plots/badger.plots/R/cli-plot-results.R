@@ -33,7 +33,8 @@ deserialize_results <- function(
   pedigree_codes,
   threads = 1L,
   method = c("uoc", "oci"),
-  conf = 0.95
+  conf = 0.95,
+  cm_levels = NULL
 ) {
   results     <- list()
   performance <- list()
@@ -71,7 +72,11 @@ deserialize_results <- function(
       results[[coverage]][[tool]] <- plyr::ldply(dataframes)
 
       # ---- Compute performance classification metrics (UOC / OCI)
-      levels <- sort(unique(results[[coverage]][[tool]]$true_r))
+      levels <- if (is.null(cm_levels)) { # check if CM levels were specified
+         sort(unique(results[[coverage]][[tool]]$true_r))
+      } else {
+        cm_levels
+      }
       message(
         "  - Computing performance classification metrics ",
         "(method='", method[1L], "')..."
@@ -294,6 +299,11 @@ save_plotly_svg <- function(
   return(args)
 }
 
+.check_args_changes <- function(old_args, new_args) {
+  same_length <- (length(unlist(old_args)) == length(unlist(new_args)))
+  (!same_length || (!all(unlist(Map(`%in%`, old_args, new_args)))))
+}
+
 #' (Internal) Main function of the `plot` module of badger-plots' CLI.
 #'
 #' @description
@@ -339,23 +349,38 @@ save_plotly_svg <- function(
   data_backup_path <- file.path(output_dir, "data-backup.Rdata")
 
   # ---- Parse all results
+  parse_results <- TRUE
   if (endsWith(data, ".Rdata")) {
     message("Loading specified .Rdata: ", data)
     load(data)
   } else if (file.exists(data_backup_path)) {
     message("Found data backup: ", data_backup_path)
+
+
     message("Loading such data backup instead of the provided input path...")
     load(data_backup_path)
-  } else {
+    if ("old_args" %in% ls()) {
+      parse_results <- .check_args_changes(old_args, optargs$parsing)
+      if (parse_results) {
+        message("Changes detected since last parsing. \
+          Rerunning parsing procedure  (this will overwrite data backup)"
+        )
+        file.copy(data_backup_path, paste0(data_backup_path, ".bak"), overwrite = TRUE)
+      }
+    }
+  }
+  if (parse_results) {
     message("Parsing archived results using the specified input yaml...")
     results <- badger.plots::deserialize_results(
-      badger.plots::parse_input_yaml(data),
-      pedigree_codes,
-      threads
+      yaml           = badger.plots::parse_input_yaml(data),
+      pedigree_codes = pedigree_codes,
+      threads        = threads,
+      cm_levels      = optargs$parsing$cm_levels
     )
     # ---- Save results
     message("Saving parsed results in ", data_backup_path)
-    save(results, file = data_backup_path)
+    old_args <- optargs$parsing
+    save(results, old_args, file = data_backup_path)
   }
 
   # ---- Reorder, rename and exclude methods if requested
@@ -380,7 +405,7 @@ save_plotly_svg <- function(
 
   allow_ragged <- optargs$`ragged-input`
   if (!is.null(allow_ragged) && allow_ragged) {
-    keep <- unique(c(unlist(lapply(results$data, FUN=function(x) names(x)))))
+    keep <- unique(c(unlist(lapply(results$data, FUN = names))))
   } else {
     keep <- names(results$data[[1L]])
   }
@@ -417,7 +442,6 @@ save_plotly_svg <- function(
     message("Plotting overall nRMSD plot...")
 
     rmsd_dfs <- lapply(results$statistics, FUN = function(x) x[keep])
-    #rmsd_dfs <- lapply(rmsd_dfs, FUN = function(x) x[!is.na(names(x))])
 
     rmsd_fig <- do.call(what = badger.plots::plot_accuracy,
       args = c(

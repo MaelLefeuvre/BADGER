@@ -63,10 +63,11 @@ plot_confusion_matrix <- function(
     confusion_matrix <- prop.table(confusion_matrix, margin = 1L)
   }
 
+
+
   # ---- Generate colorscale for error rates.
-  scaled_vals    <- unique(
-    scales::rescale(c(confusion_matrix) / rowSums(confusion_matrix))
-  )
+  z <- confusion_matrix / (rowSums(confusion_matrix) %>% replace(., . == 0L, 1L))
+  scaled_vals    <- unique(scales::rescale(c(z)))
   o              <- order(scaled_vals, decreasing = FALSE)
   color_palette  <- scales::col_numeric(colorscale, domain = NULL)(scaled_vals)
   heatmap_colors <- stats::setNames(
@@ -74,7 +75,7 @@ plot_confusion_matrix <- function(
   )
 
   # Generate heatmap with plotly
-  z <- confusion_matrix / (rowSums(confusion_matrix) %>% replace(., . == 0L, 1L))
+  #z <- confusion_matrix / (rowSums(confusion_matrix) %>% replace(., . == 0L, 1L))
   fig <- plotly::plot_ly(
     x          = unlist(r_to_rel[colnames(confusion_matrix)]),
     y          = unlist(r_to_rel[row.names(confusion_matrix)]),
