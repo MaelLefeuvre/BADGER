@@ -73,7 +73,7 @@ deserialize_results <- function(
 
       # ---- Compute performance classification metrics (UOC / OCI)
       levels <- if (is.null(cm_levels)) { # check if CM levels were specified
-         sort(unique(results[[coverage]][[tool]]$true_r))
+        sort(unique(results[[coverage]][[tool]]$true_r))
       } else {
         cm_levels
       }
@@ -365,7 +365,11 @@ save_plotly_svg <- function(
         message("Changes detected since last parsing. \
           Rerunning parsing procedure  (this will overwrite data backup)"
         )
-        file.copy(data_backup_path, paste0(data_backup_path, ".bak"), overwrite = TRUE)
+        file.copy(
+          data_backup_path,
+          paste0(data_backup_path, ".bak"),
+          overwrite = TRUE
+        )
       }
     }
   }

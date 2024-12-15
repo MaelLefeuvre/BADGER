@@ -119,9 +119,9 @@ The simulation parameters, and general behaviour of BADGER can be configured by 
 ```yaml
 gargammel:
   coverage:                  0.05 # (average sequencing depth (X) [0-Inf])
-  comp_endo:                 0.98 # (proportion of endogenous sequences [0-1])
-  comp_cont:                 0.02 # (proportion of human contaminant sequences [0-1])
-  comp_bact:                 0.05 # (proportion of bacterial contamination)
+  comp-endo:                 0.98 # (proportion of endogenous sequences [0-1])
+  comp-cont:                 0.02 # (proportion of human contaminant sequences [0-1])
+  comp-bact:                 0.05 # (proportion of bacterial contamination)
   pmd-model:                 "briggs"  # See (Briggs et al 2007)
   briggs:
     nick-frequency:          0.024   # Per-base nick frequency rate (nu)
@@ -321,7 +321,7 @@ Will sequentially run `badger unpack`, `badger run` and `badger archive` on the 
 
 ## Plotting the output of BADGER
 
-Summarizing the output of multiple BADGER runs through statistical analysis and plotting is handled by the `badger-plots` command line program. Using `badger-plots` will generally imply that you have applied BADGER in multiple replicates on several parameter sets, each representing a given biological condition (e.g. applying BADGER on several simulated average sequencing depths, by modifying the value of `gargammel['comp_endo']` in the usual `config/config.yml` file). 
+Summarizing the output of multiple BADGER runs through statistical analysis and plotting is handled by the `badger-plots` command line program. Using `badger-plots` will generally imply that you have applied BADGER in multiple replicates on several parameter sets, each representing a given biological condition (e.g. applying BADGER on several simulated average sequencing depths, by modifying the value of `gargammel['comp-endo']` in the usual `config/config.yml` file). 
 
 > [!IMPORTANT]
 > Note that each simulated biological condition is expected to be stored in a separate archive directory for `badger-plots` to work, as the program generally relies on the assumption that the data was compressed and structured using `badger archive`.

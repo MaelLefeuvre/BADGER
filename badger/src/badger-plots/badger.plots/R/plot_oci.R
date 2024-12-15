@@ -44,7 +44,7 @@ plot_confusion_matrix <- function(
 ) {
 
   if (is.null(confusion_matrix)) {
-    confusion_matrix <- matrix(nrow = 0, ncol = 0)
+    confusion_matrix <- matrix(nrow = 0L, ncol = 0L)
   }
 
   axis_font <- list(size = axis_fontsize)
@@ -66,7 +66,9 @@ plot_confusion_matrix <- function(
 
 
   # ---- Generate colorscale for error rates.
-  z <- confusion_matrix / (rowSums(confusion_matrix) %>% replace(., . == 0L, 1L))
+  z <- confusion_matrix / (
+    rowSums(confusion_matrix) %>% replace(., . == 0L, 1L)
+  )
   scaled_vals    <- unique(scales::rescale(c(z)))
   o              <- order(scaled_vals, decreasing = FALSE)
   color_palette  <- scales::col_numeric(colorscale, domain = NULL)(scaled_vals)
@@ -75,7 +77,6 @@ plot_confusion_matrix <- function(
   )
 
   # Generate heatmap with plotly
-  #z <- confusion_matrix / (rowSums(confusion_matrix) %>% replace(., . == 0L, 1L))
   fig <- plotly::plot_ly(
     x          = unlist(r_to_rel[colnames(confusion_matrix)]),
     y          = unlist(r_to_rel[row.names(confusion_matrix)]),
@@ -124,8 +125,10 @@ plot_confusion_matrix <- function(
 
   if (border) {
     border_shape <- list(
-      type = "rect", xref = "paper", yref = "paper", x0 = 0, y0 = 0, x1 = 1, y1 = 1,
-      line = list(color = "black", width = 1)
+      type = "rect",
+      xref = "paper", yref = "paper",
+      x0 = 0L, y0 = 0L, x1 = 1L, y1 = 1L,
+      line = list(color = "black", width = 1L)
     )
   } else {
     border_shape <- list()
@@ -226,8 +229,8 @@ plot_oci_performance <- function(
     dash  = c("solid"), # nolint: unnecessary_concatenation_linter.
     mode  = NULL,
     markers = list(
-      size    = 6,
-      symbols = c("circle")
+      size    = 6L,
+      symbols = c("circle") # nolint: unnecessary_concatenation_linter.
     ),
     yaxis = list(
       range = c(0.38, 1.02),
@@ -277,17 +280,17 @@ plot_oci_performance <- function(
     for (coverage in names(oci_results)){
       for (tool in toolnames){
 
-        if (all(is.null(oci_results[[coverage]][[tool]]$confusion_matrix))){
+        if (all(is.null(oci_results[[coverage]][[tool]]$confusion_matrix))) {
           if (!warned) {
             warning("[Warning] Missing confusion matrix result for ",
-            coverage, "|", tool, " (This could be intentional)",
-            "CM matrix will be jagged", "\n"
+              coverage, "|", tool, " (This could be intentional)",
+              "CM matrix will be jagged", "\n"
             )
           }
           oci_cms[[tool]][[coverage]] <- plot_confusion_matrix(
             confusion_matrix = NULL,
             yaxis_title   = paste0("<b>", tool, "</b>"),
-            axis_fontsize = axis_fontsize,
+            axis_fontsize = axis_fontsize
           )
           next
         }
@@ -407,8 +410,8 @@ make_oci_scatter_plot <- function(
   toolnames   = NULL,
   dash        = c("solid"), # nolint: unnecessary_concatenation_linter.
   markers     = list(
-    size    = 6,
-    symbols = c("circle")
+    size    = 6L,
+    symbols = c("circle")   # nolint: unnecessary_concatenation_linter.
   ),
   mode        = "lines+markers",
   colors      = RColorBrewer::brewer.pal(
@@ -442,7 +445,7 @@ make_oci_scatter_plot <- function(
   }
 
   oci_values <- as.data.frame(oci_values, row.names = names(oci_results))
-  oci_errors <- rapply(oci_errors, how="list", f=function(x) x[!is.na(x)])
+  oci_errors <- rapply(oci_errors, how = "list", f = function(x) x[!is.na(x)])
 
   # recycle toolnames and marker symbols
   dash    <- rep(dash, length(toolnames))

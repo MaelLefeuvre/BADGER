@@ -19,8 +19,9 @@ rule symlink_KINgaroo_input_bams:
         linkdir  = directory("results/04-kinship/KIN/{generation}/symbams/")
     resources:
         cores    = lambda w, threads: threads
-    log:      "logs/04-kinship/KIN/symlink_KINgaroo_input_bams/{generation}.log"
-    conda:    "../envs/coreutils-9.1.yml"
+    log:       "logs/04-kinship/KIN/symlink_KINgaroo_input_bams/{generation}.log"
+    benchmark: "benchmarks/04-kinship/KIN/symlink_KINgaroo_input_bams/{generation}.tsv"
+    conda:     "../envs/coreutils-9.1.yml"
     threads: 1
     shell: """
         mkdir -p {output.linkdir} && ln -srft {output.linkdir} {input.bamlist} 2>  {log}
@@ -55,9 +56,12 @@ rule run_KINgaroo:
     input:
         bamlist        = rules.symlink_KINgaroo_input_bams.output.bamlist,
         linkdir        = rules.symlink_KINgaroo_input_bams.output.linkdir,
-        targets        = get_snp_targets(ext=".ucscbed"),
+        targets        = expand(rules.get_target_panel_intersect.output.targets,
+            maf      = config['variant-calling']['maf'],
+            superpop = config['variant-calling']['maf-superpop'],
+        ),
     output:
-        kingaroo_dir      =  directory("results/04-kinship/KIN/{generation}/kingaroo"),
+        kingaroo_dir      = directory("results/04-kinship/KIN/{generation}/kingaroo"),
         bedfiles          = directory("results/04-kinship/KIN/{generation}/kingaroo/bedfiles"),
         hapProbs          = directory("results/04-kinship/KIN/{generation}/kingaroo/hapProbs"),
         hbd_results       = directory("results/04-kinship/KIN/{generation}/kingaroo/hbd_results"),
@@ -144,13 +148,13 @@ rule run_KIN:
         interval     = config['kinship']['KIN']['interval'],
         optargs      = parse_KIN_optargs
     resources:
-        #runtime      = 10,
+        runtime      = 60,
         mem_mb       = 3000,
         cores        = lambda w, threads: threads
     log:       "logs/04-kinship/KIN/run_KIN/{generation}.log"
     benchmark: "benchmarks/04-kinship/KIN/run_KIN/{generation}.tsv"
-    conda:      "../envs/kin-3.1.3.yml"
-    threads:    16
+    conda:     "../envs/kin-3.1.3.yml"
+    threads:   16
     shell: """
         CWD=`pwd`; cd {params.workdir}
         KIN \

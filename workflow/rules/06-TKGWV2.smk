@@ -155,11 +155,10 @@ rule run_TKGWV2:
         plink_basename = lambda wildcards, input: splitext(input.plink_targets[0])[0],
         min_MQ     = config["kinship"]["TKGWV2"]["min-MQ"],
         min_BQ     = config["kinship"]["TKGWV2"]["min-BQ"],
-        min_depth  = config["kinship"]["TKGWV2"]["min-depth"],
+        min_depth  = config["kinship"]["TKGWV2"]["min-overlap"],
         bam_ext    = lambda wildcards, input: basename(input.bams[0]).split(".",1)[1]
     resources:
         runtime    = 10,
-        #mem_mb     = 4000,
         mem_mb     = lambda w: round(2600 + 16900 * float(config['gargammel']['coverage'])),
         cores      = lambda w, threads: threads
     log:       "logs/04-kinship/TKGWV2/run_TKGWV2/{generation}/{pairA}_{pairB}.log"

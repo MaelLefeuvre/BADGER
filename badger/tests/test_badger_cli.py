@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from badger import badger
 
-TEST_CONFIG_ARGS="--config gargammel=\"{'coverage': '0.005', 'comp_endo': '0.99', 'comp_cont': '0.01', 'compt_bact': '0.00'}\""
+TEST_CONFIG_ARGS="--config gargammel=\"{'coverage': '0.005', 'comp-endo': '0.99', 'comp-cont': '0.01', 'compt_bact': '0.00'}\""
 SMK_SYMLINK_DIRS=["config", "resources", "workflow"]
 MIN_REQUIRED_CORES="18"
 MIN_REQUIRED_MEM="32000"
