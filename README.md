@@ -61,8 +61,8 @@ This environment should contain the following programs and dependencies:
 | `python`       | `3.11.0`  |
 | `R`            | `>=4.1.2` |
 | `snakemake`    | `7.20.0`  |
-| `badger`       | `>=0.4.2` |
-| `badger-plots` | `>=0.4.2` |
+| `badger`       | `>=0.5.0` |
+| `badger-plots` | `>=0.5.0` |
 
 ### 03. Test the installation
 

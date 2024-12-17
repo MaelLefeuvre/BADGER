@@ -138,7 +138,7 @@ rule run_ped_sim:
         vcf = temp(pipe("results/00-ped-sim/splitted/{rep}/{POP}-pedigrees.vcf")),
     params:
         output_basename  = "results/00-ped-sim/splitted/{rep}/{POP}-pedigrees",
-        error_rate       = config['ped-sim']['params']['error_rate'],
+        error_rate       = config['ped-sim']['params']['error-rate'],
         missingness      = config['ped-sim']['params']['missingness'],
         retain_extra     = config['ped-sim']['params']['retain-extra'],
         seed             = set_ped_sim_seed

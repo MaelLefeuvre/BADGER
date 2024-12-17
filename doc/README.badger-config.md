@@ -423,6 +423,11 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
 
     > **Allowed values:** (String) Any valid three-lettered 1000g-phase3 population, or super-population label. A detailled list of the available population codes can be seen in IGSR's FAQ section here: [What do the population codes mean ?](https://www.internationalgenome.org/faq/what-do-the-population-codes-mean/) 
 
+  - #### <a name="contam-rate"></a>contam-rate
+    > **Description:** Specify a rate of simulated human modern contamination rate. Can be specified as a single floating point value, or a list of values. The former mode will simulate an equal rate of contamination across all samples. The latter mode will map the provided values to every samples.
+
+    > **Allowed values:** (List<float>) A list of floating point values (in the range $[0, 1]$), each representing a contamination rate.
+
   - #### <a name="min-depth-1"></a>min-depth
     > **Description:** Specify the minimum allowed sequencing depth, when comparing two overlapping positions on a pair of individuals.
     
@@ -477,6 +482,11 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
     > **Description:** Minimum required number of genotyped positions within a given genomic window. This argument is passed on to `KIN`. (Default recommended value is `10`)
 
     > **Allowed values:** (integer) Any value in the range $[1, +\infty]$.
+
+  - #### <a name="contam-parameter"></a>contam-parameter
+    > **Description:**Provide the software with a user-defined rate of divergence between the target and contaminating population. This argument is passed on to `KINgaroo`. (Default value is `0`)
+
+    > **Allowed values:** (float) Any value in the range $[0, 1[$.
 
   - #### <a name="diversity-parameter"></a>diversity-parameter
     > **Description:** Provide the software with a user-defined estimate of $P_{0}$. Setting this value to `None` (`~`) will order KIN to estimate this value from the data (default.)

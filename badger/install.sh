@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="0.4.2"
+VERSION="0.5.0"
 CONDA="${CONDA_EXE:-$(which conda)}"
 TERM="${TERM:-dumb}"
 

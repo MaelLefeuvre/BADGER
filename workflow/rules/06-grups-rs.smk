@@ -114,6 +114,7 @@ rule run_GRUPS:
         pedigree       = config["kinship"]["GRUPS"]["pedigree"],
         pedigree_pop   = config["kinship"]["GRUPS"]["pedigree-pop"],
         contam_pop     = config["kinship"]["GRUPS"]["contam-pop"],
+        contam_rate    = config["kinship"]["GRUPS"]["contam-rate"],
         reps           = config["kinship"]["GRUPS"]["reps"],
         mode           = config["kinship"]["GRUPS"]["mode"],
         min_depth      = config["kinship"]["GRUPS"]["min-depth"],
@@ -137,6 +138,7 @@ rule run_GRUPS:
         --pedigree {params.pedigree} \
         --pedigree-pop {params.pedigree_pop} \
         --contam-pop {params.contam_pop} \
+        --contamination-rate {params.contam_rate} \
         --min-depth {params.min_depth} \
         --samples 0-{params.samples} \
         --sample-names {params.sample_names} \

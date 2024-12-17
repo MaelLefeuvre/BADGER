@@ -108,6 +108,7 @@ kinship:
     pedigree:                "resources/grups-rs/pedigrees/siblings-pedigree.ped"
     pedigree-pop:            "EUR"
     contam-pop:              "EUR"
+    contam-rate:             0.0
     min-depth:               1
     mode:                    "fst"
     reps:                    1000
@@ -127,6 +128,7 @@ kinship:
     interval:                10000000
     p0-threshold:            10
     roh-threshold:           ~                   # (ignored if None)
+    contam-parameter:        0
     diversity-parameter:     ~                   # (ignored if None)
     noisy-windows:           ~                   # (ignored if None)
   correctKin:

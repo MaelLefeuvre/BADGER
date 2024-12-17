@@ -77,6 +77,7 @@ rule run_KINgaroo:
     params:
         interval       = config['kinship']['KIN']['interval'],
         threshold      = config['kinship']['KIN']['p0-threshold'],
+        contam_param   = config['kinship']['KIN']['contam-parameter'],
         optargs        = parse_KINgaroo_optargs
     resources:
         runtime        = 600,
@@ -95,7 +96,7 @@ rule run_KINgaroo:
         --bamfiles_location $CWD/{input.linkdir} \
         --target_location $CWD/{input.bamlist} \
         --bedfile $CWD/{input.targets} \
-        --contam_parameter 0 \
+        --contam_parameter {params.contam_param} \
         --interval {params.interval} \
         --threshold {params.threshold} \
         {params.optargs} \
