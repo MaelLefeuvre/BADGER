@@ -1,3 +1,6 @@
+# v0.5.1
+## Fixes
+- Tweak `grups-rs-0.3.2`, `pmd-mask-0.3.2` and `pcangsd-0.99` conda environment definition files
 # v0.5.0
 ## Changes
 - **(Breaking)** remove underscores in `config.yml`:
