@@ -6,7 +6,9 @@ dependencies:
   - bioconda::snakemake=7.20.0
   - conda-forge::python=3.11
   - conda-forge::pyopenssl>=24
-  - conda-forge::pip  
+  - conda-forge::pip
+  - conda-forge::liblzma
+  - conda-forge::liblzma-devel
   - pip: # badger.py dependencies
     - argparse
     - colorama

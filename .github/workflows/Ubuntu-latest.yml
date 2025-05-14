@@ -23,8 +23,6 @@ jobs:
         activate-environment: ""
     - name: Conda info
       run: conda info
-    - name: Install core dependencies
-      run: sudo apt-get install -y liblzma-dev
     - name: Install Badger
       run: bash ./badger/install.sh
     - name: Run tests
