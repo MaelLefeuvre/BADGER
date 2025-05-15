@@ -1,6 +1,10 @@
 # v0.5.1
 ## Fixes
+- Enforce a minimum supported snakemake version using `snakemake.utils.min_version`
+- Explicitly define `libmzma-dev` as a dependency within the conda environment of `badger`.
 - Tweak `grups-rs-0.3.2`, `pmd-mask-0.3.2` and `pcangsd-0.99` conda environment definition files
+## Documentation / CI
+- Add `CONTRIBUTING.md`
 # v0.5.0
 ## Changes
 - **(Breaking)** remove underscores in `config.yml`:
