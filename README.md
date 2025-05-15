@@ -419,6 +419,20 @@ Once in possession of an `input.yml` and a properly configured `params.yml` file
 badger-plots plot --yaml plots/params.yml --threads 32
 ```
 
+## Installing and running BADGER with older conda versions
+If your workstation is running a version of conda `<4.7.0` and you are unable to update it, the installation process of BADGER may be sluggish, as these older versions of conda are single-threaded and made use of a suboptimal solver. In such cases, we recommend the installation of [`mamba`](https://github.com/mamba-org/mamba) within your base environment. The use of a `CONDA_EXE` environment may then be applied to redirect the conda-frontend to `mamba` when running the installation:
+
+```bash
+CONDA_EXE="mamba" ./badger/install.sh
+```
+
+When setting up badger, the mamba frontend may also be specified as a snakemake option, like so:
+```bash
+badger setup -- --conda-frontend mamba
+```
+
+
+
 ## Issues and contributions.
 
 For any questions or issue related to the use of BADGER, please directly submit an issue on the github page of this repository. Suggestions, feature requests or code contributions are also welcome. 
