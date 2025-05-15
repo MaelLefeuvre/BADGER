@@ -33,7 +33,8 @@ deserialize_results <- function(
   pedigree_codes,
   threads = 1L,
   method = c("uoc", "oci"),
-  conf = 0.95
+  conf = 0.95,
+  cm_levels = NULL
 ) {
   results     <- list()
   performance <- list()
@@ -71,7 +72,11 @@ deserialize_results <- function(
       results[[coverage]][[tool]] <- plyr::ldply(dataframes)
 
       # ---- Compute performance classification metrics (UOC / OCI)
-      levels <- sort(unique(results[[coverage]][[tool]]$true_r))
+      levels <- if (is.null(cm_levels)) { # check if CM levels were specified
+        sort(unique(results[[coverage]][[tool]]$true_r))
+      } else {
+        cm_levels
+      }
       message(
         "  - Computing performance classification metrics ",
         "(method='", method[1L], "')..."
@@ -294,6 +299,11 @@ save_plotly_svg <- function(
   return(args)
 }
 
+.check_args_changes <- function(old_args, new_args) {
+  same_length <- (length(unlist(old_args)) == length(unlist(new_args)))
+  (!same_length || (!all(unlist(Map(`%in%`, old_args, new_args)))))
+}
+
 #' (Internal) Main function of the `plot` module of badger-plots' CLI.
 #'
 #' @description
@@ -339,23 +349,42 @@ save_plotly_svg <- function(
   data_backup_path <- file.path(output_dir, "data-backup.Rdata")
 
   # ---- Parse all results
+  parse_results <- TRUE
   if (endsWith(data, ".Rdata")) {
     message("Loading specified .Rdata: ", data)
     load(data)
   } else if (file.exists(data_backup_path)) {
     message("Found data backup: ", data_backup_path)
+
+
     message("Loading such data backup instead of the provided input path...")
     load(data_backup_path)
-  } else {
+    if ("old_args" %in% ls()) {
+      parse_results <- .check_args_changes(old_args, optargs$parsing)
+      if (parse_results) {
+        message("Changes detected since last parsing. \
+          Rerunning parsing procedure  (this will overwrite data backup)"
+        )
+        file.copy(
+          data_backup_path,
+          paste0(data_backup_path, ".bak"),
+          overwrite = TRUE
+        )
+      }
+    }
+  }
+  if (parse_results) {
     message("Parsing archived results using the specified input yaml...")
     results <- badger.plots::deserialize_results(
-      badger.plots::parse_input_yaml(data),
-      pedigree_codes,
-      threads
+      yaml           = badger.plots::parse_input_yaml(data),
+      pedigree_codes = pedigree_codes,
+      threads        = threads,
+      cm_levels      = optargs$parsing$cm_levels
     )
     # ---- Save results
     message("Saving parsed results in ", data_backup_path)
-    save(results, file = data_backup_path)
+    old_args <- optargs$parsing
+    save(results, old_args, file = data_backup_path)
   }
 
   # ---- Reorder, rename and exclude methods if requested
@@ -369,25 +398,36 @@ save_plotly_svg <- function(
   }
 
   if (!is.null(optargs$rename) && length(optargs$rename) > 0L) {
+
     for (cov in names(results$data)) {
-      names(results$data[[cov]])        <- optargs$rename
-      names(results$performance[[cov]]) <- optargs$rename
-      names(results$statistics[[cov]])  <- optargs$rename
+      n <- length(names(results$data[[cov]]))
+      names(results$data[[cov]])[1L:n]        <- optargs$rename[1L:n]
+      names(results$performance[[cov]])[1L:n] <- optargs$rename[1L:n]
+      names(results$statistics[[cov]])[1L:n]  <- optargs$rename[1L:n]
     }
   }
 
+  allow_ragged <- optargs$`ragged-input`
+  if (!is.null(allow_ragged) && allow_ragged) {
+    keep <- unique(c(unlist(lapply(results$data, FUN = names))))
+  } else {
+    keep <- names(results$data[[1L]])
+  }
 
-  keep <- names(results$data[[1L]])
+  # ---- Exclude requested entries
   keep <- keep[which(!(keep %in% optargs$exclude))]
 
+  oci_results <- lapply(results$performance, FUN = function(x) x[keep])
+  oci_results <- lapply(oci_results, FUN = function(x) x[!is.na(names(x))])
   # ---- Plot overall performance plot
+
   plotlist <- list()
   if (!is.null(optargs$`performance-plot`)) {
     message("Plotting overall performance plot...")
     oci_fig <- do.call(
       what = badger.plots::plot_oci_performance,
       args = c(
-        list(oci_results = lapply(results$performance, function(x) x[keep])),
+        list(oci_results = oci_results),
         optargs$`performance-plot`
       )
     )
@@ -400,12 +440,16 @@ save_plotly_svg <- function(
       save_plotly_svg(oci_fig, filename, output_dir, width, height)
     })
   }
+
   # ---- Plot overall accuracy plot
   if (!is.null(optargs$`accuracy-plot`)) {
     message("Plotting overall nRMSD plot...")
+
+    rmsd_dfs <- lapply(results$statistics, FUN = function(x) x[keep])
+
     rmsd_fig <- do.call(what = badger.plots::plot_accuracy,
       args = c(
-        list(rmsd_dfs = lapply(results$statistics, function(x) x[keep])),
+        list(rmsd_dfs = rmsd_dfs),
         optargs$`accuracy-plot`
       )
     )

@@ -225,7 +225,7 @@ def find_contaminant(wildcards):
         raise RuntimeError("Failed to find {gen} pattern in {contamination_table}")
 
     out = "results/01-gargammel/contaminants/{cont}/{{chr}}/{cont}_chr{{chr}}_haplo{haplo}.fasta"
-    if float(config['gargammel']['comp_cont']) > 0.0:
+    if float(config['gargammel']['comp-cont']) > 0.0:
         return expand(out, cont=contaminant, chr=chromo, haplo=[1,2])
     else:
         return []
@@ -256,9 +256,9 @@ def get_pmd_model(wildcards):
 
 
 def parse_gargammel_comp(wildcards):
-    cont = config['gargammel']['comp_cont']
-    endo = config['gargammel']['comp_endo']
-    bact = config['gargammel']['comp_bact']
+    cont = config['gargammel']['comp-cont']
+    endo = config['gargammel']['comp-endo']
+    bact = config['gargammel']['comp-bact']
 
 
     if config['gargammel']['params']['contaminate-samples'] is None:

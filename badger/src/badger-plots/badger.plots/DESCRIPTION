@@ -1,6 +1,6 @@
 Package: badger.plots
 Title: A suite of visualization tools for BADGER
-Version: 0.4.0
+Version: 0.4.2
 Authors@R: 
     person("Maël", "Lefeuvre", , "mael.lefeuvre@mnhn.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3567-1088"))

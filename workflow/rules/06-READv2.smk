@@ -38,7 +38,7 @@ def parse_READv2_norm_method(wildcards):
         case "value":
             if norm_value is None:
                 raise RuntimeError("[READv2] Requested a set value as a normalisation value, but none was provided.")
-            return f"--norm_method --norm_value {config['kinship']['READ']['norm-value']}"
+            return f"--norm_method {norm_method} --norm_value {config['kinship']['READ']['norm-value']}"
         case other:
             raise RuntimeError(f"[READv2] Invalid norm-method: {other}")
 

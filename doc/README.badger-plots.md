@@ -55,6 +55,11 @@ This page lists and describes all the graphical parameters that can be configure
 > `exclude: ["read-v1", "tkgwv2"]`  
 > `exclude: []`
 
+## <a name="ragged-input"></a>ragged-input
+> <ins>**Description**</ins>: Specify whether plotting should take into account, and attempt to plot ragged input data (i.e.: This may be of use in cases where the provided input.yml` has missing entries, and may not be expressed as a fully populated 2D matrix).
+> <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
+> <ins>**Default**</ins>: `no`
+
 ## <a name="performance-plot"></a>performance-plot
 Categorizes plotting parameters arguments for the summarized Ordinal classification index performance plot. 
 - ### <a name="filename"></a>filename
@@ -63,6 +68,13 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
   > <ins>**Allowed values**</ins>: (String) Any valid string representing a filename. Use of special characters is not recommended. (Prefer using the following character set: `[a-zA-Z0-9-_.]`)
   
   > <ins>**Default**</ins>: *`"OCI-performance-plot"`
+
+- ### <a name="plot"></a>plot
+  > <ins>**Description**</ins>: Specify which subcomponents of the classification performance plot should be displayed.
+
+  > <ins>**Allowed values**</ins>: `[String]`. A List of string. Allowed values are ('cm' and/or 'scatter')
+
+  > <ins>**Default**</ins>: *`["cm", "scatter"]`
 
 - ### <a name="transpose"></a>transpose
   > <ins>**Description**</ins>: Transpose the plotting order of benchmarked methods and biological conditions. When the value is set to `no`, the grid of confusion matrices within the plot is ordered by arranging each kinship estimation method as a distinct row, and each biological condition as a distinct column. Setting this value to `yes` will instead arrange biological conditions on a distinct *row*, and methods on a distinct *column*.
@@ -127,6 +139,13 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
 
     > <ins>**Default**</ins>: `-0.1`
 
+  - #### <a name="title"></a>title
+    > <ins>**Description**</ins>: Specify a title categorizing every item within the legend
+
+    > <ins>**Allowed values**</ins>: (string) Any string representing a legend title.
+
+    > <ins>**Default**</ins>: `"Method"`
+
 - ### <a name="cm"></a>cm
   Categorizes plotting parameters related to the display of every individual confusion matrix found within the main OCI performance plot.
   - #### <a name="condense"></a>condense
@@ -190,6 +209,13 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
 
     > <ins>**Default**</ins>: `no`
 
+  - #### <a name="border"></a>border
+    > <ins>**Description**</ins>: Draw a border surrounding every confusion matrix. This can be useful to visually separate each matrix when plotting many methods and biological conditions at the same time.
+
+    > <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
+
+    > <ins>**Default**</ins>: `no`
+
 - ### <a name="scatter"></a>scatter
   Categorizes plotting parameters related to the display of the summary scatterplot of OCI performance values.
   - #### <a name="dash"></a>dash
@@ -210,6 +236,27 @@ Categorizes plotting parameters arguments for the summarized Ordinal classificat
     > <ins>**Allowed values**</ins>: (String) A plotly-compatible string, representing a drawing mode (i.e.: "lines", "markers", "line+markers"). See the corresponding plotly reference entry, for an extensive description of allowed values: [scatter mode](https://plotly.com/r/reference/scatter/#scatter-mode)
 
     > <ins>**Default**</ins>: *`"lines+markers"`*
+
+  - #### <a name="markers"></a>markers
+    Categorizes plotting parameters related to marker data points.
+    - ##### <a name="size-1"></a>size
+    > <ins>**Description**</ins>: Specify the size of the markers (in px.)
+
+    > <ins>**Allowed values**</ins>: (integer) Any non negative integer in the range $[1, +\infty]$, representing a pixel size.
+
+    > <ins>**Default**</ins>: `6`
+    
+    - ##### <a name="symbols"></a>symbols
+     > <ins>**Description**</ins>: Specify a list of marker symbols for every category of the scatterplot. Note that values of the list will be recycled, if the number of categories is greater than the number of elements within the list. 
+
+    > <ins>**Allowed values**</ins>: (List[strings]) A list of plotly-compatible line symbol styles. (i.e.: *`"circle"`*, *`"square"`*, *`"diamond"`*, *`"triangle-down"`*, etc). For an extensive description of allowed values, see the corresponding plotly reference entry: [scatter marker symbol](https://plotly.com/r/reference/scatter/#scatter-marker-symbol)
+
+    > <ins>**Default**</ins>: `"solid"`
+
+    > <ins>**Examples**</ins>:  
+    > `symbols: "circle"`  
+    > `symbols: ["triangle-down", "square"]`  
+    > `symbols: ["circle-open-dot", "diamond-open-dot", "cross-open-dot", "triangle-up-open-dot"]`
 
   - #### <a name="yaxis"></a>yaxis
     Categorizes plotting parameters related to the display of the summary scatterplot's y-axis.
@@ -270,6 +317,12 @@ Categorizes plotting parameters arguments for the normalized root mean square de
   
   > <ins>**Default**</ins>: *`"nRMSD-accuracy-plot"`
 
+- ### <a name="plot-1"></a>plot
+  > <ins>**Description**</ins>: Specify which subcomponents of the accuracy plot should be displayed.
+
+  > <ins>**Allowed values**</ins>: `[String]`. A List of string. Allowed values are ('rmsd' and/or 'mbe')
+
+  > <ins>**Default**</ins>: *`["rmsd", "mbe"]`
 
 - ### <a name="transpose-1"></a>transpose
 
@@ -279,6 +332,21 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
   > <ins>**Default**</ins>: `no`
 
+- ### <a name="flip"></a>flip
+
+  > <ins>**Description**</ins>: Transpose the plotting configuration between the individual `nRMSD` and `nMBE` plots. When set to `no`, `nRMSD` and `nMBE` plots each inhabit a separate *column*. When set to `yes`, the `nRMSD` plots and `nMBE` plots are instead organized into rows.
+
+  > <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
+
+  > <ins>**Default**</ins>: `no`
+
+  - #### <a name="border-1"></a>border
+    > <ins>**Description**</ins>: Draw a border surrounding every nRMSD and nMBE subplot. This can help visually separate each component when simultaneously plotting many methods and biological conditions.
+
+    > <ins>**Allowed values**</ins>: (boolean) Any value parseable as a boolean, according to the YAML format specifications (See: [YAML boolean](https://yaml.org/spec/1.2.2/#10212-boolean), for more details.)
+
+    > <ins>**Default**</ins>: `no`
+
 - ### <a name="fixed_axis"></a>fixed_axis
   > <ins>**Description**</ins>: Specify whether every `nRMSD` and `nMBE` subplot should share the same y-axis range. When set to `no`, the y-axis range of every subplot is tailored to the given values. When set to `yes`, the program will instead search for the maximum and minimum value across every subplot, and use these as a shared plotting range across all subplots.
 
@@ -286,7 +354,21 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
   > <ins>**Default**</ins>: `yes`
 
-- ### <a name="title"></a>title
+- ### <a name="horizontal_margin-1"></a>horizontal_margin
+  > <ins>**Description**</ins>: Specify the display margin separating each *row* of the plot. 
+
+  > <ins>**Allowed values**</ins>: (float) Any non negative floating point value in the range $[0, 1]$, representing a display ratio.
+
+  > <ins>**Default**</ins>: `0.02`
+
+- ### <a name="vertical_margin-1"></a>vertical_margin
+  > <ins>**Description**</ins>: Specify the display margin separating each *column* of the plot
+
+  > <ins>**Allowed values**</ins>: (float) Any non negative floating point value in the range $[0, 1]$, representing a display ratio.
+    
+  > <ins>**Default**</ins>: `0.02`
+
+- ### <a name="title-1"></a>title
   > <ins>**Description**</ins>: Specify a main title for the plot.
 
   > <ins>**Allowed values**</ins>: (String) Any string representing a main title for the plot.
@@ -295,7 +377,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
 - ### <a name="rmsd"></a>rmsd
   Categorizes plotting parameters shared across all `nRMSD` subplots
-  - #### <a name="title-1"></a>title
+  - #### <a name="title-2"></a>title
     > <ins>**Description**</ins>: Specify a subtitle for the `nRMSD` subplots
 
     > <ins>**Allowed values**</ins>: (String) Any string representing a main subtitle for the `nRMSD` subplots.
@@ -319,7 +401,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 - ### <a name="mbe"></a>mbe
   Categorizes plotting parameters shared across all `nMBE` subplots
 
-  - #### <a name="title-2"></a>title
+  - #### <a name="title-3"></a>title
     > <ins>**Description**</ins>: Specify a subtitle for the `nMBE` subplots
 
     > <ins>**Allowed values**</ins>: (String) Any string representing a main subtitle for the `nMBE` subplots.
@@ -372,14 +454,14 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
 - ### <a name="legend-1"></a>legend
   Categorizes plotting parameters related to the display of the legend within the main accuracy plot.
-  - #### <a name="size-1"></a>size
+  - #### <a name="size-2"></a>size
     > <ins>**Description**</ins>: Specify the font size of every figure legend key. (in px.)
 
     > <ins>**Allowed values**</ins>: (integer) Any non negative integer value in the range $[1, +\infty]$, representing a pixel size.
 
     > <ins>**Default**</ins>: `12`
 
-  - #### <a name="title-3"></a>title
+  - #### <a name="title-4"></a>title
     > <ins>**Description**</ins>: Specify a title categorizing every item within the legend
 
     > <ins>**Allowed values**</ins>: (string) Any string representing a legend title.
@@ -421,7 +503,7 @@ Categorizes plotting parameters arguments for the normalized root mean square de
 
       > <ins>**Default**</ins>: `0.5`
 
-    - ##### <a name="size-2"></a>size
+    - ##### <a name="size-3"></a>size
       > <ins>**Description**</ins>: Specify the size of the shapes used to generate the hatching pattern (in px.)
 
       > <ins>**Allowed values**</ins>: (integer) Any integer value in the range $[1, +\infty]$, representing a pixel size. 

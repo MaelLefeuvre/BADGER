@@ -16,7 +16,7 @@ ped-sim:
     map:                     ~
     interference:            ~
   params:
-    error_rate:              0
+    error-rate:              0
     missingness:             0
     retain-extra:            0 
     pop:                     "CEU"
@@ -25,9 +25,9 @@ ped-sim:
 simulator:                   "gargammel"         # "gargammel" | "dwgsim"
 gargammel:
   coverage:                  0.02
-  comp_endo:                 1.00
-  comp_cont:                 0.00
-  comp_bact:                 0.00
+  comp-endo:                 1.00
+  comp-cont:                 0.00
+  comp-bact:                 0.00
   pmd-model:                 "misincorporation"  # "misincorporation" | "briggs"
   misincorporation:
     file:                    "resources/gargammel/misincorporations/Chan_meso/misincorporation.txt"
@@ -108,6 +108,7 @@ kinship:
     pedigree:                "resources/grups-rs/pedigrees/siblings-pedigree.ped"
     pedigree-pop:            "EUR"
     contam-pop:              "EUR"
+    contam-rate:             0.0
     min-depth:               1
     mode:                    "fst"
     reps:                    1000
@@ -122,11 +123,12 @@ kinship:
     target-frequencies:      ~
     min-BQ:                  30
     min-MQ:                  20
-    min-depth:               1
+    min-overlap:             1
   KIN:
     interval:                10000000
     p0-threshold:            10
     roh-threshold:           ~                   # (ignored if None)
+    contam-parameter:        0
     diversity-parameter:     ~                   # (ignored if None)
     noisy-windows:           ~                   # (ignored if None)
   correctKin:

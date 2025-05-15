@@ -3,9 +3,10 @@ channels:
   - conda-forge
 dependencies:
   - conda-forge::compilers
-  - conda-forge::python>=3.6
+  - conda-forge::python>=3.6,<=3.11
   - conda-forge::setuptools
   - conda-forge::numpy
   - conda-forge::scipy
-  - conda-forge::cython<3.0.0
+  - conda-forge::cython>3.0.0
   - conda-forge::pandas
+  - conda-forge::pip>=24.0.0,<=25.0.0

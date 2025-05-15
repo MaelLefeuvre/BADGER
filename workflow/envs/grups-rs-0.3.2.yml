@@ -1,4 +1,4 @@
-name: grups-rs
+name: grups-rs-0.3.2
 channels:
   - conda-forge
 dependencies:
@@ -14,4 +14,5 @@ dependencies:
   - conda-forge::libdeflate>=1.17
   - conda-forge::r-base>=4.1.2
   - conda-forge::r-devtools>=2.4.5
-
+  - conda-forge::r-viridis
+  - conda-forge::r-mass

@@ -73,7 +73,7 @@ Categorizes arguments related to pedigree simulations, and the `ped-sim` softwar
 - ### <a name="params"></a>params
   Categorizes optional parameters and flags for the `ped-sim` program. These optional parameters are described in a dedicated section within ped-sim's documentation: [Other optional arguments](https://github.com/williamslab/ped-sim/tree/v1.4.2?tab=readme-ov-file#other-optional-arguments). Note that this section does not currently map every optional arguments of `ped-sim` exhaustively.
 
-  - #### <a name="error_rate"></a>error_rate
+  - #### <a name="error-rate"></a>error-rate
     > <ins>**Description**</ins>: Sets `ped-sim`'s internal genotyping error rate (`--err_rate` parameter)
 
     > <ins>**Allowed values**</ins>: (float) Any valid floating point value found in the range $[0, 1]$
@@ -108,17 +108,17 @@ This sub-section categorizes all parameters related to the `gargammel` aDNA frag
 
   > <ins>**Allowed values**</ins>: (float) Any non-negative floating point value.
 
-- ### <a name="comp_endo"></a>comp_endo
+- ### <a name="comp-endo"></a>comp-endo
   > <ins>**Description**</ins>: Fractional composition of endogenous sequences.
 
   > <ins>**Allowed values**</ins>: (float) Any valid floating point value in the range $[0, 1]$
 
-- ### <a name="comp_cont"></a>comp_cont
-  > <ins>**Description**</ins>: Fractional composition of modern human contaminating sequences. Note that this value should be equal to (1 - *[`comp_endo`](#com)*)
+- ### <a name="comp-cont"></a>comp-cont
+  > <ins>**Description**</ins>: Fractional composition of modern human contaminating sequences. Note that this value should be equal to (1 - *[`comp-endo`](#com)*)
 
   > <ins>**Allowed values**</ins>: (float) Any valid floating point value in the range $[0, 1]$
 
-- ### <a name="comp_bact"></a>comp_bact
+- ### <a name="comp-bact"></a>comp-bact
   > <ins>**Description**</ins>: Fractional composition of contaminating bacterial sequences. Note that setting this value to anything other than 0 will trigger BADGER to automatically download the example bacterial database proposed in gargammel's source code.
 
   > <ins>**Allowed values**</ins>: (float) Any valid floating point value in the range $[0, 1]$
@@ -423,6 +423,11 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
 
     > **Allowed values:** (String) Any valid three-lettered 1000g-phase3 population, or super-population label. A detailled list of the available population codes can be seen in IGSR's FAQ section here: [What do the population codes mean ?](https://www.internationalgenome.org/faq/what-do-the-population-codes-mean/) 
 
+  - #### <a name="contam-rate"></a>contam-rate
+    > **Description:** Specify a rate of simulated human modern contamination rate. Can be specified as a single floating point value, or a list of values. The former mode will simulate an equal rate of contamination across all samples. The latter mode will map the provided values to every samples.
+
+    > **Allowed values:** (List<float>) A list of floating point values (in the range $[0, 1]$), each representing a contamination rate.
+
   - #### <a name="min-depth-1"></a>min-depth
     > **Description:** Specify the minimum allowed sequencing depth, when comparing two overlapping positions on a pair of individuals.
     
@@ -477,6 +482,11 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
     > **Description:** Minimum required number of genotyped positions within a given genomic window. This argument is passed on to `KIN`. (Default recommended value is `10`)
 
     > **Allowed values:** (integer) Any value in the range $[1, +\infty]$.
+
+  - #### <a name="contam-parameter"></a>contam-parameter
+    > **Description:**Provide the software with a user-defined rate of divergence between the target and contaminating population. This argument is passed on to `KINgaroo`. (Default value is `0`)
+
+    > **Allowed values:** (float) Any value in the range $[0, 1[$.
 
   - #### <a name="diversity-parameter"></a>diversity-parameter
     > **Description:** Provide the software with a user-defined estimate of $P_{0}$. Setting this value to `None` (`~`) will order KIN to estimate this value from the data (default.)
@@ -582,7 +592,7 @@ Categorises arguments related to all of the benchmarked kinship estimation metho
     > **Description:**  Skip aligned fragments carrying a mapping quality that is lower than the provided threshold. Note that `TKGWV2` internally calls samtools and passes this argument directly to it. The default recommended value of the software is 30
 
     > **Allowed values:** (integer) a non-negative integer in the range $[0, 40]$, representing a PHRED quality score. 
-  - #### <a name="min-depth-2"></a>min-depth
+  - #### <a name="min-overlap-1"></a>min-overlap
     > **Description:** Specify the minimum number of SNPs allowed to estimate relatedness. Default value is 1.
 
     > **Allowed values:** (integer) Any integer value in the range $[1, +\infty]$ representing a number of overlapping snps.

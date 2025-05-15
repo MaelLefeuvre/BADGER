@@ -30,5 +30,6 @@ EOF
 
 
 # ---- End rpy2 vs r-archive shenanigans
-pip install -U pip setuptools~=74.1.1 packaging~=24.1
-pip install "$THIS_DIR/.."
+PIP="$CONDA_PREFIX/bin/pip"
+$PIP install -U pip setuptools~=74.1.1 packaging~=24.1
+$PIP install "$THIS_DIR/.."

@@ -39,8 +39,13 @@ plot_confusion_matrix <- function(
   tickangle              = 0L,
   cm_font_size           = 10L,
   tickfont_size          = 10L,
-  axis_fontsize          = 14L
+  axis_fontsize          = 14L,
+  border                 = FALSE
 ) {
+
+  if (is.null(confusion_matrix)) {
+    confusion_matrix <- matrix(nrow = 0L, ncol = 0L)
+  }
 
   axis_font <- list(size = axis_fontsize)
 
@@ -58,10 +63,13 @@ plot_confusion_matrix <- function(
     confusion_matrix <- prop.table(confusion_matrix, margin = 1L)
   }
 
+
+
   # ---- Generate colorscale for error rates.
-  scaled_vals    <- unique(
-    scales::rescale(c(confusion_matrix) / rowSums(confusion_matrix))
+  z <- confusion_matrix / (
+    rowSums(confusion_matrix) %>% replace(., . == 0L, 1L)
   )
+  scaled_vals    <- unique(scales::rescale(c(z)))
   o              <- order(scaled_vals, decreasing = FALSE)
   color_palette  <- scales::col_numeric(colorscale, domain = NULL)(scaled_vals)
   heatmap_colors <- stats::setNames(
@@ -72,7 +80,7 @@ plot_confusion_matrix <- function(
   fig <- plotly::plot_ly(
     x          = unlist(r_to_rel[colnames(confusion_matrix)]),
     y          = unlist(r_to_rel[row.names(confusion_matrix)]),
-    z          = confusion_matrix / rowSums(confusion_matrix),
+    z          = z,
     type       = "heatmap",
     colorscale = heatmap_colors,
     showscale  = FALSE
@@ -115,7 +123,19 @@ plot_confusion_matrix <- function(
     )
   }
 
+  if (border) {
+    border_shape <- list(
+      type = "rect",
+      xref = "paper", yref = "paper",
+      x0 = 0L, y0 = 0L, x1 = 1L, y1 = 1L,
+      line = list(color = "black", width = 1L)
+    )
+  } else {
+    border_shape <- list()
+  }
+
   fig <- fig %>% plotly::layout(
+    shapes      = border_shape,
     xaxis       = list(
       title     = list(
         text = ifelse(xaxis_title_visibility, xaxis_title, ""),
@@ -129,10 +149,13 @@ plot_confusion_matrix <- function(
     yaxis       = list(
       title     = list(text = yaxis_title, font = axis_font),
       tickfont  = list(size = tickfont_size),
-      autorange = "reversed"
+      autorange = "reversed",
+      showgrid = FALSE
     ),
     annotations = annotations
   )
+
+
 
   fig
 }
@@ -184,6 +207,7 @@ plot_confusion_matrix <- function(
 plot_oci_performance <- function(
   oci_results,
   filename            = "OCI-performance-plot",
+  plot                = c("cm", "scatter"),
   transpose           = FALSE,
   scatterplot_ratio   = 0.20,
   horizontal_margin   = 0.02,
@@ -198,11 +222,16 @@ plot_oci_performance <- function(
     tickfont   = 10L,
     tickangle  = 0L,
     fontsize   = 10L,
-    show_xaxis = FALSE
+    show_xaxis = FALSE,
+    border     = FALSE
   ),
   scatter = list(
     dash  = c("solid"), # nolint: unnecessary_concatenation_linter.
     mode  = NULL,
+    markers = list(
+      size    = 6L,
+      symbols = c("circle") # nolint: unnecessary_concatenation_linter.
+    ),
     yaxis = list(
       range = c(0.38, 1.02),
       tickfont = 10L,
@@ -212,14 +241,14 @@ plot_oci_performance <- function(
   ),
   ...
 ) {
-  oci_cms   <- list()
-  tool_figures  <- list()
-
-  toolnames <- names(oci_results[[1L]])
+  oci_cms      <- list()
+  tool_figures <- list()
 
   if (transpose) {
     oci_results <- purrr::transpose(oci_results)
   }
+
+  toolnames <- unique(c(unlist(lapply(oci_results, FUN = names))))
 
   if (is.null(scatter$mode)) {
     scatter$mode <- ifelse(transpose, "markers", "lines+markers")
@@ -246,79 +275,107 @@ plot_oci_performance <- function(
   }
 
   # Generate an OCI confusion matrix for each tool and coverage.
-  for (coverage in names(oci_results)){
-    for (tool in names(oci_results[[coverage]])){
+  warned <- FALSE
+  if ("cm" %in% plot) {
+    for (coverage in names(oci_results)){
+      for (tool in toolnames){
 
-      plot_col         <- match(tool, names(oci_results[[coverage]]))
-      confusion_matrix <- oci_results[[coverage]][[tool]]$confusion_matrix
-      if (cm$condense) confusion_matrix <- confusion_matrix[, keep]
+        if (all(is.null(oci_results[[coverage]][[tool]]$confusion_matrix))) {
+          if (!warned) {
+            warning("[Warning] Missing confusion matrix result for ",
+              coverage, "|", tool, " (This could be intentional)",
+              "CM matrix will be jagged", "\n"
+            )
+          }
+          oci_cms[[tool]][[coverage]] <- plot_confusion_matrix(
+            confusion_matrix = NULL,
+            yaxis_title   = paste0("<b>", tool, "</b>"),
+            axis_fontsize = axis_fontsize
+          )
+          next
+        }
+        plot_col         <- match(tool, names(oci_results[[coverage]]))
+        confusion_matrix <- oci_results[[coverage]][[tool]]$confusion_matrix
+        if (cm$condense) confusion_matrix <- confusion_matrix[, keep]
 
-      oci_cms[[tool]][[coverage]] <- plot_confusion_matrix(
-        confusion_matrix       = confusion_matrix,
-        yaxis_title            = paste0("<b>", toolnames[plot_col], "</b>"),
-        xaxis_title            = paste0("<b>", coverage, "</b>"),
-        xaxis_title_visibility = (plot_col == 1L),
-        show_xaxis             = cm$show_xaxis,
-        axis_fontsize          = axis_fontsize,
-        ratio                  = cm$ratio,
-        colorscale             = cm$colorscale,
-        cm_font_size           = cm$fontsize,
-        ticklabels             = cm$ticklabels,
-        tickfont_size          = cm$tickfont,
-        tickangle              = cm$tickangle
+        oci_cms[[tool]][[coverage]] <- plot_confusion_matrix(
+          confusion_matrix       = confusion_matrix,
+          yaxis_title            = paste0("<b>", toolnames[plot_col], "</b>"),
+          xaxis_title            = paste0("<b>", coverage, "</b>"),
+          xaxis_title_visibility = (plot_col == 1L),
+          show_xaxis             = cm$show_xaxis,
+          axis_fontsize          = axis_fontsize,
+          ratio                  = cm$ratio,
+          colorscale             = cm$colorscale,
+          cm_font_size           = cm$fontsize,
+          ticklabels             = cm$ticklabels,
+          tickfont_size          = cm$tickfont,
+          tickangle              = cm$tickangle,
+          border                 = cm$border
+        )
+      }
+    }
+
+    # ---- Aggregate confusion matrices into subplots. One subplot per tool/row
+    for (tool in names(oci_cms)){
+      tool_figures[[tool]] <- plotly::subplot(
+        oci_cms[[tool]],
+        shareX = FALSE,
+        shareY = TRUE,
+        titleX = TRUE,
+        margin = horizontal_margin
       )
     }
   }
 
-  # ---- Aggregate confusion matrices into subplots. One subplot per tool / row
-  for (tool in names(oci_cms)){
-    tool_figures[[tool]] <- plotly::subplot(
-      oci_cms[[tool]],
-      shareX = FALSE,
-      shareY = TRUE,
-      titleX = TRUE,
-      margin = horizontal_margin
-    )
-  }
-
   # ---- Create a scatter plot summarizing OCI performance values for each tool
   #      and coverage.
-  scatter_figure <- make_oci_scatter_plot(
-    oci_results, toolnames = toolnames,
-    colors         = scatter$colors,
-    dash           = scatter$dash,
-    mode           = scatter$mode,
-    yaxis          = scatter$yaxis,
-    axis_fontsize  = axis_fontsize,
-    legend         = legend
-  )
+  if ("scatter" %in% plot) {
+    scatter_figure <- make_oci_scatter_plot(
+      oci_results, toolnames = toolnames,
+      colors         = scatter$colors,
+      dash           = scatter$dash,
+      mode           = scatter$mode,
+      yaxis          = scatter$yaxis,
+      markers        = scatter$markers,
+      axis_fontsize  = axis_fontsize,
+      legend         = legend
+    )
+  }
 
   # ---- Merge all plots as a single plot.
   rows             <- length(names(tool_figures))
   cm_height_ratios <- rep(1.0 / rows, rows)
 
-  merged_confusion_matrices <- plotly::subplot(
-    tool_figures,
-    nrows   = rows,
-    shareX  = FALSE,
-    shareY  = FALSE,
-    titleX  = TRUE,
-    titleY  = TRUE,
-    heights = cm_height_ratios,
-    margin  = vertical_margin
-  )
+  if ("cm" %in% plot) {
+    merged_confusion_matrices <- plotly::subplot(
+      tool_figures,
+      nrows   = rows,
+      shareX  = FALSE,
+      shareY  = FALSE,
+      titleX  = TRUE,
+      titleY  = TRUE,
+      heights = cm_height_ratios,
+      margin  = vertical_margin
+    )
+  }
 
-  merged_subplot <- plotly::subplot(
-    merged_confusion_matrices, scatter_figure,
-    nrows  = 2L,
-    shareX = FALSE,
-    shareY = FALSE,
-    titleX = TRUE,
-    titleY = TRUE,
-    heights = c(1.0 - scatterplot_ratio, scatterplot_ratio),
-    margin = 0L
-  )
-
+  if ("cm" %in% plot && "scatter" %in% plot) {
+    merged_subplot <- plotly::subplot(
+      merged_confusion_matrices, scatter_figure,
+      nrows  = 2L,
+      shareX = FALSE,
+      shareY = FALSE,
+      titleX = TRUE,
+      titleY = TRUE,
+      heights = c(1.0 - scatterplot_ratio, scatterplot_ratio),
+      margin = 0L
+    )
+  } else if ("cm" %in% plot) {
+    merged_subplot <- merged_confusion_matrices
+  } else if ("scatter" %in% plot) {
+    merged_subplot <- scatter_figure
+  }
   merged_subplot
 }
 
@@ -350,42 +407,49 @@ plot_oci_performance <- function(
 #' @return a plotly scatterplot figure object
 make_oci_scatter_plot <- function(
   oci_results = NULL,
-  toolnames = NULL,
-  dash = c("solid"), # nolint: unnecessary_concatenation_linter.
-  mode = "lines+markers",
-  colors = RColorBrewer::brewer.pal(
-    n = length(names(oci_results)),
+  toolnames   = NULL,
+  dash        = c("solid"), # nolint: unnecessary_concatenation_linter.
+  markers     = list(
+    size    = 6L,
+    symbols = c("circle")   # nolint: unnecessary_concatenation_linter.
+  ),
+  mode        = "lines+markers",
+  colors      = RColorBrewer::brewer.pal(
+    n    = length(names(oci_results)),
     name = "Set2"
   ),
-  yaxis = list(range = c(0.38, 1.02), dtick = 0.1, tickfont = 10L),
-  axis_fontsize  = 16L,
-  tickfont_size  = 14L,
-  legend = list(size = 10L, xpos = -0.1, ypos = -0.1)
+  yaxis         = list(range = c(0.38, 1.02), dtick = 0.1, tickfont = 10L),
+  axis_fontsize = 16L,
+  tickfont_size = 14L,
+  legend        = list(size = 10L, xpos = -0.1, ypos = -0.1)
 ) {
 
   oci_values <- list()
   oci_errors <- list()
-  axis_font <- list(size = axis_fontsize)
+  axis_font  <- list(size = axis_fontsize)
 
   for (coverage in names(oci_results)){
-    for (tool in names(oci_results[[coverage]])){
+    for (tool in toolnames){
+      value <- oci_results[[coverage]][[tool]]$value
       oci_values[[tool]] <- c(
         oci_values[[tool]],
-        oci_results[[coverage]][[tool]]$value
+        ifelse(is.null(value), NA, value)
       )
 
+      error <- oci_results[[coverage]][[tool]]$error
       oci_errors[[tool]] <- c(
         oci_errors[[tool]],
-        oci_results[[coverage]][[tool]]$error
+        ifelse(is.null(error), NA, error)
       )
     }
   }
 
-
   oci_values <- as.data.frame(oci_values, row.names = names(oci_results))
+  oci_errors <- rapply(oci_errors, how = "list", f = function(x) x[!is.na(x)])
 
-  # recycle toolnames
-  dash <- rep(dash, length(toolnames))
+  # recycle toolnames and marker symbols
+  dash    <- rep(dash, length(toolnames))
+  markers$symbols <- rep(markers$symbols, length(toolnames))
 
   # check mode validity
   valid_modes <- c("lines", "markers", "lines+markers")
@@ -401,7 +465,12 @@ make_oci_scatter_plot <- function(
     line <- if (grepl("line", mode, fixed = TRUE)) {
       list(color = colors[i], dash = dash[i])
     }
-    markers <- if (grepl("markers", mode, fixed = TRUE)) list(color = colors[i])
+    marker_layout <- if (grepl("markers", mode, fixed = TRUE)) {
+      list(
+        color = colors[i], symbol = markers$symbols[i], size = markers$size,
+        line = list(color = "#000000FF", width = 1L)
+      )
+    }
 
     if (i == 1L) {
       fig <- plotly::plot_ly(
@@ -410,7 +479,7 @@ make_oci_scatter_plot <- function(
         x      = ~row.names(oci_values),
         type   = "scatter",
         line   = line,
-        marker = markers,
+        marker = marker_layout,
         mode   = mode,
         name   = toolnames[i],
         error_y = list(
@@ -427,7 +496,7 @@ make_oci_scatter_plot <- function(
         x      = ~row.names(oci_values),
         type   = "scatter",
         line   = line,
-        marker = markers,
+        marker = marker_layout,
         mode   = mode,
         name   = toolnames[i],
         error_y = list(
