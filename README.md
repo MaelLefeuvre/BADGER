@@ -1,6 +1,8 @@
 # BADGER: Benchmark Ancient DNA GEnetic Relatedness
 
+![BADGER-logo](/doc/assets/badger-logo/badger-logo-full.svg)
 
+---
 
 [![DOI](https://zenodo.org/badge/520971855.svg)](https://doi.org/10.5281/zenodo.15424124) [![Ubuntu](https://github.com/MaelLefeuvre/BADGER/actions/workflows/Ubuntu-latest.yml/badge.svg)](https://github.com/MaelLefeuvre/BADGER/actions/workflows/Ubuntu-latest.yml)
 ## Introduction
