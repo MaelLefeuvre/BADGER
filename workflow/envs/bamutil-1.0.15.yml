@@ -1,0 +1,6 @@
+name: bamutil-1.0.15
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - bioconda::bamutil=1.0.15

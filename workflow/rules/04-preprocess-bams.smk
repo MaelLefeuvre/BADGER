@@ -365,8 +365,57 @@ rule run_pmd_mask:
         pmd-mask -@ {threads} -b {input.bam} -f {input.reference} -m {input.misincorporation} --threshold {params.threshold} -M {output.metrics} -Ob -o {output.bam} --verbose > {log} 2>&1
     """
 
+def format_trimbam_optargs(wildcards):
+    trim_length   = config['preprocess']['pmd-rescaling']['trimbam']['trim-length']
+    ignore_strand = config['preprocess']['pmd-rescaling']['trimbam']['ignore-strand']
+    soft_clip     = config['preprocess']['pmd-rescaling']['trimbam']['soft-clip']
+    optargs= ""
 
+    # ---- Format trim-length.
+    # - if the provided parameter is an integer (e.g. 'trim-length: 10'), just specify this value as is.
+    # - if the provided parameter is a side-specific dictionary (e.g.
+    #     trim-length:
+    #       left:10
+    #       right: 12
+    #   ... then format these values such that -L and -R is provided
+    trim_error_msg = (
+        "Invalid value for trimbam's trim-length." +
+        "Either provide a constant integer (e.g.: 'trim-length: 10'), or a side-specific set of key-value pairs" +
+        "(e.g.:\ntrim-length:\n  left: 10\n  right: 10)"
+    )
+    match trim_length:
+        case int():
+            optargs += f"{trim_length}"
+        case dict():
+            if any(not isinstance(value, int) for value in trim_length.values()):
+                raise RuntimeError(trim_error_msg)
+            optargs += f"--left {trim_length['left']} --right {trim_length['right']} "
+        case other:
+            raise RuntimeError(trim_error_msg)
 
+    # ---- format ignorestrand and soft-clipping
+    if ignore_strand:
+        optargs += "--ignoreStrand "
+    if soft_clip:
+        optargs += "--clip "
+    
+    return optargs
+
+rule run_trimbam:
+    input:
+        bam     = define_masking_input_bam,
+        bai     = lambda wildcards: define_masking_input_bam(wildcards) + ".bai",
+    output:
+        bam     = "results/02-preprocess/06-trimbam/{sample}/{sample}.trimbam.bam",
+    params:
+        optargs = format_trimbam_optargs
+    log:       "logs/02-preprocess/06-trimbam/run_trimbam/{sample}.log"
+    benchmark: "benchmarks/02-preprocess/06-trimbam/run_trimbam/{sample}.tsv"
+    conda:     "../envs/bamutil-1.0.15.yml"
+    threads:   1
+    shell: """
+        bam trimBam {input.bam} {output.bam} {params.optargs} > {log} 2>&1 
+    """
 
 def get_contaminants(wildcards):
     """
@@ -423,11 +472,15 @@ def get_pileup_input_bams(wildcards, print_log = False, logfile = sys.stderr, fi
 
     # If masking is required, delegate input definition to the appropriate rule.
     apply_masking = config['preprocess']['pmd-rescaling']['apply-masking']
-    if apply_masking:
-        if print_log:
-            print("Applying pmd-mask for variant calling.", file=logfile)
-        return expand(rules.run_pmd_mask.output.bam, sample = samples_ids)
-
+    match apply_masking.lower():
+        case "pmd-mask":
+            if print_log:
+                print("Applying pmd-mask for variant calling.", file=logfile)
+            return expand(rules.run_pmd_mask.output.bam, sample = samples_ids)
+        case "trimbam":
+            if print_log:
+                print("Applying bamutil trimBam for variant calling.", file=logfile)
+            return expand(rules.run_trimbam.output.bam, sample = samples_ids)
 
     # Return a list of input bam files for pileup
     rescaler = config['preprocess']['pmd-rescaling']['rescaler']

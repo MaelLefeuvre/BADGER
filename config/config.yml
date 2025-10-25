@@ -66,7 +66,7 @@ preprocess:
     method:                  picard              # "samtools" | "picard" | "dedup"
   pmd-rescaling:
     rescaler:                ~                   # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
-    apply-masking:           True
+    apply-masking:           trimbam             # "pmd-mask"  | "trimbam"  | None ('~') to skip masking
     map-damage:
       rescale:               False
       downsample:            ~                   # No downsampling if empty (0 < downsample < 1)
@@ -76,6 +76,10 @@ preprocess:
       mask-terminal-deams:   0                   # in bases. Default 0 
     pmd-mask:
       threshold:             0.01
+    trimbam:
+      trim-length:           10                  # Either a single integer, or a dictionary containing two keys ('left' and 'right')
+      ignore-strand:         False
+      soft-clip:             False
 
 variant-calling:
   caller:                    "pileupCaller"      # ANGSD | pileupCaller
