@@ -92,7 +92,7 @@ def uncram(cramfile: str, target_dir: str, cores: int = 1) -> None:
     # ---- Decompress and split .cram file
     logger.info(f"Decompressing samples from {cramfile}...") 
     try:
-        split_args = ['-@', str(cores), '-f', '%!.bam', '--output-fmt', 'BAM', path.join(main_wd, cramfile)]
+        split_args = ['-@', str(cores), '--no-PG', '-f', '%!.bam', '--output-fmt', 'BAM', path.join(main_wd, cramfile)]
         logger.debug(f"Running 'samtools split {' '.join(split_args)}'")
         pysam.split(*split_args)
     except pysam.SamtoolsError as e:
