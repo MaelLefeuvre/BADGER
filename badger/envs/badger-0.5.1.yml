@@ -9,6 +9,11 @@ dependencies:
   - conda-forge::pip
   - conda-forge::liblzma
   - conda-forge::liblzma-devel
+  # pysam build dependencies
+  - conda-forge::gcc
+  - conda-forge::make
+  - conda-forge::libz
+  - conda-forge::curl
   - pip: # badger.py dependencies
     - argparse
     - colorama
