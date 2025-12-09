@@ -9,5 +9,8 @@ plots
 workflow/scripts/grups/target
 workflow/scripts/dopplegang-samples/target
 report.html
-__pycache__
+__pycache__/
 .pytest_cache
+# pixi environments
+.pixi/*
+!.pixi/config.toml
