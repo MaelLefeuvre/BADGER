@@ -19,7 +19,18 @@
 
 ## Installing BADGER
 
-### Minimum system requirements
+### Prerequisites
+
+#### Step 01. Clone this repository 
+```bash
+git clone --recursive https://github.com/MaelLefeuvre/BADGER.git
+cd ./BADGER
+```
+
+> [!IMPORTANT]
+> Note that all subsequent commands described in this README are executed from the root directory of this repository.
+
+#### Minimum system requirements
 
 BADGER is generally designed to operate in high-performance computing environments, and will benefit from as many CPU cores, memory and disk space as possible.  The following specifications are the ***minimum*** system requirements for running BADGER:
 
@@ -27,7 +38,19 @@ BADGER is generally designed to operate in high-performance computing environmen
 - **<ins>Memory</ins>**: 32GB of RAM
 - **<ins>Storage</ins>**: 128GB of available disk space
 
-### Software requirements
+#### Supported OS and interoperability
+The installation of BADGER is currently only supported on GNU/Linux operating systems (e.g. [Ubuntu](https://www.ubuntu.com), [Debian](https://www.debian.org), [ArchLinux](https://www.archlinux.org)). Although other UNIX-type operating systems, such as MacOS, FreeBSD and Solaris, are technically compatible, they are not currently being tested as part of the continuous testing of the software. If you experience any compatibility issues when installing BADGER on an unsupported UNIX-type system, feel free to submit an issue in this GitHub repository to help us improve the software's interoperability.
+
+### Methods of installation
+
+BADGER currently supports two alternative methods of installation to install the `badger` and `badger-plots` command line programs. These two installation procedures are mutually exclusive, but can be chosen interchangeably, depending on your personal preference, your knowledge of one or the other of the required environment managers, and/or your workstation's current setup:
+
+- Using [miniconda](https://www.anaconda.com/docs/getting-started/miniconda/main). This procedure should be considered as the default installation method. See the chapter [conda installation](#conda-installation)
+- Using [pixi](https://pixi.sh/latest/). This procedure is currently experimental, but may become the default in future updates of `badger`. See the chapter [pixi installation](#pixi-installation)
+
+
+### Conda installation
+#### Software requirements (conda)
 
 BADGER is written using the [`snakemake`](https://snakemake.github.io/) workflow management system and relies extensively on the [`conda`](https://docs.conda.io/projects/conda/en/latest/index.html) environment manager to ensure both interoperability and reproducibility. Hence, a requirement of using BADGER is that users first install `conda` within their system, since the `badger` command line interface in itself is designed to be embedded within a conda environment...
 
@@ -42,17 +65,8 @@ MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_6
 wget $MINICONDA_URL && bash $(basename $MINICONDA_URL)
 ```
 
-### 01. Clone this repository 
-```bash
-git clone --recursive https://github.com/MaelLefeuvre/BADGER.git
-cd ./BADGER
-```
-
-> [!IMPORTANT]
-> Note that all subsequent commands described in this README are executed from the root directory of this repository.
-
-### 02. Install `BADGER` within a dedicated conda environment
-#### Simple installation
+#### Step 02 (conda). Install `BADGER` within a dedicated conda environment
+##### Simple installation
 
 This command should seamlessly create a dedicated conda environment for BADGER, called `badger-0.4.1`.
 ```bash
@@ -68,17 +82,82 @@ This environment should contain the following programs and dependencies:
 | `badger`       | `>=0.5.1` |
 | `badger-plots` | `>=0.5.1` |
 
-### 03. Test the installation
+#### Step 03 (conda). Test the installation
 
 A very basic test suite can be run using the following command, to ensure every program and dependency can be found within the path, as well as running several integration tests.
 ```bash
 ./badger/install.sh test
 ```
 
-#### Manual installation
+#### Calling `badger` and `badger-plots` with conda.
+
+To access and run the  `badger` and `badger-plots` command line programs using `conda`, one should simply activate the conda environment in the root of this repository
+
+```bash
+conda activate badger-0.5.1  # activate the environment
+badger --help   # run the badger CLI
+badger-plots --help # run the badger-plots CLI
+```
+
+##### Manual installation (conda)
 
 > [!TIP]
 > For users wishing to manually install `BADGER` within a custom environment, a detailled step-by-step procedure may be found here: [manual installation](doc/README.installation.md)
+
+### Pixi installation
+
+#### Software requirements (pixi)
+
+Alternatively, `badger` can also be fully embedded into a [pixi](https://pixi.sh/latest) environment, to ensure a complete isolation of all of its dependencies (including [`conda`](https://docs.conda.io/projects/conda/en/latest/index.html)).
+
+Should this installation procedure be your preferred option, a requirement of using BADGER is then to have a working installation of the [`pixi`](https://pixi.sh/latest/) package manager within the system. To install [pixi](https://pixi.sh/latest/), check the 
+[installation instructions](https://pixi.sh/latest/installation/) on their website
+beforehand.
+
+On `x86_64-Linux` architectures, a default installation may be achieved using the following commands:
+```Bash
+wget -qO- https://pixi.sh/install.sh | sh
+```
+
+#### Step 02 (pixi). Install `BADGER` within a dedicated pixi environment
+
+These commands should seamlessly create a dedicated default pixi environment containing both `badger` and `badger-plots`, called `badger`.
+```bash
+pixi install # install the default environment
+pixi run configure # Install and configure badger-plots. (This is a one-time operation)
+```
+This environment should contain the following programs and dependencies:
+
+| software       | version   |
+| -------------- | --------- |
+| `python`       | `3.11.0`  |
+| `R`            | `>=4.1.2` |
+| `snakemake`    | `7.20.0`  |
+| `badger`       | `>=0.5.1` |
+| `badger-plots` | `>=0.5.1` |
+
+#### Step 03 (pixi). Test the installation
+
+A very basic test suite can be run using the following command, to ensure every program and dependency can be found within the path, as well as running several integration tests.
+```bash
+pixi run test
+```
+
+#### Calling `badger` and `badger-plots` with pixi.
+
+To access and run the  `badger` and `badger-plots` command line programs using pixi, one can either start a pixi shell in the root of this repository
+
+```bash
+pixi shell # Badger setup
+```
+
+...Or use dedicated pixi tasks
+```bash
+pixi run badger --help # run the badger CLI in a pixi environment
+pixi run badger-plots --help # run the badger CLI in a pixi environment
+```
+
+Note that every subsequent commands in this README will assume they are directly run from the `pixi shell`, but they can of course also work using the dedicated pixi tasks method, by simply prepending the given command with *"`pixi run`"*
 
 ## Configuring BADGER
 
