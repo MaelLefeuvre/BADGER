@@ -63,7 +63,7 @@ _test(){
     _search_path_ok(){
         which $1 | grep -q "${what}"
     }
-    
+
     eval "$($CONDA shell.bash hook)"
 
     log "Running quick test-suite for ${what}"

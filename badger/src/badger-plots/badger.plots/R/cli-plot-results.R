@@ -216,10 +216,11 @@ save_plotly_svg <- function(
     conda    <- Sys.getenv("CONDA_EXE")
     reticulate::use_condaenv(condaenv, conda)
   } else {
-    message(
-      "badger-plots does not appear to have a dedicated conda environment.",
-      "Saving plots as static images may not be supported."
-    )
+    #message(
+    #  "badger-plots does not appear to have a dedicated conda environment.",
+    #  "Saving plots as static images may not be supported."
+    #)
+    reticulate::use_python(python = Sys.getenv("RETICULATE_PYTHON"), required=TRUE)
   }
   prefix   <- ifelse(timestamp, paste0(format(Sys.Date(), "%Y%m%d"), "-"), "")
   filename <- paste0(prefix, filename, ".svg")

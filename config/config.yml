@@ -1,3 +1,4 @@
+aadr-dataset:                "v52.2"
 reference-genome:            "GRCh37"            # "GRCh37" | "hs37d5" | "human_g1k_v37"
 tempdir:                     "data/.tmp"
 make-qc:                     False

@@ -12,8 +12,7 @@ wget -O- $RELEASE_URL | tar -xvzf-
 cd pcangsd-v.0.99
 
 python setup.py build_ext --inplace
-#pip3 install -e .
-pip3 install .
+$CONDA_PREFIX/bin/pip3 install .
 
 sed -i '1s/^/#!\/usr\/bin\/env python\n/' pcangsd.py
 chmod +x pcangsd.py

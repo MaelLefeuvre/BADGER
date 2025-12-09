@@ -40,10 +40,12 @@ rule eigenstrat_to_binary_plink:
 
 rule subset_reich_dataset:
     input:
-        bfile = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".bed", ".bim", ".fam"),
+        #bfile = multiext("data/Reich-dataset/1240K/v52.2_1240K_public", ".bed", ".bim", ".fam"),
+        bfile = multiext(f"data/Reich-dataset/{AADRDataset.get_version()}/aadr_{AADRDataset.get_version()}_1240K_public", ".bed", ".bim", ".fam"),
         panel = "data/vcf/1000g-phase3/samples-list/integrated_call_samples_v3.20130502.ALL.panel"
     output:
-        subset = multiext("data/Reich-dataset/1240K/subsets/{refpop}/v52.2_1240K_public", ".bed", ".bim", ".fam"),
+        #subset = multiext("data/Reich-dataset/1240K/subsets/{refpop}/v52.2_1240K_public", ".bed", ".bim", ".fam"),
+        subset = multiext(f"data/Reich-dataset/{AADRDataset.get_version()}/subsets/{'{refpop}'}/aadr_{AADRDataset.get_version()}_1240K_public", ".bed", ".bim", ".fam"),
     params:
         bfile_basename  = lambda wildcards, input:  splitext(input.bfile[0])[0],
         subset_basename = lambda wildcards, output: splitext(output[0])[0]
@@ -91,7 +93,8 @@ rule correctKin_deplete_inds:
             basename  = splitext(basename(rules.pileup_caller.output.plink[0]))[0]
         )
     output:
-        depleted = multiext("results/04-kinship/correctKin/{generation}/{refpop}-v52.2_1240K_public-depleted", ".bed", ".bim", ".fam")
+        #depleted = multiext("results/04-kinship/correctKin/{generation}/{refpop}-v52.2_1240K_public-depleted", ".bed", ".bim", ".fam")
+        depleted = multiext(f"results/04-kinship/correctKin/{'{generation}'}/{'{refpop}'}-{AADRDataset.get_version()}_1240K_public-depleted", ".bed", ".bim", ".fam")
     params:
         subset_basename   = lambda wildcards, input: splitext(input.subset[0])[0],
         depleted_basename = lambda wildcards, output: splitext(output.depleted[0])[0]
