@@ -1495,8 +1495,8 @@ packages:
   timestamp: 1765057678423
 - pypi: ./badger
   name: badger
-  version: 0.5.1
-  sha256: 0670e53d8f2d2e8f6171017c3b9116f8422943cc78bf54ea5b86306ff0e6b69e
+  version: 0.5.2
+  sha256: ab2af8b5b42bda5e7a66e11293876c1ee709bbc6197a18c6867ccb179604f4f7
   requires_dist:
   - argparse
   - colorama

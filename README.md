@@ -79,8 +79,8 @@ This environment should contain the following programs and dependencies:
 | `python`       | `3.11.0`  |
 | `R`            | `>=4.1.2` |
 | `snakemake`    | `7.20.0`  |
-| `badger`       | `>=0.5.1` |
-| `badger-plots` | `>=0.5.1` |
+| `badger`       | `>=0.5.2` |
+| `badger-plots` | `>=0.5.2` |
 
 #### Step 03 (conda). Test the installation
 
@@ -94,7 +94,7 @@ A very basic test suite can be run using the following command, to ensure every 
 To access and run the  `badger` and `badger-plots` command line programs using `conda`, one should simply activate the conda environment in the root of this repository
 
 ```bash
-conda activate badger-0.5.1  # activate the environment
+conda activate badger-0.5.2  # activate the environment
 badger --help   # run the badger CLI
 badger-plots --help # run the badger-plots CLI
 ```
@@ -133,8 +133,8 @@ This environment should contain the following programs and dependencies:
 | `python`       | `3.11.0`  |
 | `R`            | `>=4.1.2` |
 | `snakemake`    | `7.20.0`  |
-| `badger`       | `>=0.5.1` |
-| `badger-plots` | `>=0.5.1` |
+| `badger`       | `>=0.5.2` |
+| `badger-plots` | `>=0.5.2` |
 
 #### Step 03 (pixi). Test the installation
 

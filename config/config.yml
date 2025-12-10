@@ -25,7 +25,7 @@ ped-sim:
 
 simulator:                   "gargammel"         # "gargammel" | "dwgsim"
 gargammel:
-  coverage:                  0.02
+  coverage:                  0.01
   comp-endo:                 1.00
   comp-cont:                 0.00
   comp-bact:                 0.00
