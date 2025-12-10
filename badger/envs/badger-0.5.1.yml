@@ -12,7 +12,7 @@ dependencies:
   # pysam build dependencies
   - conda-forge::gcc
   - conda-forge::make
-  - conda-forge::libz
+  - conda-forge::zlib
   - conda-forge::curl
   - pip: # badger.py dependencies
     - argparse
