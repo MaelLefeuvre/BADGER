@@ -26,4 +26,4 @@ jobs:
     - name: Install Badger
       run: bash ./badger/install.sh
     - name: Run tests
-      run: bash ./badger/install.sh test
+      run: bash ./badger/install.sh test --urls
