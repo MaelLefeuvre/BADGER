@@ -124,11 +124,11 @@ data
 │   └── GRCh37
 │       └── Homo_sapiens.GRCh37.dna.primary_assembly.fa
 ├── Reich-dataset
-│   └── 1240K
-│       ├── v52.2_1240K_public.anno
-│       ├── v52.2_1240K_public.geno
-│       ├── v52.2_1240K_public.ind
-│       └── v52.2_1240K_public.snp
+│   └── v52.2
+│       ├── aadr_v52.2_1240K_public.anno
+│       ├── aadr_v52.2_1240K_public.geno
+│       ├── aadr_v52.2_1240K_public.ind
+│       └── aadr_v52.2_1240K_public.snp
 ├── TKGWV2
 │   ├── 1240K
 │   │   └── 1000GP3_EUR_1240K.frq

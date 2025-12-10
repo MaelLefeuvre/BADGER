@@ -4,12 +4,12 @@ These are detailled installation instructions for users wishing to manually inst
 
 #### 1. Create a base conda environment for `badger-0.5.1`.
 ```bash
-conda env create -f envs/badger-0.5.1.yml
+conda env create -f badger/envs/badger-0.5.1.yml 
 ```
 
 #### 2. Update the base environment with the proper dependencies of `badger-plots`
 ```bash
-conda env update --name badger-0.5.1 --file workflow/scripts/badger-plots/envs/badger-plots.yml
+conda env update --name badger-0.5.1 --file badger/src/badger-plots/envs/badger-plots.yml 
 ```
 
 #### 3. Install the badger command line program using pip
