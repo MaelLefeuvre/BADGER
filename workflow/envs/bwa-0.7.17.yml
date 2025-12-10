@@ -1,5 +1,7 @@
 name: bwa-0.7.17
 channels:
+    - conda-forge
     - bioconda
 dependencies:
     - bioconda::bwa=0.7.17
+    - conda-forge::libgcc-ng>=9.3.0

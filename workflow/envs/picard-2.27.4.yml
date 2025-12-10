@@ -1,6 +1,7 @@
 name: picard-2.27.4
-channel:
+channels:
   - conda-forge
   - bioconda
 dependencies:
   - bioconda::picard=2.27.4
+  - conda-forge::openjdk>=8
