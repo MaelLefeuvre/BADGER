@@ -33,7 +33,7 @@ if "fetch_data" in sys.argv:
         input:
             expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
             rules.fetch_samples_panel.output.panel,
-            rules.download_reference_genome.output.refgen.format(reference="Homo_sapiens.GRCh37.dna.primary_assembly"),
+            rules.index_reference_genome.input.refgen,
             rules.download_HapMapII_recombination_map.output.map,
             rules.fetch_sex_specific_recombination_map.output.gen_maps,
             rules.fetch_interference_map.output.intf_map,

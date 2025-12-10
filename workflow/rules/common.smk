@@ -53,17 +53,18 @@ class AADRDataset:
 class ReferenceGenome:
     _name = config["reference-genome"].lower()
     _dict = config["netrules"]["reference-genomes"]
+
     @staticmethod
-    def get_name():
+    def get_name() -> str:
         return config["reference-genome"].lower()
 
     @classmethod
-    def get_url(cls):
-            return cls._dict[ReferenceGenome.get_name()]["url"]
+    def get_url(cls) -> str:
+        return cls._dict[ReferenceGenome.get_name()]["url"]
 
     @classmethod
-    def get_path(cls):
-            return cls._dict[ReferenceGenome.get_name()]["path"]
+    def get_path(cls) -> str:
+        return cls._dict[ReferenceGenome.get_name()]["path"] 
 
     @classmethod
     def list_available_references(cls):
