@@ -280,15 +280,18 @@ Categorises parameters related to the alignment of reads and pre-processing of a
     > <ins>**Description**</ins>:  Select the main pmd-rescaling software to use. This pre-processing step is optional and may be replaced by a null value (*`~`*), to skip pmd-rescaling altogether.
     > - *`"mapdamage"`*: Estimate and rescale post-mortem deaminations using `mapDamagev2` *[(Jо́nsson et al. 2013)](https://doi.org/10.1093/bioinformatics/btt193)*. See the corresponding documentation here: [mapDamagev2](https://ginolhac.github.io/mapDamage/).
     > - *`"pmdtools"`*: Estimate and rescale post-mortem deaminations using `PMDtools` *[(Skoglund et al. 2014)](https://doi.org/10.1073/pnas.1318934111)* . See the corresponding documentation here: [PMDtools](https://github.com/pontussk/PMDtools/blob/master/README.md).
+
     > <ins>**Allowed values**</ins>: (string)(optional) either *`"mapdamage"`*, *`"pmdtools"`*, or *`None`* (*`~`* character).
 
   - #### <a name="apply-masking"></a>apply-masking
-    > <ins>**Description**</ins>: Boolean specifying if putatively deaminated nucleotides should be masked using the software `pmd-mask`. Note that masking terminal deaminations may be applied on either non-rescaled or previously rescaled bam files, depending on whether or not `rescaler` was set to None`~`. In both cases, setting `apply-masking` to *`True`* will trigger the execution of `MapDamagev2` regardless, as `pmd-mask` currently requires the misincorporation frequencies estimates of this software as an input.
+    > <ins>**Description**</ins>: Specify whether putatively deaminated nucleotides should be masked using either the software `pmd-mask`, or `bamutil trimBam`. This pre-processing step is optional and may be replaced by a null value (*`~`*), to skip pmd-masking altogether. Note that masking terminal deaminations may be applied on either non-rescaled or previously rescaled bam files, depending on whether or not `rescaler` was set to None`~`.
+    > - *`"pmd-mask"`*: Selectively masks potential sites of `C>T` and `G>A` deaminations on the `5'` and `3'` end, respectively. Note that, using `"pmd-mask"` will trigger the execution of `MapDamagev2` regardless of the value provided to the [rescaler](#rescaler) parameter , as `pmd-mask` currently requires the misincorporation frequencies estimates of this software as an input.
+    > - *`"trimBam`*: Masks all terminal `5'` and `3'` nucleotides, up to a given user-defined length.
 
-    > <ins>**Allowed values**</ins>: (boolean) either *`True`* or *`False`*
+    > <ins>**Allowed values**</ins>: (string)(optional) either *`"pmd-mask"`* or *`"trimBam"`*
 
   - #### <a name="map-damage"></a>map-damage
-    Categorises arguments related to the `mapDamage-v2` software. These parameters are ignored unless [rescaler](#rescaler) is set to *`"mapdamage"`* or [apply-masking](#apply-masking) is set to *`True`*.
+    Categorises arguments related to the [`mapDamagev2`](https://ginolhac.github.io/mapDamage/) software. These parameters are ignored unless [rescaler](#rescaler) is set to *`"mapdamage"`* or [apply-masking](#apply-masking) is set to *`True`*.
     - ##### <a name="rescale"></a>rescale
       > <ins>**Description**</ins>: Specify whether or not pmd-rescaling should be applied. Setting this parameter to `False` may be useful to run mapdamage in order to only obtain PMD-estimates as a form of QC-validation.
 
@@ -304,7 +307,7 @@ Categorises parameters related to the alignment of reads and pre-processing of a
       > <ins>**Allowed values**</ins>: (integer) Any non-negative 32bit integer value.
 
   - #### <a name="pmdtools"></a>pmdtools
-    Categorises arguments related to the `PMDtools` software. These parameters are ignored unless [rescaler](#rescaler) is set to *`"pmdtools"`*
+    Categorises arguments related to the [`PMDtools`](https://github.com/pontussk/PMDtools) software. These parameters are ignored unless [rescaler](#rescaler) is set to *`"pmdtools"`*
     - ##### <a name="threshold"></a>threshold
       > <ins>**Description**</ins>: Filter out reads carrying a PMD-score that is lower than the provided threshold. This parameter may be useful to filter out reads originating from modern human contamination. Note that higher PMD-score values indicate a higher likelihood of a fragment having been subject do post-mortem damage. Setting this parameter to a value that is less than or equal to *`-19999`* will disable PMD-score filtering altogether.
 
@@ -316,11 +319,32 @@ Categorises parameters related to the alignment of reads and pre-processing of a
       > <ins>**Allowed values**</ins>: (integer) Any positive integer in the range $[0, +\infty]$, representing a number of nucleotides.
 
   - #### <a name="pmd-mask"></a>pmd-mask
-    Categorises arguments related to the `pmd-mask` software. These parameters are ignored unless [apply-masking](#apply-masking) is set to *`True`*
+    Categorises arguments related to the [`pmd-mask`](https://github.com/MaelLefeuvre/pmd-mask) software. These parameters are ignored unless [apply-masking](#apply-masking) is set to *`pmd-mask`*
     - ##### <a name="threshold-1"></a>threshold
       > <ins>**Description**</ins>: Mask all `5'C` and `3'G` along the reads, until the estimated nucleotide misincorporation rate is lower than the provided threshold
 
       > <ins>**Allowed values**</ins>: (float) Any floating point value in the range $[0, 1]$, representing a rate of misincorporation.
+  - #### <a name="trimbam"></a>trimbam
+      Categorises arguments related to the [`bamutil trimBam`](https://genome.sph.umich.edu/wiki/TrimBam) software. These parameters are ignored unless [apply-masking](#apply-masking) is set to *`trimBam`*
+      - ##### <a name="trim-length"></a>trim-length
+        > <ins>**Description**</ins>: Specify the nuber of nucleodites to mask from each-side. This parameter can either be specified as as single integer (e.g.: *`trim-length: 10`*), which will apply this value to both ends. Alternatively, side-specific values can be provided in the form of a dictionary, with the *`left`* and *`right`* keys. e.g.: 
+        > ```yaml
+        > trim-length:
+        >   left: 10
+        >   right: 15
+        > ```
+
+        > <ins>**Allowed values**</ins>: (integer|dict): Either an single integer value, or a two-keyed dictionary, containing the keys `left` and `right`.
+
+      - ##### <a name="ignore-strand"></a>ignore-strand
+      > <ins>**Description**</ins>: Setting this value to `True` will make [`trimBam`](https://genome.sph.umich.edu/wiki/TrimBam) ignore the strand information of reads, treating the `left`and `right` parameters all the same for forward and reverse reads. When set to `False`, the `left` and `right` arguments of the [trim-length](#trim-length) parameter are reversed for reverse reads.
+
+      > <ins>**Allowed values**</ins>: (boolean) either *`True`* or *`False`*.
+
+      - ##### <a name="soft-clip"></a>soft-clip
+      > <ins>**Description**</ins>: Setting this value will apply soft-clipping or reads, instead of modifying the sequence and quality of nucleotides.
+
+      > <ins>**Allowed values**</ins>: (boolean) either *`True`* or *`False`*.
 
 ## <a name="variant-calling"></a>variant-calling
 Categorises parameters related to random pseudo-haploid variant calling.

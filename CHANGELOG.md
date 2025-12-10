@@ -1,10 +1,27 @@
+# v0.5.2
+## Features:
+- `BADGER` now features the ability to use the software [`bamUtil trimbam`](https://genome.sph.umich.edu/wiki/BamUtil:_trimBam), as an alternate PMD-correction strategy.
+- `BADGER` can now be completely installed and isolated in a dedicated environment using the [`pixi`](https://pixi.sh/latest) package manager. Note that the original `conda` installation procedure currently remains available and maintained.
+- Several Improvements regarding the definition of `conda` environments, which should improve interoperability.
+
+## Fixes
+- Adresses a major change in the server and API where the AADR 1240K is currently hosted (See issue #6).
+- Corrects a significant slowdown in the execution performance of the [`KIN`] software (https://github.com/DivyaratanPopli/Kinship_Inference) due to an unforeseen interaction between the BADGER archiving procedure and the use of the pysam library within the KIN software (See issue #5).
+- Fixes a malformed URL in the `.gitmodules` file (See issue #7)
+
+## Documentation / CI
+- Documentation now states the current Operating System requirements of BADGER more clearly
+- Implements an additional integration test, which periodically checks the availability/validity of the various URLs used by BADGER to access and download remote databases. This is currently applied once every 15 days.
+
 # v0.5.1
 ## Fixes
 - Enforce a minimum supported snakemake version using `snakemake.utils.min_version`
 - Explicitly define `libmzma-dev` as a dependency within the conda environment of `badger`.
 - Tweak `grups-rs-0.3.2`, `pmd-mask-0.3.2` and `pcangsd-0.99` conda environment definition files
+
 ## Documentation / CI
 - Add `CONTRIBUTING.md`
+
 # v0.5.0
 ## Changes
 - **(Breaking)** remove underscores in `config.yml`:
@@ -21,11 +38,13 @@
 - Allow plotting of individual subcomponents of the plots (see: `plot` parameters)
 - [Performance plot]: Allow specification of marker symbols and size (see `markers`, `size` and `symbols` parameters)
 - [Accuracy plot]: Allow *visual* transposition of nMBE and nRMSD subplots (see: `flip` parameter)
+
 ## Documentation
 - [badger-plots] Add documentation entry for `border` parameter
 - [badger-plots] Add documentation entry for `split` parameter
 - [badger-plots] Add documentation entry for `ragged-input` parameter)
-## Fix
+
+## Fixes
 - [badger-plots] Fix incorrect CM plotting when row sums equal zero. (which caused division by zero when computing colorscale values)
 - [badger][READv2] Fix erroneous setting of `--norm_method` when config value is set to `norm-method: "value"`
 - [badger-plots] Fix transposition bug which caused incorrect plotting when setting `transpose=TRUE` on performance plot

@@ -1,5 +1,7 @@
 name: Ubuntu
 on:
+  schedule:
+    - cron: '17 11 16 * *'
   push:
     branches: [ main ]
   pull_request:
@@ -26,4 +28,4 @@ jobs:
     - name: Install Badger
       run: bash ./badger/install.sh
     - name: Run tests
-      run: bash ./badger/install.sh test
+      run: bash ./badger/install.sh test --urls

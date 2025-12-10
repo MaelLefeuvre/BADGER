@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="0.5.1"
+VERSION="0.5.2"
 CONDA="${CONDA_EXE:-$(which conda)}"
 TERM="${TERM:-dumb}"
 
@@ -63,7 +63,7 @@ _test(){
     _search_path_ok(){
         which $1 | grep -q "${what}"
     }
-    
+
     eval "$($CONDA shell.bash hook)"
 
     log "Running quick test-suite for ${what}"

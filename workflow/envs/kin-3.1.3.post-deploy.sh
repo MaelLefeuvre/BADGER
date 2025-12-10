@@ -7,8 +7,8 @@ CWD=`pwd`
 
 wget -O - ${REPO_URL} | tar -xvzf - 
 cd ${TMP_SOURCE} &&
-pip3 install pypackage/kingaroo &&
-pip3 install pypackage/kin
+$CONDA_PREFIX/bin/pip3 install pypackage/kingaroo &&
+$CONDA_PREFIX/bin/pip3 install pypackage/kin
 
 cd $CWD 
 rm -r ${TMP_SOURCE}

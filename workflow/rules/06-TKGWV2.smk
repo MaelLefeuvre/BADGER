@@ -16,21 +16,25 @@ def TKGWV2_output(wildcards):
 def get_TKGWV2_input_bams(wildcards, print_log = False, logfile = sys.stderr):
     apply_masking = config['preprocess']['pmd-rescaling']['apply-masking']
     rescaler = config['preprocess']['pmd-rescaling']['rescaler']
-    if apply_masking:
-        if print_log:
-            print("Applying pmd-mask for TKGWV2", file=logfile)
-        root = expand(rules.run_pmd_mask.output.bam, sample = "{generation}_{pairs}")
+    match apply_masking:
+        case "pmd-mask":
+            if print_log:
+                print("Applying pmd-mask for variant calling.", file=logfile)
+            root = expand(rules.run_pmd_mask.output.bam, sample = "{generation}_{pairs}")
+        case "trimbam":
+            if print_log:
+                print("Applying pmd-mask for variant calling.", file=logfile)
+            root = expand(rules.run_trimbam.output.bam, sample = "{generation}_{pairs}")
+        case other:
+            if rescaler is None:
+                if print_log: 
+                    print("Skipping PMD correction for TKGWV2", file=logfile)
+                root = expand(define_dedup_input_bam(wildcards), sample = "{generation}_{pairs}")
+            else:
+                if print_log:
+                    print(f"Using: {rescaler} bam files for TKGWV2", file=logfile)
+                root = expand(define_rescale_input_bam(wildcards), sample = "{generation}_{pairs}")
 
-
-    elif rescaler is None:
-        if print_log: 
-            print("WARNING: Skipping PMD rescaling for TKGWV2!", file=logfile)
-        root = expand(define_dedup_input_bam(wildcards), sample = "{generation}_{pairs}")
-    else:
-        if print_log:
-            print(f"Using: {rescaler} bam files for TKGWV2", file=logfile)
-        root = expand(define_rescale_input_bam(wildcards), sample = "{generation}_{pairs}")
-    
     return expand(root,
         generation = "{generation}",
         pairs      = ["{pairA}", "{pairB}"],

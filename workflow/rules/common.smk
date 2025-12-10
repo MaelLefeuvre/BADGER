@@ -5,6 +5,73 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 configfile: "config/config.yml"
 configfile: "config/netrules.yml"
 
+class AADRDataset:
+    _version                = config["aadr-dataset"].lower()
+    _server_url             = config["netrules"]["aadr-dataset"]["server-url"]
+    _persistent_id          = config["netrules"]["aadr-dataset"]["persistent-id"]
+    _dataverse_version_dict = config["netrules"]["aadr-dataset"]["dataverse-version-dict"]
+
+    @staticmethod
+    def get_version():
+        return config["aadr-dataset"].lower()
+
+    @classmethod
+    def get_url(cls):
+        try:
+            dataverse_version = cls._dataverse_version_dict[AADRDataset.get_version()]
+        except KeyError:
+            error_msg = "Invalid version number for 'aadr-dataset' parameter. Available versions are:\n"
+            for key, value in cls._dataverse_version_dict.items():
+                error_msg += f" - {key}  (Dataverse version {value})\n"
+            raise RuntimeError(error_msg)
+
+        return (
+            f"{cls._server_url}" +
+            "/api/access/dataset/:persistentId/versions/" +
+            f"{dataverse_version}" +
+            f"?persistentId={cls._persistent_id}"
+        )
+
+    @classmethod
+    def get_path(cls):
+        return f"data/Reich-dataset/{cls._version}"
+
+    @classmethod
+    def get_output(cls):
+        return multiext(f"data/Reich-dataset/{cls._version}/aadr_{cls._version}_1240K_public", ".snp", ".anno", ".geno", ".ind")
+
+    @classmethod
+    def get_default_target(cls):
+        return f"data/Reich-dataset/{cls._version}/aadr_{cls._version}_1240K_public.snp"
+
+    @classmethod
+    def list_available_versions(cls):
+        for key in cls._dataverse_version_dict.keys():
+            print(f" - {key}")
+
+
+class ReferenceGenome:
+    _name = config["reference-genome"].lower()
+    _dict = config["netrules"]["reference-genomes"]
+
+    @staticmethod
+    def get_name() -> str:
+        return config["reference-genome"].lower()
+
+    @classmethod
+    def get_url(cls) -> str:
+        return cls._dict[ReferenceGenome.get_name()]["url"]
+
+    @classmethod
+    def get_path(cls) -> str:
+        return cls._dict[ReferenceGenome.get_name()]["path"] 
+
+    @classmethod
+    def list_available_references(cls):
+        for key in cls._dict.keys():
+            print(f" - {key}")
+
+
 class ReferenceGenome:
     _name = config["reference-genome"].lower()
     _dict = config["netrules"]["reference-genomes"]
@@ -30,7 +97,7 @@ class ReferenceGenome:
 
 def get_snp_targets(ext=".snp"):
     user_defined = config["kinship"]["targets"]
-    default      = config["netrules"]["aadr-1240k"]["default-targets"]
+    default      = AADRDataset.get_default_target()
     return path.splitext(user_defined or default)[0] + ext
 
 # ------------------------------------------------------------------------------------------------------------------- #

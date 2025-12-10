@@ -166,7 +166,7 @@ rule archive_pedigree_bams:
     threads:   16
     shell: """
         THREADS=`echo {threads}/2 | bc`
-        samtools merge -@ ${{THREADS}} -o - {input.bams} | samtools view -@ ${{THREADS}} -OCRAM -T {input.reference} --output-fmt-option {params.opts} > {output.cram} 2> {log}
+        samtools merge -@ ${{THREADS}} --no-PG -o - {input.bams} | samtools view -@ ${{THREADS}} --no-PG -OCRAM -T {input.reference} --output-fmt-option {params.opts} > {output.cram} 2> {log}
         
         # store checksums in metadata file yaml-like format.
         md5sum {input.bams} > {output.checksum} 2>> {log}

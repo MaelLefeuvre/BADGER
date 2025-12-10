@@ -1,0 +1,94 @@
+[workspace]
+  name = "badger"
+  version = "0.5.2"
+  channels = ["conda-forge", "bioconda"]
+  platforms = ["linux-64"]
+  authors = ["MaelLefeuvre <lefeuvre.m.p@gmail.com>"]
+  license = "GPL-3.0"
+  license-file = "LICENSE.md"
+  readme = "README.md"
+  repository = "https://github.com/MaelLefeuvre/BADGER"
+
+[dependencies]
+  # ---- badger dependencies
+  conda     = { version = ">=24.11.3", channel = "conda-forge"}
+  snakemake = { version = "7.20.0.*", channel = "bioconda" }
+  python    = { version = "3.11.*", channel = "conda-forge" }
+  pyopenssl = { version = ">=24", channel = "conda-forge" }
+  pip = {version = ">=25.1.1,<26", channel = "conda-forge"}
+  liblzma = { version = ">=5.8.1,<6", channel = "conda-forge" }
+  liblzma-devel = { version = ">=5.8.1,<6", channel = "conda-forge" }
+  # ---- pysam build dependencies
+  gcc = {version = "*", channel = "conda-forge"}
+  make = {version = "*", channel = "conda-forge"}
+  curl = {version = "*", channel = "conda-forge"}
+  zlib = {version = "*", channel = "conda-forge"}
+  # ---- badger-plots dependencies
+  r-base = { version = "=4.4.3", channel = "conda-forge" }
+  libarchive = { channel = "conda-forge" }
+  plotly = { channel = "conda-forge" }
+  r-reticulate = { channel = "conda-forge" }
+  python-kaleido = { version = "=0.2.1", channel = "conda-forge" }
+  r-essentials = { channel = "conda-forge" }
+  r-plotly = { version = "=4.10.4", channel = "conda-forge" }
+  r-archive = { channel = "conda-forge" }
+  r-magrittr = { channel = "conda-forge" }
+  r-tibble = { channel = "conda-forge" }
+  r-tidyr = { channel = "conda-forge" }
+  r-purrr = { channel = "conda-forge" }
+  r-dplyr = { channel = "conda-forge" }
+  r-rlang = { channel = "conda-forge" }
+  r-yaml = { channel = "conda-forge" }
+  r-stringr = { channel = "conda-forge" }
+  r-scales = { channel = "conda-forge" }
+  r-rcolorbrewer = { channel = "conda-forge" }
+  r-viridis = { channel = "conda-forge" }
+  r-future = { channel = "conda-forge" }
+  "r-future.apply" = { channel = "conda-forge" }
+  r-progressr = { channel = "conda-forge" }
+  r-optparse = { channel = "conda-forge" }
+  r-htmlwidgets = { channel = "conda-forge" }
+  r-processx = { channel = "conda-forge" }
+  r-devtools = { channel = "conda-forge" }
+  r-curl = { channel = "conda-forge" }
+  "r-data.table" = { channel = "conda-forge" }
+
+
+[pypi-dependencies]
+  badger   = { path = "./badger/", editable = true }
+  # ---- badger dependencies
+  argparse = ">=1.4.0, <2"
+  colorama = "*"
+  psutil   = "*"
+  pysam    = "~=0.19.1"
+  setuptools = ">=74.1.1"
+  packaging = ">=24.2"
+
+[activation.env]
+    BADGER_LIBR_PATH = "$CONDA_PREFIX/lib/R/lib/libR.so"
+#LD_PRELOAD="${BADGER_LIBR_PATH}${LD_PRELOAD+:${LD_PRELOAD}}"
+    RETICULATE_PYTHON="${CONDA_PREFIX}/bin/python"
+
+[environments]
+  test         = ["default", "test"]
+
+[feature.test.tasks]
+  test = { cmd = "pytest ./badger --verbose", description = "Run the test suite for badger and badger plots", depends-on=[{task = "configure", environment = "test"}], cwd = "."}
+
+[tasks]
+  configure = {cmd = "badger/src/badger-plots/envs/badger-plots.pixi-configure.sh", description = "Install and configure badger-plots. This is a one-time operation", cwd = "."}
+  badger = {cmd = "badger", description = "Run the badger command line interface program", cwd = "."}
+  badger-plots = {cmd = "badger-plots", description = "Run the badger-plots command line interface program", cwd = "."}
+
+
+#[tasks.test]
+#depends-on = [
+#  { task = "configure", environment = "default" },
+#  { task = "configure", environment = "test" },
+#  { task = "test", environment = "test" },
+#]
+
+[feature.test.dependencies]
+pytest = "*"
+pytest-dependency = "*"
+

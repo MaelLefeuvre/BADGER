@@ -57,18 +57,23 @@ rule download_reich_1240K:
     """
     Download the 1240K dataset from Reich Lab's website.
     """
-    input:
-        tarball    = HTTP.remote(config["netrules"]["aadr-1240k"]["url"])    # ---- Snakemake-7
     output:
-        eigenstrat = multiext(get_snp_targets(ext=""), ".snp", ".ind", ".geno")
+        path       = directory(AADRDataset.get_path()),
+        eigenstrat = AADRDataset.get_output(),
+        zipfile    = temp(f"{AADRDataset.get_path()}/dataverse_files.zip")
     params:
-        output_dir = lambda wildcards, output: dirname(output.eigenstrat[0])
+        url     = AADRDataset.get_url(),
+        path    = AADRDataset.get_path(),
+        default = AADRDataset.get_default_target(),
+        output  = AADRDataset.get_output()
     resources:
         cores=lambda w, threads: threads
-    log: "logs/00-netrules/download_reich_1240K.log"
+    log: f"logs/00-netrules/download_reich_1240K/{AADRDataset.get_path()}.log"
     threads: 1
+    conda: "../envs/coreutils-9.1.yml"
     shell:"""
-        tar -xvf {input.tarball} -C {params.output_dir} > {log} 2>&1
+        cd {output.path}
+        curl -sL -O -J {params.url} > ${{OLDPWD}}/{log} 2>&1 && unzip -x dataverse_files.zip >> ${{OLDPWD}}/{log} 2>&1
     """
 
 # ------------------------------------------------------------------------------------------------ #
@@ -88,7 +93,7 @@ rule download_reference_genome:
     log: f"logs/00-netrules/download_reference_genome/{ReferenceGenome.get_path()}.log"
     threads: 1
     shell: """
-        mv {input.refgen} {output.refgen}
+        mv {input.refgen} {output.refgen} > {log} 2>&1
     """
 
 
@@ -112,8 +117,8 @@ rule download_HapMapII_recombination_map:
     log: "logs/00-netrules/download_HapMapII_recombination_map.log"
     threads: 1
     shell: """
-        tar -xvzf {input.tarball} -C {params.output_dir} > {log} 2>&1
-        rm {input.tarball}                               > {log} 2>&1
+        tar -xvzf {input.tarball} -C {params.output_dir} >  {log} 2>&1
+        rm {input.tarball}                               >> {log} 2>&1
     """
 
 

@@ -1,5 +1,7 @@
 name: plink-1.9
 channels:
+  - conda-forge
   - bioconda
 dependencies:
   - bioconda::plink=1.90b6.21
+  - conda-forge::libgcc-ng

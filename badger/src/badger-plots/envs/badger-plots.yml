@@ -6,10 +6,10 @@ dependencies:
   - conda-forge::libarchive
   - conda-forge::plotly
   - conda-forge::r-reticulate
-  - conda-forge::python-kaleido
+  - conda-forge::python-kaleido=0.2.1
   - conda-forge::r-base>=4.1.2
   - conda-forge::r-essentials
-  - conda-forge::r-plotly
+  - conda-forge::r-plotly=4.10.4
   - conda-forge::r-archive
   - conda-forge::r-magrittr
   - conda-forge::r-tibble

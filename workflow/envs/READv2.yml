@@ -2,11 +2,10 @@ name: READv2
 channels:
   - conda-forge
   - anaconda
+  - bioconda
 dependencies:
-  - conda-forge::python=3.7
+  - conda-forge::python>=3.7
   - conda-forge::pandas=1.1.1
   - conda-forge::matplotlib=3.5.3
-  - numpy>=1.18.3      # Documentation of READ specifies 1.18.3 for numpy, but it is now deprecated in conda     
-  - conda-forge::pip=22.3.1
-  - pip:
-    - plinkio>=0.9.8
+  - numpy>=1.18.3            # Documentation of READ specifies 1.18.3 for numpy, but it is now deprecated in conda
+  - bioconda::plinkio>=0.9.8

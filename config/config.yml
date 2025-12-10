@@ -1,3 +1,4 @@
+aadr-dataset:                "v52.2"
 reference-genome:            "GRCh37"            # "GRCh37" | "hs37d5" | "human_g1k_v37"
 tempdir:                     "data/.tmp"
 make-qc:                     False
@@ -24,7 +25,7 @@ ped-sim:
 
 simulator:                   "gargammel"         # "gargammel" | "dwgsim"
 gargammel:
-  coverage:                  0.02
+  coverage:                  0.01
   comp-endo:                 1.00
   comp-cont:                 0.00
   comp-bact:                 0.00
@@ -66,7 +67,7 @@ preprocess:
     method:                  picard              # "samtools" | "picard" | "dedup"
   pmd-rescaling:
     rescaler:                ~                   # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
-    apply-masking:           True
+    apply-masking:           pmd-mask            # "pmd-mask"  | "trimbam"  | None ('~') to skip masking
     map-damage:
       rescale:               False
       downsample:            ~                   # No downsampling if empty (0 < downsample < 1)
@@ -76,6 +77,10 @@ preprocess:
       mask-terminal-deams:   0                   # in bases. Default 0 
     pmd-mask:
       threshold:             0.01
+    trimbam:
+      trim-length:           10                  # Either a single integer, or a dictionary containing two keys ('left' and 'right')
+      ignore-strand:         False
+      soft-clip:             False
 
 variant-calling:
   caller:                    "pileupCaller"      # ANGSD | pileupCaller

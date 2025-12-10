@@ -1,12 +1,10 @@
-from snakemake.utils import min_version
-min_version("7.20.0")
 configfile: "./config/config.yml"
 include: "rules/common.smk"
 include: "rules/00-qc.smk"
 include: "rules/00-preprocess-reference.smk"
 include: "rules/00-preprocess-1000g-phase3.smk"
 include: "rules/01-pedigree-sims.smk"
-include: "rules/02-adna-simulations.smk"
+#include: "rules/02-adna-simulations.smk"
 include: "rules/03-align-fastqs.smk"
 include: "rules/04-preprocess-bams.smk"
 include: "rules/05-variant-calling.smk"
@@ -35,7 +33,7 @@ if "fetch_data" in sys.argv:
         input:
             expand(rules.download_1000_genomes.output.vcf, chr=range(1,23)),
             rules.fetch_samples_panel.output.panel,
-            rules.download_reference_genome.output.refgen.format(reference="Homo_sapiens.GRCh37.dna.primary_assembly"),
+            rules.index_reference_genome.input.refgen,
             rules.download_HapMapII_recombination_map.output.map,
             rules.fetch_sex_specific_recombination_map.output.gen_maps,
             rules.fetch_interference_map.output.intf_map,

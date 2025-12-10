@@ -1,4 +1,4 @@
-name: badger-0.5.1
+name: badger-0.5.2
 channels:
   - conda-forge
   - bioconda
@@ -9,6 +9,11 @@ dependencies:
   - conda-forge::pip
   - conda-forge::liblzma
   - conda-forge::liblzma-devel
+  # pysam build dependencies
+  - conda-forge::gcc
+  - conda-forge::make
+  - conda-forge::zlib
+  - conda-forge::curl
   - pip: # badger.py dependencies
     - argparse
     - colorama

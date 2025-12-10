@@ -41,7 +41,6 @@ def test_dry_run_loop_pipeline(setup_env):
     _run_badger_main(f"loop-pipeline --cores {MIN_REQUIRED_CORES} --mem-mb {MIN_REQUIRED_MEM} -i 3 -- --forcerun fetch_data --dry-run")
 
 @pytest.mark.dependency(name="create-conda-envs")
-@pytest.mark.extensive
 @pytest.mark.network
 def test_create_conda_envs(setup_env):
     command = "setup --no-fetch-data -- --forcerun fetch_data"
