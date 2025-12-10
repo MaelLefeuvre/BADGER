@@ -67,7 +67,7 @@ preprocess:
     method:                  picard              # "samtools" | "picard" | "dedup"
   pmd-rescaling:
     rescaler:                ~                   # "mapdamage" | "pmdtools" | None ('~') to skip rescale 
-    apply-masking:           trimbam             # "pmd-mask"  | "trimbam"  | None ('~') to skip masking
+    apply-masking:           pmd-mask            # "pmd-mask"  | "trimbam"  | None ('~') to skip masking
     map-damage:
       rescale:               False
       downsample:            ~                   # No downsampling if empty (0 < downsample < 1)
