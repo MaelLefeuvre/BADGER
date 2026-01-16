@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::snakemake=7.20.0
+  - bioconda::snakemake=7.20.0=hdfd78af_0
   - conda-forge::python=3.11
   - conda-forge::pyopenssl>=24
   - conda-forge::pip
