@@ -514,7 +514,32 @@ When setting up badger, the mamba frontend may also be specified as a snakemake 
 badger setup -- --conda-frontend mamba
 ```
 
+## Estimation of computing time and HDD storage requirements.
 
+The execution time of BADGER is affected by a number of factors. In addition to the number of CPU resources allocated when running the software, key factors will include the number of desired replicates, the average sequencing depth and the number of individuals simulated in each pedigree. Currently, no benchmarking of execution performance has been carried out on BADGER. However, note that running a sufficient number of pedigree replicates may take several days, if not weeks. 
+
+Below is a very rough estimate of the computation times required to obtain some of the conditions studied in the paper describing BADGER :
+
+| CPU Cores | Memory (GB) | No. of pedigree replicates    | Pedigree (No. Individuals)                                            | Coverage (X) | Total Runtime (Days HH:MM) | Runtime / replicate (HH:MM) |
+| --------- | ----------- | ----------------------------- | ----------------------------------------------------------------------| ------------ | -------------------------- | --------------------------- |
+| 64        | 80          | 100                           | [Outbred](resources/ped-sim/ped-definition/outbred) (11 individuals)  | 0.1          | ~ 7d 04:19                 | ~ 01:43                     |
+| 64        | 80          | 100                           | [Inbred](resources/ped-sim/ped-definition/inbred) (14 individuals)    | 0.1          | ~ 9d 08:47                 | ~ 02:14                     |
+
+
+Note that these calculation times correspond to the use of the `badger loop-pipeline` command, which generates *independent* simulation replicates from scratch. Conversely, using BADGER to generate statistically paired data from previously archived results (i.e., using `badger rerun`) should take considerably less time.
+
+In any case, due to its highly parallelizable nature, using BADGER on a computing cluster with a large number of cores is strongly recommended in order to reduce computation time.
+
+As for the available disk space required to store archived results of BADGER (via `badger archive`), the following table summarises the approximate total size of the archives generated to obtain some of the conditions studied in the paper describing BADGER:
+
+| No. of pedigree replicates | Pedigree (No. Individuals)                                            | Coverage (X)  | Total Size (GB) | Size / replicate (GB) |
+| -------------------------- | --------------------------------------------------------------------- | ------------- | --------------- | --------------------- |
+| 100                        | [Outbred](resources/ped-sim/ped-definition/outbred) (11 individuals)  | 0.02          | 34.3            | 0.34                  |
+| 100                        | [Outbred](resources/ped-sim/ped-definition/outbred) (11 individuals)  | 0.10          | 92.4            | 0.92                  |
+| 100                        | [Inbred](resources/ped-sim/ped-definition/inbred)   (14 individuals)  | 0.10          | 111             | 1.11                  |
+| 100                        | [Outbred](resources/ped-sim/ped-definition/outbred) (11 individuals)  | 0.20          | 163             | 1.63                  |
+| 100                        | [Outbred](resources/ped-sim/ped-definition/outbred) (11 individuals)  | 0.50          | 362             | 3.62                  |
+| 100                        | [Outbred](resources/ped-sim/ped-definition/outbred) (11 individuals)  | 1.00          | 705             | 7.05                  |
 
 ## Issues and contributions.
 
