@@ -6,7 +6,7 @@ dependencies:
   - bioconda::snakemake=7.20.0=hdfd78af_0
   - conda-forge::python=3.11
   - conda-forge::pyopenssl>=24
-  - conda-forge::pip
+  - conda-forge::pip<=25  # Versions > 26.0 made removal of pkg_resources effective
   - conda-forge::liblzma
   - conda-forge::liblzma-devel
   # pysam build dependencies
@@ -18,5 +18,5 @@ dependencies:
     - argparse
     - colorama
     - psutil
-    - pysam~=0.19.1
+    - pysam~=0.19.1  # Wraps htslib/bcftools/samtools version 1.15.1
 
