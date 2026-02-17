@@ -6,7 +6,7 @@ Here, a detailled list of URLs as well as instructions to download each dataset 
 | Dataset                                         | version      | URL                                                                                                                                                |
 | ----------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1000g-phase3                                    | v5b-20130502 | http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/                                                                                        |
-| AADR 1240K                                      | v52.2        | https://reichdata.hms.harvard.edu/pub/datasets/amh_repo/curated_releases/V52/V52.2/SHARE/public.dir/                                               |
+| AADR 1240K                                      | v52.2 (v6)   | https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/FFIDCW&version=6.0                                                        |
 | GRCh37 reference genome                         | release-113  | http://ftp.ensembl.org/pub/grch37/release-113/fasta/homo_sapiens/dna/                                                                              |
 | HapMapII genetic map                            | 2012         | http://ftp.ncbi.nlm.nih.gov/hapmap/recombination/2011-01_phaseII_B37/                                                                              |
 | Refined sex-specific genetic Map (Bhérer et al) | N/A          | https://github.com/cbherer/Bherer_etal_SexualDimorphismRecombination                                                                               |
@@ -120,11 +120,11 @@ data
 │       ├── sexavg_chr20.txt
 │       ├── sexavg_chr21.txt
 │       └── sexavg_chr22.txt
-├── refgen
-│   └── GRCh37
+├── reference-genome
+│   └── GRCh37
 │       └── Homo_sapiens.GRCh37.dna.primary_assembly.fa
 ├── Reich-dataset
-│   └── v52.2
+│   └── v52.2
 │       ├── aadr_v52.2_1240K_public.anno
 │       ├── aadr_v52.2_1240K_public.geno
 │       ├── aadr_v52.2_1240K_public.ind
