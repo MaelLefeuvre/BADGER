@@ -1,6 +1,6 @@
 [workspace]
   name = "badger"
-  version = "0.5.2"
+  version = "0.5.3"
   channels = ["conda-forge", "bioconda"]
   platforms = ["linux-64"]
   authors = ["MaelLefeuvre <lefeuvre.m.p@gmail.com>"]

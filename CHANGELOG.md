@@ -1,3 +1,14 @@
+# v0.5.3
+## Fixes
+- pin `pip` to version <= 25
+
+## Documentation / CI
+- [docs] Update URLs and directory structure for manual installation of datasets
+- [docs] include a rough estimation of the execution runtime and required abailable HDD space in the README.md
+- [ci] Update .github action to replace deprecated `auto-activate-base` keyword
+- [ci] Fix ambiguous channel definition in conda-incubator workflow
+- [ci] Specify the exact version of snakemake in badger's yaml conda environment file
+
 # v0.5.2
 ## Features:
 - `BADGER` now features the ability to use the software [`bamUtil trimbam`](https://genome.sph.umich.edu/wiki/BamUtil:_trimBam), as an alternate PMD-correction strategy.
